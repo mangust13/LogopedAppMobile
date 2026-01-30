@@ -1,0 +1,18 @@
+import axios from "axios";
+import { ENV } from "../config/env";
+import { useAuthStore } from "../store/authStore";
+
+export const http = axios.create({
+  baseURL: ENV.API_BASE_URL,
+  timeout: 10000,
+});
+
+http.interceptors.request.use((config) => {
+  const token = useAuthStore.getState().token;
+
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+
+  return config;
+});

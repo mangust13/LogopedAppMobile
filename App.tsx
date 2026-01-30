@@ -1,9 +1,5 @@
-import { Text, View } from "react-native";
+import { AppRoot } from "./src/app/AppRoot";
 
 export default function App() {
-  return (
-    <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-      <Text>App started</Text>
-    </View>
-  );
+  return <AppRoot />;
 }
