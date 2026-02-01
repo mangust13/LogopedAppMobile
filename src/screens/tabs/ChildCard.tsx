@@ -7,7 +7,7 @@ type Props = {
   onAssignPress: (childId: string) => void;
   onEditPress: (child: ChildDto) => void;
   onDeletePress: (childId: string) => void;
-  onUpdated?: () => void; // додатково для попапу після оновлення
+  onUpdated?: () => void;
 };
 
 export function ChildCard({
@@ -44,7 +44,7 @@ export function ChildCard({
           title="✏️"
           onPress={() => {
             onEditPress(child);
-            handleUpdated(); // тут можна викликати попап після редагування
+            handleUpdated();
           }}
         />
         <Button

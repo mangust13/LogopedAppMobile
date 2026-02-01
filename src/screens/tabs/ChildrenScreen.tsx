@@ -27,7 +27,6 @@ export function ChildrenScreen() {
   const [showAddChild, setShowAddChild] = useState(false);
   const [assignChildId, setAssignChildId] = useState<string | null>(null);
 
-  // нові стани для редагування
   const [editChild, setEditChild] = useState<ChildDto | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
 
@@ -121,7 +120,7 @@ export function ChildrenScreen() {
 
       {assignChildId && selectedChild && (
         <AssignLogopedModal
-          key={assignChildId} // важливо для скидання стану модалки
+          key={assignChildId}
           childId={assignChildId}
           visible={!!assignChildId && !!selectedChild}
           onClose={() => setAssignChildId(null)}

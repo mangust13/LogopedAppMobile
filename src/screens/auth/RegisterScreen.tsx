@@ -36,28 +36,15 @@ export function RegisterScreen() {
   try {
     setLoading(true);
 
-    console.log("REGISTER REQUEST", {
-      email,
-      password,
-      role,
-    });
-
     const res = await authApi.register({
       email,
       password,
       role,
     });
 
-    console.log("REGISTER RESPONSE", res);
 
     await setAuth(res.token, res.role);
   } catch (e: any) {
-    console.log("REGISTER ERROR", {
-      message: e?.message,
-      status: e?.response?.status,
-      data: e?.response?.data,
-    });
-
     Alert.alert(
       "Register error",
       e?.response?.data?.message ??

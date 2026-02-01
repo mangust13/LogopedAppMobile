@@ -17,7 +17,7 @@ type Props = {
   child: ChildDto & { problemSounds?: string | null };
   visible: boolean;
   onClose: () => void;
-  onUpdated: () => void; // викликається після успішного оновлення
+  onUpdated: () => void;
 };
 
 export function EditChildModal({ child, visible, onClose, onUpdated }: Props) {
@@ -49,7 +49,7 @@ export function EditChildModal({ child, visible, onClose, onUpdated }: Props) {
       await childrenApi.updateChild(child.id, dto);
 
       Alert.alert("Успіх", "Дані дитини оновлено");
-      onUpdated(); // оновлюємо список у ChildrenScreen
+      onUpdated();
       onClose();
     } catch (e: any) {
       console.log("UPDATE CHILD ERROR", e?.response?.status, e?.response?.data);
