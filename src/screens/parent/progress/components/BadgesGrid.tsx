@@ -10,7 +10,7 @@ import {
   TouchableOpacity,
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { childrenApi } from "../../api/childrenApi";
+import { childrenApi } from "../../../../api/childrenApi";
 
 type Props = {
   visible: boolean;

@@ -1,6 +1,6 @@
 // src/screens/tabs/components/AttemptRow.tsx
-import { View, Text, StyleSheet } from 'react-native';
-import { ProgressAttemptDto } from '../../../api/types/progress';
+import { View, Text, StyleSheet } from "react-native";
+import { ProgressAttemptDto } from "../../../../api/types/progress";
 
 export function AttemptRow({ item }: { item: ProgressAttemptDto }) {
   return (
@@ -23,19 +23,19 @@ const styles = StyleSheet.create({
   row: {
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderColor: '#EEE',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    borderColor: "#EEE",
+    flexDirection: "row",
+    justifyContent: "space-between",
   },
   name: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   date: {
     fontSize: 12,
-    color: '#888',
+    color: "#888",
   },
   accuracy: {
-    fontWeight: '600',
+    fontWeight: "600",
   },
 });

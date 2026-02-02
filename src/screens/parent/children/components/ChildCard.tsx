@@ -1,6 +1,6 @@
 import { Text, View, Button, Alert } from "react-native";
-import { ChildDto } from "../../api/types/child";
-import { calcAge } from "../../shared/utils/age";
+import { ChildDto } from "../../../../api/types/child";
+import { calcAge } from "../../../../shared/utils/age";
 
 type Props = {
   child: ChildDto & { problemSounds?: string | null };

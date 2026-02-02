@@ -1,4 +1,4 @@
-// ChildrenScreen.tsx
+// src/screens/parent/children/ParentChildrenScreen.tsx
 import { useEffect, useState } from "react";
 import {
   FlatList,
@@ -8,19 +8,15 @@ import {
   ActivityIndicator,
   Alert,
 } from "react-native";
-import { Screen } from "../../shared/ui/Screen";
-import { childrenApi } from "../../api/childrenApi";
-import { logopedApi } from "../../api/logopedApi";
-import { ChildDto } from "../../api/types/child";
-import { useAuthStore } from "../../store/authStore";
-import { ChildCard } from "./ChildCard";
-import { AddChildModal } from "./AddChildModal";
-import { AssignLogopedModal } from "./AssignLogopedModal";
-import { EditChildModal } from "./EditChildModal";
+import { Screen } from "../../../shared/ui/Screen";
+import { childrenApi } from "../../../api/childrenApi";
+import { ChildDto } from "../../../api/types/child";
+import { ChildCard } from "./components/ChildCard";
+import { AddChildModal } from "./components/AddChildModal";
+import { AssignLogopedModal } from "./components/AssignLogopedModal";
+import { EditChildModal } from "./components/EditChildModal";
 
-export function ChildrenScreen() {
-  const role = useAuthStore((s) => s.role);
-
+export function ParentChildrenScreen() {
   const [children, setChildren] = useState<ChildDto[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -33,10 +29,7 @@ export function ChildrenScreen() {
   const loadChildren = async () => {
     try {
       setLoading(true);
-      const data =
-        role === "Logoped"
-          ? await logopedApi.getLogopedChildren()
-          : await childrenApi.getMyChildren();
+      const data = await childrenApi.getMyChildren();
       setChildren(data);
     } catch (e) {
       console.error("LOAD CHILDREN ERROR", e);
@@ -48,7 +41,7 @@ export function ChildrenScreen() {
 
   useEffect(() => {
     loadChildren();
-  }, [role]);
+  }, []);
 
   const selectedChild = assignChildId
     ? children.find((c) => c.id === assignChildId)
@@ -62,10 +55,9 @@ export function ChildrenScreen() {
     );
   }
 
-  const title = role === "Logoped" ? "🧑‍🏫 Мої учні" : "👶 Мої діти";
   return (
     <Screen>
-      <Text style={{ fontSize: 22, fontWeight: "600" }}>{title}</Text>
+      <Text style={{ fontSize: 22, fontWeight: "600" }}>👶 Мої діти</Text>
       <View style={{ height: 16 }} />
 
       <FlatList
@@ -102,15 +94,8 @@ export function ChildrenScreen() {
         />
       )}
 
-      {role === "User" && (
-        <>
-          <View style={{ height: 16 }} />
-          <Button
-            title="+ Додати дитину"
-            onPress={() => setShowAddChild(true)}
-          />
-        </>
-      )}
+      <View style={{ height: 16 }} />
+      <Button title="+ Додати дитину" onPress={() => setShowAddChild(true)} />
 
       <AddChildModal
         visible={showAddChild}

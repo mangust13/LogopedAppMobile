@@ -9,8 +9,8 @@ import {
   Alert,
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
-import { logopedApi, LogopedDto } from "../../api/logopedApi";
-import { childrenApi } from "../../api/childrenApi";
+import { logopedApi, LogopedDto } from "../../../../api/logopedApi";
+import { childrenApi } from "../../../../api/childrenApi";
 
 type Props = {
   childId: string;

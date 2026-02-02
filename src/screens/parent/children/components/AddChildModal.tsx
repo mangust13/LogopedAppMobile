@@ -10,22 +10,19 @@ import {
   TouchableOpacity,
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { childrenApi, UpdateChildProfileDto } from "../../api/childrenApi";
-import { ChildDto } from "../../api/types/child";
+import { childrenApi } from "../../../../api/childrenApi";
 
 type Props = {
-  child: ChildDto & { problemSounds?: string | null };
   visible: boolean;
   onClose: () => void;
-  onUpdated: () => void;
+  onCreated: () => void;
 };
 
-export function EditChildModal({ child, visible, onClose, onUpdated }: Props) {
-  const [name, setName] = useState(child.name);
-  const [birthDate, setBirthDate] = useState(new Date(child.birthDate));
-  const [problemSounds, setProblemSounds] = useState(child.problemSounds || "");
+export function AddChildModal({ visible, onClose, onCreated }: Props) {
+  const [name, setName] = useState("");
+  const [birthDate, setBirthDate] = useState<Date | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [problemSounds, setProblemSounds] = useState("");
 
   const onSubmit = async () => {
     if (!birthDate) {
@@ -33,38 +30,31 @@ export function EditChildModal({ child, visible, onClose, onUpdated }: Props) {
       return;
     }
 
-    setLoading(true);
     try {
-      const dto: UpdateChildProfileDto = {
+      await childrenApi.createChild({
         name,
         birthDate: birthDate.toISOString(),
         problemSounds: problemSounds
-          ? problemSounds
-              .split(",")
-              .map((s) => s.trim())
-              .join(",")
-          : null,
-      };
-
-      await childrenApi.updateChild(child.id, dto);
-
-      Alert.alert("Успіх", "Дані дитини оновлено");
-      onUpdated();
+          .split(",")
+          .map((s) => s.trim())
+          .join(","),
+      });
+      onCreated();
       onClose();
+
+      setName("");
+      setBirthDate(null);
+      setProblemSounds("");
     } catch (e: any) {
-      console.log("UPDATE CHILD ERROR", e?.response?.status, e?.response?.data);
-      Alert.alert("Помилка", "Не вдалося оновити дані дитини");
-    } finally {
-      setLoading(false);
+      console.log("CREATE CHILD ERROR", e?.response?.status, e?.response?.data);
+      Alert.alert("Помилка", "Не вдалося створити дитину");
     }
   };
 
   return (
     <Modal visible={visible} animationType="slide">
       <View style={{ flex: 1, padding: 16 }}>
-        <Text style={{ fontSize: 20, fontWeight: "600" }}>
-          Редагувати дитину
-        </Text>
+        <Text style={{ fontSize: 20, fontWeight: "600" }}>Додати дитину</Text>
 
         <TextInput
           placeholder="Імʼя"
@@ -75,9 +65,17 @@ export function EditChildModal({ child, visible, onClose, onUpdated }: Props) {
 
         <TouchableOpacity
           onPress={() => setShowDatePicker(true)}
-          style={{ borderWidth: 1, padding: 12, marginTop: 12 }}
+          style={{
+            borderWidth: 1,
+            padding: 12,
+            marginTop: 12,
+          }}
         >
-          <Text>{birthDate.toLocaleDateString()}</Text>
+          <Text>
+            {birthDate
+              ? birthDate.toLocaleDateString()
+              : "Дата народження (натисніть для вибору)"}
+          </Text>
         </TouchableOpacity>
 
         {showDatePicker && (
@@ -94,20 +92,16 @@ export function EditChildModal({ child, visible, onClose, onUpdated }: Props) {
         )}
 
         <TextInput
-          placeholder="Проблемні звуки (R,L,S)"
+          placeholder="Problem sounds (R,L,S)"
           value={problemSounds}
           onChangeText={setProblemSounds}
           style={{ borderWidth: 1, padding: 12, marginTop: 12 }}
         />
 
         <View style={{ height: 16 }} />
-        <Button
-          title={loading ? "Завантаження..." : "Зберегти"}
-          onPress={onSubmit}
-          disabled={loading}
-        />
+        <Button title="Створити" onPress={onSubmit} />
         <View style={{ height: 8 }} />
-        <Button title="Скасувати" onPress={onClose} disabled={loading} />
+        <Button title="Скасувати" onPress={onClose} />
       </View>
     </Modal>
   );
