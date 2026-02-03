@@ -1,59 +1,147 @@
-// src/screens/parent/progress/ChildProgressScreen.tsx
-import { View, Text, FlatList, StyleSheet } from "react-native";
-import { useRoute } from "@react-navigation/native";
+// src/screens/parent/home/HomeParentScreen.tsx
+import { View, Text, Pressable, StyleSheet, ScrollView } from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import { useEffect, useState } from "react";
+
+import { childrenApi } from "../../../api/childrenApi";
+import { ChildDto } from "../../../api/types/child";
+import { useChildStore } from "../../../store/childStore";
 import { useProgress } from "../../../hooks/useProgress";
-import { SummaryCard } from "../../../shared/ui/SummaryCard";
-import { AttemptRow } from "../../logoped/children/components/AttemptRow";
-import { TrendChart } from "../../logoped/children/components/TrendChart";
 
-type RouteParams = {
-  childId?: number;
-};
+import { ChildSelector } from "./components/ChildSelector";
+import { HabitTracker } from "./components/HabitTracker";
+import { SoundProgressBar } from "./components/SoundProgressBar";
+import { BadgesGrid } from "./components/BadgesGrid";
+import { buildHabit } from "../../../shared/utils/habit";
 
-export function ChildProgressScreen() {
-  const route = useRoute<any>();
-  const { childId } = (route.params ?? {}) as RouteParams;
+export function HomeParentScreen() {
+  const navigation = useNavigation<any>();
 
-  if (!childId) {
+  const {
+    selectedChild,
+    selectedChildId,
+    setSelectedChild,
+    setSelectedChildData,
+  } = useChildStore();
+
+  const [children, setChildren] = useState<ChildDto[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const { last: attempts } = useProgress(selectedChildId ?? undefined);
+
+  useEffect(() => {
+    const load = async () => {
+      const data = await childrenApi.getMyChildren();
+      setChildren(data);
+
+      if (data.length === 1 && !selectedChildId) {
+        setSelectedChild(data[0]);
+        setLoading(false);
+        return;
+      }
+
+      if (selectedChildId && !selectedChild) {
+        const child = data.find((c) => Number(c.id) === selectedChildId);
+        if (child) {
+          setSelectedChildData(child);
+        }
+      }
+
+      setLoading(false);
+    };
+
+    load();
+  }, []);
+
+  if (loading) {
+    return <View style={styles.container} />;
+  }
+
+  if (children.length === 0) {
     return (
-      <View style={styles.empty}>
-        <Text>Дитину не вибрано</Text>
+      <View style={styles.container}>
+        <Text style={styles.title}>Домашня сторінка</Text>
+
+        <Pressable
+          style={styles.primaryButton}
+          onPress={() => navigation.navigate("Children")}
+        >
+          <Text style={styles.primaryText}>Додати дитину</Text>
+        </Pressable>
       </View>
     );
   }
 
-  const { summary, last, trend, loading, error, refresh } =
-    useProgress(childId);
+  if (!selectedChild) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.title}>Оберіть дитину</Text>
 
-  if (error) {
-    return <Text>{error}</Text>;
+        <ChildSelector
+          children={children}
+          selectedChildId={selectedChildId}
+          onSelect={setSelectedChild}
+        />
+      </View>
+    );
   }
 
+  const habit = buildHabit(attempts ?? []);
+
   return (
-    <FlatList
-      ListHeaderComponent={
-        <View style={styles.container}>
-          {summary && (
-            <View style={styles.summaryRow}>
-              <SummaryCard
-                label="Середня точність"
-                value={`${summary.avgAccuracy}%`}
-              />
-              <SummaryCard label="Спроб" value={`${summary.totalAttempts}`} />
-            </View>
-          )}
+    <ScrollView contentContainerStyle={styles.container}>
+      <Text style={styles.title}>Домашня сторінка</Text>
 
-          {trend.length > 0 && <TrendChart data={trend} />}
+      {children.length > 1 && (
+        <ChildSelector
+          children={children}
+          selectedChildId={selectedChildId}
+          onSelect={setSelectedChild}
+        />
+      )}
 
-          <Text style={styles.section}>Останні спроби</Text>
-        </View>
-      }
-      data={last}
-      keyExtractor={(i) => i.id.toString()}
-      renderItem={({ item }) => <AttemptRow item={item} />}
-      refreshing={loading}
-      onRefresh={refresh}
-    />
+      {/* Active child */}
+      <View style={styles.card}>
+        <Text style={styles.childName}>{selectedChild.name}</Text>
+        <Text style={styles.meta}>
+          Проблемні звуки: {selectedChild.problemSounds ?? "–"}
+        </Text>
+      </View>
+
+      {/* Habit tracker */}
+      <HabitTracker streak={habit.streak} days={habit.days} />
+
+      {/* Sound progress */}
+      <View style={styles.card}>
+        <Text style={styles.subtitle}>Прогрес по звуках</Text>
+
+        <SoundProgressBar sound="р" progress={65} />
+        <SoundProgressBar sound="с" progress={80} />
+        <SoundProgressBar sound="ш" progress={40} />
+      </View>
+
+      {/* Badges */}
+      <BadgesGrid />
+
+      {/* Today plan */}
+      <View style={styles.card}>
+        <Text style={styles.subtitle}>План на сьогодні</Text>
+        <Text>• Артикуляційна вправа</Text>
+        <Text>• Гра на автоматизацію</Text>
+
+        <Pressable style={styles.primaryButton}>
+          <Text style={styles.primaryText}>Почати заняття</Text>
+        </Pressable>
+      </View>
+
+      {/* CTA */}
+      <Pressable
+        style={styles.secondaryButton}
+        onPress={() => navigation.navigate("Progress")}
+      >
+        <Text style={styles.secondaryText}>Переглянути прогрес</Text>
+      </Pressable>
+    </ScrollView>
   );
 }
 
@@ -62,17 +150,47 @@ const styles = StyleSheet.create({
     padding: 16,
     gap: 16,
   },
-  summaryRow: {
-    flexDirection: "row",
-    gap: 12,
+  title: {
+    fontSize: 22,
+    fontWeight: "600",
   },
-  section: {
+  card: {
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+    backgroundColor: "#fff",
+    gap: 8,
+  },
+  childName: {
+    fontSize: 18,
+    fontWeight: "600",
+  },
+  meta: {
+    color: "#6b7280",
+  },
+  subtitle: {
     fontSize: 16,
     fontWeight: "600",
   },
-  empty: {
-    flex: 1,
+  primaryButton: {
+    marginTop: 8,
+    paddingVertical: 10,
+    borderRadius: 8,
+    backgroundColor: "#2563eb",
     alignItems: "center",
-    justifyContent: "center",
+  },
+  primaryText: {
+    color: "#fff",
+    fontWeight: "600",
+  },
+  secondaryButton: {
+    paddingVertical: 10,
+    borderRadius: 8,
+    backgroundColor: "#f3f4f6",
+    alignItems: "center",
+  },
+  secondaryText: {
+    fontWeight: "600",
   },
 });

@@ -1,38 +1,44 @@
 // src/screens/parent/progress/ChildProgressScreen.tsx
 import { View, Text, FlatList, StyleSheet } from "react-native";
-import { useRoute } from "@react-navigation/native";
+import { useChildStore } from "../../../store/childStore";
 import { useProgress } from "../../../hooks/useProgress";
 import { SummaryCard } from "../../../shared/ui/SummaryCard";
 import { AttemptRow } from "../../logoped/children/components/AttemptRow";
 import { TrendChart } from "../../logoped/children/components/TrendChart";
 
-type RouteParams = {
-  childId?: number;
-};
-
 export function ChildProgressScreen() {
-  const route = useRoute<any>();
-  const { childId } = (route.params ?? {}) as RouteParams;
+  const selectedChildId = useChildStore((s) => s.selectedChildId);
+  const selectedChild = useChildStore((s) => s.selectedChild);
 
-  if (!childId) {
+  if (!selectedChildId) {
     return (
       <View style={styles.empty}>
-        <Text>Дитину не вибрано</Text>
+        <Text style={styles.emptyText}>
+          Оберіть дитину для перегляду прогресу
+        </Text>
       </View>
     );
   }
 
   const { summary, last, trend, loading, error, refresh } =
-    useProgress(childId);
+    useProgress(selectedChildId);
 
   if (error) {
-    return <Text>{error}</Text>;
+    return (
+      <View style={styles.empty}>
+        <Text>{error}</Text>
+      </View>
+    );
   }
 
   return (
     <FlatList
       ListHeaderComponent={
         <View style={styles.container}>
+          {selectedChild && (
+            <Text style={styles.childName}>{selectedChild.name}</Text>
+          )}
+
           {summary && (
             <View style={styles.summaryRow}>
               <SummaryCard
@@ -70,9 +76,19 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
   },
+  childName: {
+    fontSize: 20,
+    fontWeight: "600",
+  },
   empty: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
+    padding: 24,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: "#6b7280",
+    textAlign: "center",
   },
 });

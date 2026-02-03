@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Alert,
 } from "react-native";
+import { useNavigation } from "@react-navigation/native";
 import { Screen } from "../../../shared/ui/Screen";
 import { childrenApi } from "../../../api/childrenApi";
 import { ChildDto } from "../../../api/types/child";
@@ -15,8 +16,14 @@ import { ChildCard } from "./components/ChildCard";
 import { AddChildModal } from "./components/AddChildModal";
 import { AssignLogopedModal } from "./components/AssignLogopedModal";
 import { EditChildModal } from "./components/EditChildModal";
+import { useChildStore } from "../../../store/childStore";
 
 export function ParentChildrenScreen() {
+  const navigation = useNavigation<any>();
+
+  const selectedChild = useChildStore((s) => s.selectedChild);
+  const setSelectedChild = useChildStore((s) => s.setSelectedChild);
+
   const [children, setChildren] = useState<ChildDto[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -31,8 +38,12 @@ export function ParentChildrenScreen() {
       setLoading(true);
       const data = await childrenApi.getMyChildren();
       setChildren(data);
+
+      // ✅ Автоматично обираємо першу дитину, якщо ще нічого не обрано
+      if (data.length > 0 && !selectedChild) {
+        setSelectedChild(data[0]);
+      }
     } catch (e) {
-      console.error("LOAD CHILDREN ERROR", e);
       Alert.alert("Error", "Failed to load children");
     } finally {
       setLoading(false);
@@ -43,7 +54,7 @@ export function ParentChildrenScreen() {
     loadChildren();
   }, []);
 
-  const selectedChild = assignChildId
+  const assignSelectedChild = assignChildId
     ? children.find((c) => c.id === assignChildId)
     : undefined;
 
@@ -67,6 +78,10 @@ export function ParentChildrenScreen() {
         renderItem={({ item }) => (
           <ChildCard
             child={item}
+            onViewProgress={() => {
+              setSelectedChild(item);
+              navigation.navigate("Progress");
+            }}
             onAssignPress={(id) => setAssignChildId(id)}
             onEditPress={(child) => {
               setEditChild(child);
@@ -76,8 +91,7 @@ export function ParentChildrenScreen() {
               try {
                 await childrenApi.deleteChild(id);
                 loadChildren();
-              } catch (e) {
-                console.error("DELETE CHILD ERROR", e);
+              } catch {
                 Alert.alert("Error", "Failed to delete child");
               }
             }}
@@ -103,14 +117,14 @@ export function ParentChildrenScreen() {
         onCreated={loadChildren}
       />
 
-      {assignChildId && selectedChild && (
+      {assignChildId && assignSelectedChild && (
         <AssignLogopedModal
           key={assignChildId}
           childId={assignChildId}
-          visible={!!assignChildId && !!selectedChild}
+          visible
           onClose={() => setAssignChildId(null)}
           onAssigned={loadChildren}
-          currentLogopedEmail={selectedChild.logopedEmail ?? null}
+          currentLogopedEmail={assignSelectedChild.logopedEmail ?? null}
         />
       )}
     </Screen>

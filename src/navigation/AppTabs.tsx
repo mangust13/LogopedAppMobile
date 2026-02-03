@@ -1,5 +1,5 @@
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { HomeScreen } from "../screens/tabs/HomeScreen";
+import { HomeEntry } from "../screens/tabs/HomeEntry";
 import { ChildrenEntry } from "../screens/tabs/ChildrenEntry";
 import { ProgressEntry } from "../screens/tabs/ProgressEntry";
 import { ProfileScreen } from "../screens/tabs/ProfileScreen";
@@ -16,7 +16,7 @@ const Tabs = createBottomTabNavigator<AppTabsParamList>();
 export function AppTabs() {
   return (
     <Tabs.Navigator>
-      <Tabs.Screen name="Home" component={HomeScreen} />
+      <Tabs.Screen name="Home" component={HomeEntry} />
       <Tabs.Screen name="Children" component={ChildrenEntry} />
       <Tabs.Screen name="Progress" component={ProgressEntry} />
       <Tabs.Screen name="Profile" component={ProfileScreen} />

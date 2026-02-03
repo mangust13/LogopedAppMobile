@@ -1,3 +1,4 @@
+// src/screens/parent/children/components/ChildCard.tsx
 import { Text, View, Button, Alert } from "react-native";
 import { ChildDto } from "../../../../api/types/child";
 import { calcAge } from "../../../../shared/utils/age";
@@ -7,6 +8,7 @@ type Props = {
   onAssignPress: (childId: string) => void;
   onEditPress: (child: ChildDto) => void;
   onDeletePress: (childId: string) => void;
+  onViewProgress: () => void;
   onUpdated?: () => void;
 };
 
@@ -15,6 +17,7 @@ export function ChildCard({
   onAssignPress,
   onEditPress,
   onDeletePress,
+  onViewProgress,
   onUpdated,
 }: Props) {
   const hasLogoped = !!child.logopedEmail;
@@ -30,16 +33,21 @@ export function ChildCard({
     <View style={{ padding: 16, borderWidth: 1, borderRadius: 10 }}>
       <Text style={{ fontSize: 18, fontWeight: "500" }}>{child.name}</Text>
       <Text>Вік: {calcAge(child.birthDate)}</Text>
+
       {hasLogoped && <Text>Логопед: {child.logopedEmail}</Text>}
+
       {child.problemSounds && child.problemSounds.length > 0 && (
         <Text>Проблемні звуки: {child.problemSounds}</Text>
       )}
 
       <View style={{ flexDirection: "row", marginTop: 8, gap: 8 }}>
+        <Button title="📊 Прогрес" onPress={onViewProgress} />
+
         <Button
           title={hasLogoped ? "Змінити логопеда" : "Додати логопеда"}
           onPress={() => onAssignPress(child.id)}
         />
+
         <Button
           title="✏️"
           onPress={() => {
@@ -47,6 +55,7 @@ export function ChildCard({
             handleUpdated();
           }}
         />
+
         <Button
           title="🗑️"
           color="red"
