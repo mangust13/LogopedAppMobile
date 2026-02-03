@@ -1,7 +1,6 @@
-// src/screens/parent/home/HomeParentScreen.tsx
 import { View, Text, Pressable, StyleSheet, ScrollView } from "react-native";
-import { useNavigation } from "@react-navigation/native";
-import { useEffect, useState } from "react";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
+import { useCallback, useState } from "react";
 
 import { childrenApi } from "../../../api/childrenApi";
 import { ChildDto } from "../../../api/types/child";
@@ -29,29 +28,37 @@ export function HomeParentScreen() {
 
   const { last: attempts } = useProgress(selectedChildId ?? undefined);
 
-  useEffect(() => {
-    const load = async () => {
+  const load = async () => {
+    setLoading(true);
+
+    try {
       const data = await childrenApi.getMyChildren();
       setChildren(data);
 
-      if (data.length === 1 && !selectedChildId) {
-        setSelectedChild(data[0]);
+      if (data.length === 0) {
         setLoading(false);
         return;
       }
 
-      if (selectedChildId && !selectedChild) {
-        const child = data.find((c) => Number(c.id) === selectedChildId);
-        if (child) {
-          setSelectedChildData(child);
-        }
+      const found = data.find((c) => Number(c.id) === selectedChildId);
+
+      if (!found) {
+        setSelectedChild(data[0]);
+      } else if (selectedChildId && !selectedChild) {
+        setSelectedChildData(found);
       }
-
+    } catch (e) {
+      console.warn("Failed to load children", e);
+    } finally {
       setLoading(false);
-    };
+    }
+  };
 
-    load();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      load();
+    }, []),
+  );
 
   if (loading) {
     return <View style={styles.container} />;

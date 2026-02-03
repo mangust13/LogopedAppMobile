@@ -28,7 +28,7 @@ export function ParentChildrenScreen() {
   const [loading, setLoading] = useState(true);
 
   const [showAddChild, setShowAddChild] = useState(false);
-  const [assignChildId, setAssignChildId] = useState<string | null>(null);
+  const [assignChildId, setAssignChildId] = useState<number | null>(null);
 
   const [editChild, setEditChild] = useState<ChildDto | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -39,7 +39,6 @@ export function ParentChildrenScreen() {
       const data = await childrenApi.getMyChildren();
       setChildren(data);
 
-      // ✅ Автоматично обираємо першу дитину, якщо ще нічого не обрано
       if (data.length > 0 && !selectedChild) {
         setSelectedChild(data[0]);
       }
@@ -73,7 +72,7 @@ export function ParentChildrenScreen() {
 
       <FlatList
         data={children}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => String(item.id)}
         ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
         renderItem={({ item }) => (
           <ChildCard

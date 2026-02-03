@@ -23,15 +23,15 @@ export const childrenApi = {
     await http.post("/users/children", data);
   },
 
-  updateChild: async (childId: string, dto: UpdateChildProfileDto) => {
+  updateChild: async (childId: number, dto: UpdateChildProfileDto) => {
     await http.put(`/users/children/${childId}`, dto);
   },
 
-  deleteChild: async (childId: string) => {
+  deleteChild: async (childId: number) => {
     await http.delete(`/users/children/${childId}`);
   },
 
-  assignLogoped: async (childId: string, logopedEmail: string) => {
+  assignLogoped: async (childId: number, logopedEmail: string) => {
     await http.post(`/users/children/${childId}/assign-logoped`, {
       logopedEmail,
     });

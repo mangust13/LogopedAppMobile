@@ -1,5 +1,5 @@
 export type ChildDto = {
-  id: string;
+  id: number;
   name: string;
   birthDate: string;
   problemSounds?: string | null;

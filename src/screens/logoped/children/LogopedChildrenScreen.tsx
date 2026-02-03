@@ -42,7 +42,7 @@ export function LogopedChildrenScreen() {
 
       <FlatList
         data={children}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => String(item.id)}
         ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
         renderItem={({ item }) => <ChildRow child={item} />}
       />

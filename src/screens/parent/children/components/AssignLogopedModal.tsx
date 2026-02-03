@@ -13,7 +13,7 @@ import { logopedApi, LogopedDto } from "../../../../api/logopedApi";
 import { childrenApi } from "../../../../api/childrenApi";
 
 type Props = {
-  childId: string;
+  childId: number;
   visible: boolean;
   onClose: () => void;
   onAssigned: () => void;
