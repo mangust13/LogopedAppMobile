@@ -1,3 +1,4 @@
+//src\screens\auth\LoginScreen.tsx
 import { useState } from "react";
 import { Button, Text, TextInput, View, Alert } from "react-native";
 import { useNavigation } from "@react-navigation/native";
@@ -23,7 +24,7 @@ export function LoginScreen() {
       setLoading(true);
 
       const res = await authApi.login({ email, password });
-      await setAuth(res.token, res.role);
+      await setAuth(res.token, res.role, email);
     } catch (e) {
       Alert.alert("Login error", "Invalid credentials or network issue");
     } finally {

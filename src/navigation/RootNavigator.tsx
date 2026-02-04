@@ -6,7 +6,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { SplashScreen } from "../screens/SplashScreen";
 import { AuthStack } from "./AuthStack";
 import { AppTabs } from "./AppTabs";
-import { ChildProgressScreen } from "../screens/parent/progress/ChildProgressScreen";
+import { ChildStatsScreen } from "../screens/parent/stats/ChildProgressScreen";
 
 import { useAuthStore } from "../store/authStore";
 
@@ -45,7 +45,7 @@ export function RootNavigator() {
             />
             <Stack.Screen
               name="ChildProgress"
-              component={ChildProgressScreen}
+              component={ChildStatsScreen}
               options={{ title: "Прогрес дитини" }}
             />
           </>

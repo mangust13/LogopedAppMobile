@@ -1,7 +1,7 @@
 // src/screens/tabs/ProgressEntry.tsx
 import { useAuthStore } from "../../store/authStore";
-import { ChildProgressScreen } from "../parent/progress/ChildProgressScreen";
-import { LogopedStatsScreen } from "../logoped/analytics/LogopedStatsScreen";
+import { ChildStatsScreen } from "../parent/stats/ChildProgressScreen";
+import { LogopedStatsScreen } from "../logoped/stats/LogopedStatsScreen";
 
 export function ProgressEntry() {
   const role = useAuthStore((s) => s.role);
@@ -10,5 +10,5 @@ export function ProgressEntry() {
     return <LogopedStatsScreen />;
   }
 
-  return <ChildProgressScreen />;
+  return <ChildStatsScreen />;
 }

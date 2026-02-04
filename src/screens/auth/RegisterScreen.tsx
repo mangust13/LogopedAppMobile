@@ -1,3 +1,4 @@
+//src\screens\auth\RegisterScreen.tsx
 import { useState } from "react";
 import { Button, Text, TextInput, View, Alert, Pressable } from "react-native";
 import { Screen } from "../../shared/ui/Screen";
@@ -42,8 +43,7 @@ export function RegisterScreen() {
       role,
     });
 
-
-    await setAuth(res.token, res.role);
+    await setAuth(res.token, res.role, email);
   } catch (e: any) {
     Alert.alert(
       "Register error",

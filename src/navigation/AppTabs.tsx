@@ -1,9 +1,10 @@
+//src\navigation\AppTabs.tsx
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { HomeEntry } from "../screens/tabs/HomeEntry";
 import { ChildrenEntry } from "../screens/tabs/ChildrenEntry";
 import { GamesEntry } from "../screens/games/GamesEntry";
 import { ProgressEntry } from "../screens/tabs/ProgressEntry";
-import { ProfileScreen } from "../screens/tabs/ProfileScreen";
+import { ProfileEntry } from "../screens/tabs/ProfileEntry";
 
 export type AppTabsParamList = {
   Home: undefined;
@@ -22,7 +23,7 @@ export function AppTabs() {
       <Tabs.Screen name="Children" component={ChildrenEntry} />
       <Tabs.Screen name="Games" component={GamesEntry} />
       <Tabs.Screen name="Progress" component={ProgressEntry} />
-      <Tabs.Screen name="Profile" component={ProfileScreen} />
+      <Tabs.Screen name="Profile" component={ProfileEntry} />
     </Tabs.Navigator>
   );
 }

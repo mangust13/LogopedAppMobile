@@ -57,7 +57,7 @@ export function HomeParentScreen() {
   useFocusEffect(
     useCallback(() => {
       load();
-    }, []),
+    }, [selectedChildId]),
   );
 
   if (loading) {

@@ -1,4 +1,4 @@
-// src/screens/parent/progress/ChildProgressScreen.tsx
+// src/screens/parent/stats/ChildStatsScreen.tsx
 import { View, Text, FlatList, StyleSheet } from "react-native";
 import { useChildStore } from "../../../store/childStore";
 import { useProgress } from "../../../hooks/useProgress";
@@ -6,7 +6,7 @@ import { SummaryCard } from "../../../shared/ui/SummaryCard";
 import { AttemptRow } from "../../logoped/children/components/AttemptRow";
 import { TrendChart } from "../../logoped/children/components/TrendChart";
 
-export function ChildProgressScreen() {
+export function ChildStatsScreen() {
   const selectedChildId = useChildStore((s) => s.selectedChildId);
   const selectedChild = useChildStore((s) => s.selectedChild);
 

@@ -1,4 +1,4 @@
-// src/screens/logoped/analytics/LogopedStatsScreen.tsx
+// src/screens/logoped/stats/LogopedStatsScreen.tsx
 import { View, Text, StyleSheet } from "react-native";
 import { SummaryCard } from "../../../shared/ui/SummaryCard";
 
