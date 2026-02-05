@@ -1,4 +1,4 @@
-// src/screens/tabs/HomeEntry.tsx
+//src\screens\tabs\HomeEntry.tsx
 import { useAuthStore } from "../../store/authStore";
 import { HomeParentScreen } from "../parent/home/HomeParentScreen";
 import { HomeLogopedScreen } from "../logoped/home/HomeLogopedScreen";

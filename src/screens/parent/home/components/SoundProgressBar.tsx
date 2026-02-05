@@ -1,5 +1,6 @@
 // src/screens/parent/home/components/SoundProgressBar.tsx
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text } from "react-native";
+import { cn } from "../../../../shared/utils/cn";
 
 type Props = {
   sound: string;
@@ -8,43 +9,23 @@ type Props = {
 
 export function SoundProgressBar({ sound, progress }: Props) {
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.sound}>/{sound}/</Text>
-        <Text style={styles.percent}>{progress}%</Text>
+    <View className="space-y-2 mb-3">
+      <View className="flex-row justify-between items-end">
+        <Text className="text-base font-bold text-text-main">
+          Звук <Text className="text-primary text-lg">"{sound}"</Text>
+        </Text>
+        <Text className="text-sm font-medium text-text-muted">{progress}%</Text>
       </View>
 
-      <View style={styles.track}>
-        <View style={[styles.fill, { width: `${progress}%` }]} />
+      <View className="h-3 bg-gray-100 rounded-full overflow-hidden">
+        <View
+          className={cn(
+            "h-full rounded-full",
+            progress < 30 ? "bg-secondary" : "bg-primary",
+          )}
+          style={{ width: `${progress}%` }}
+        />
       </View>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    gap: 6,
-  },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  sound: {
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  percent: {
-    fontSize: 13,
-    color: "#6b7280",
-  },
-  track: {
-    height: 8,
-    borderRadius: 6,
-    backgroundColor: "#e5e7eb",
-    overflow: "hidden",
-  },
-  fill: {
-    height: "100%",
-    backgroundColor: "#22c55e",
-  },
-});

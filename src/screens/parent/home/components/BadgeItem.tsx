@@ -1,5 +1,6 @@
 // src/screens/parent/home/components/BadgeItem.tsx
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text } from "react-native";
+import { cn } from "../../../../shared/utils/cn";
 
 type Props = {
   title: string;
@@ -8,31 +9,23 @@ type Props = {
 
 export function BadgeItem({ title, unlocked }: Props) {
   return (
-    <View style={[styles.badge, unlocked ? styles.unlocked : styles.locked]}>
-      <Text style={styles.text}>{title}</Text>
+    <View
+      className={cn(
+        "px-3 py-2 rounded-xl border min-w-[80px] items-center justify-center mb-2 mr-2",
+        unlocked
+          ? "bg-yellow-50 border-yellow-200"
+          : "bg-gray-50 border-gray-100 opacity-60",
+      )}
+    >
+      <Text className="text-xl mb-1">{unlocked ? "🏆" : "🔒"}</Text>
+      <Text
+        className={cn(
+          "text-[10px] font-bold text-center",
+          unlocked ? "text-yellow-700" : "text-gray-400",
+        )}
+      >
+        {title}
+      </Text>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  badge: {
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-    minWidth: 90,
-    alignItems: "center",
-  },
-  unlocked: {
-    backgroundColor: "#ecfeff",
-    borderColor: "#67e8f9",
-  },
-  locked: {
-    backgroundColor: "#f3f4f6",
-    borderColor: "#e5e7eb",
-  },
-  text: {
-    fontSize: 12,
-    fontWeight: "600",
-  },
-});

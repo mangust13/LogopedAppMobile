@@ -1,20 +1,21 @@
+//src\shared\ui\Screen.tsx
 import { PropsWithChildren } from "react";
-import { StyleSheet, ViewStyle } from "react-native";
+import { StatusBar } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { cn } from "../utils/cn";
 
 type Props = PropsWithChildren<{
-  style?: ViewStyle;
+  className?: string;
 }>;
 
-export function Screen({ children, style }: Props) {
-  return <SafeAreaView style={[styles.root, style]}>{children}</SafeAreaView>;
+export function Screen({ children, className }: Props) {
+  return (
+    <SafeAreaView
+      className={cn("flex-1 bg-background", className)}
+      edges={["top", "left", "right"]}
+    >
+      <StatusBar barStyle="dark-content" backgroundColor="#F8F9FA" />
+      {children}
+    </SafeAreaView>
+  );
 }
-
-const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    paddingHorizontal: 16,
-    paddingTop: -20,
-    paddingBottom: 16,
-  },
-});

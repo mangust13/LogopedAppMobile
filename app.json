@@ -25,10 +25,9 @@
       "package": "com.anonymous.LogopedAppMobile"
     },
     "web": {
+      "bundler": "metro",
       "favicon": "./assets/favicon.png"
     },
-    "plugins": [
-      "expo-secure-store"
-    ]
+    "plugins": ["expo-secure-store"]
   }
 }

@@ -1,13 +1,14 @@
 // src/screens/parent/home/components/BadgesGrid.tsx
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text } from "react-native";
 import { BadgeItem } from "./BadgeItem";
 
 export function BadgesGrid() {
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Досягнення</Text>
-
-      <View style={styles.grid}>
+    <View className="mt-2">
+      <Text className="text-base font-bold text-text-main mb-3">
+        Досягнення
+      </Text>
+      <View className="flex-row flex-wrap">
         <BadgeItem title="7 днів" unlocked />
         <BadgeItem title="Без пропусків" unlocked />
         <BadgeItem title="100 вправ" unlocked={false} />
@@ -16,18 +17,3 @@ export function BadgesGrid() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    gap: 12,
-  },
-  title: {
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  grid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-  },
-});

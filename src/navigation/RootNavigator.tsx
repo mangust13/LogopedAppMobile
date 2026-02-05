@@ -1,4 +1,3 @@
-// src/navigation/RootNavigator.tsx
 import { useEffect } from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
@@ -7,10 +6,10 @@ import { SplashScreen } from "../screens/SplashScreen";
 import { AuthStack } from "./AuthStack";
 import { AppTabs } from "./AppTabs";
 import { ChildStatsScreen } from "../screens/parent/stats/ChildProgressScreen";
-
 import { useAuthStore } from "../store/authStore";
 
 export type RootStackParamList = {
+  Splash: undefined;
   App: undefined;
   Auth: undefined;
   ChildProgress: { childId: number };
@@ -24,37 +23,27 @@ export function RootNavigator() {
   const hydrate = useAuthStore((s) => s.hydrate);
 
   useEffect(() => {
-    if (!token) {
-      hydrate();
-    }
-  }, [hydrate, token]);
-
-  if (!isHydrated) {
-    return <SplashScreen />;
-  }
+    hydrate();
+  }, [hydrate]);
 
   return (
     <NavigationContainer>
-      <Stack.Navigator>
-        {token ? (
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+        {!isHydrated && <Stack.Screen name="Splash" component={SplashScreen} />}
+
+        {isHydrated && !token && (
+          <Stack.Screen name="Auth" component={AuthStack} />
+        )}
+
+        {isHydrated && token && (
           <>
-            <Stack.Screen
-              name="App"
-              component={AppTabs}
-              options={{ headerShown: false }}
-            />
+            <Stack.Screen name="App" component={AppTabs} />
             <Stack.Screen
               name="ChildProgress"
               component={ChildStatsScreen}
-              options={{ title: "Прогрес дитини" }}
+              options={{ headerShown: true, title: "Прогрес дитини" }}
             />
           </>
-        ) : (
-          <Stack.Screen
-            name="Auth"
-            component={AuthStack}
-            options={{ headerShown: false }}
-          />
         )}
       </Stack.Navigator>
     </NavigationContainer>

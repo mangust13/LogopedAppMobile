@@ -1,4 +1,5 @@
-import { View, Text, Pressable, StyleSheet, ScrollView } from "react-native";
+﻿//src\screens\parent\home\HomeParentScreen.tsx
+import { View, Text, ScrollView, RefreshControl } from "react-native";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { useCallback, useState } from "react";
 
@@ -6,6 +7,10 @@ import { childrenApi } from "../../../api/childrenApi";
 import { ChildDto } from "../../../api/types/child";
 import { useChildStore } from "../../../store/childStore";
 import { useProgress } from "../../../hooks/useProgress";
+
+import { Screen } from "../../../shared/ui/Screen";
+import { Card } from "../../../shared/ui/Card";
+import { Button } from "../../../shared/ui/Button";
 
 import { ChildSelector } from "./components/ChildSelector";
 import { HabitTracker } from "./components/HabitTracker";
@@ -60,144 +65,117 @@ export function HomeParentScreen() {
     }, [selectedChildId]),
   );
 
-  if (loading) {
-    return <View style={styles.container} />;
-  }
-
-  if (children.length === 0) {
+  // Стан: Завантаження
+  if (loading && children.length === 0) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.title}>Домашня сторінка</Text>
-
-        <Pressable
-          style={styles.primaryButton}
-          onPress={() => navigation.navigate("Children")}
-        >
-          <Text style={styles.primaryText}>Додати дитину</Text>
-        </Pressable>
-      </View>
+      <Screen className="justify-center items-center">
+        <Text className="text-primary font-bold">Завантаження...</Text>
+      </Screen>
     );
   }
 
+  // Стан: Немає дітей
+  if (children.length === 0) {
+    return (
+      <Screen className="justify-center px-6">
+        <View className="items-center mb-8">
+          <Text className="text-6xl mb-4">🐣</Text>
+          <Text className="text-2xl font-bold text-center mb-2">Привіт!</Text>
+          <Text className="text-text-muted text-center mb-6">
+            Щоб почати, додайте профіль вашої дитини
+          </Text>
+          <Button
+            title="Додати дитину"
+            onPress={() => navigation.navigate("Children")}
+            className="w-full"
+          />
+        </View>
+      </Screen>
+    );
+  }
+
+  // Стан: Діти є, але не обрано
   if (!selectedChild) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.title}>Оберіть дитину</Text>
-
+      <Screen className="justify-center">
+        <Text className="text-2xl font-bold text-center mb-6">
+          Хто сьогодні займається?
+        </Text>
         <ChildSelector
           children={children}
           selectedChildId={selectedChildId}
           onSelect={setSelectedChild}
         />
-      </View>
+      </Screen>
     );
   }
 
   const habit = buildHabit(attempts ?? []);
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Домашня сторінка</Text>
+    <Screen className="px-0 pb-0">
+      {/* Хедер сторінки */}
+      <View className="px-6 pt-6 pb-3 items-center">
+        <Text className="text-2xl font-bold text-primary">Головна</Text>
+      </View>
 
-      {children.length > 1 && (
+      <ScrollView
+        contentContainerStyle={{
+          paddingHorizontal: 24,
+          paddingBottom: 40,
+          gap: 20,
+        }}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={loading} onRefresh={load} />
+        }
+      >
+        {/* Селектор дітей */}
         <ChildSelector
           children={children}
           selectedChildId={selectedChildId}
           onSelect={setSelectedChild}
         />
-      )}
 
-      {/* Active child */}
-      <View style={styles.card}>
-        <Text style={styles.childName}>{selectedChild.name}</Text>
-        <Text style={styles.meta}>
-          Проблемні звуки: {selectedChild.problemSounds ?? "–"}
-        </Text>
-      </View>
+        {/* Трекер звички */}
+        <HabitTracker streak={habit.streak} days={habit.days} />
 
-      {/* Habit tracker */}
-      <HabitTracker streak={habit.streak} days={habit.days} />
+        {/* План на сьогодні */}
+        <Card className="border-l-4 border-l-primary">
+          <Text className="text-lg font-bold mb-2">План на сьогодні 📝</Text>
+          <View className="space-y-2 mb-4">
+            <Text className="text-text-main text-base">
+              • Артикуляційна гімнастика
+            </Text>
+            <Text className="text-text-main text-base">
+              • Гра "Поймай звук"
+            </Text>
+          </View>
+          <Button
+            title="Почати заняття"
+            onPress={() => navigation.navigate("GamesEntry")}
+            className="h-12"
+          />
+        </Card>
 
-      {/* Sound progress */}
-      <View style={styles.card}>
-        <Text style={styles.subtitle}>Прогрес по звуках</Text>
+        {/* Прогрес звуків */}
+        <Card>
+          <Text className="text-lg font-bold mb-4">Звуки в роботі</Text>
+          <SoundProgressBar sound="Р" progress={65} />
+          <SoundProgressBar sound="С" progress={80} />
+          <SoundProgressBar sound="Ш" progress={40} />
 
-        <SoundProgressBar sound="р" progress={65} />
-        <SoundProgressBar sound="с" progress={80} />
-        <SoundProgressBar sound="ш" progress={40} />
-      </View>
+          <Button
+            title="Детальна статистика"
+            variant="ghost"
+            className="mt-2"
+            onPress={() => navigation.navigate("Progress")}
+          />
+        </Card>
 
-      {/* Badges */}
-      <BadgesGrid />
-
-      {/* Today plan */}
-      <View style={styles.card}>
-        <Text style={styles.subtitle}>План на сьогодні</Text>
-        <Text>• Артикуляційна вправа</Text>
-        <Text>• Гра на автоматизацію</Text>
-
-        <Pressable style={styles.primaryButton}>
-          <Text style={styles.primaryText}>Почати заняття</Text>
-        </Pressable>
-      </View>
-
-      {/* CTA */}
-      <Pressable
-        style={styles.secondaryButton}
-        onPress={() => navigation.navigate("Progress")}
-      >
-        <Text style={styles.secondaryText}>Переглянути прогрес</Text>
-      </Pressable>
-    </ScrollView>
+        {/* Бейджі */}
+        <BadgesGrid />
+      </ScrollView>
+    </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    padding: 16,
-    gap: 16,
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: "600",
-  },
-  card: {
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
-    backgroundColor: "#fff",
-    gap: 8,
-  },
-  childName: {
-    fontSize: 18,
-    fontWeight: "600",
-  },
-  meta: {
-    color: "#6b7280",
-  },
-  subtitle: {
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  primaryButton: {
-    marginTop: 8,
-    paddingVertical: 10,
-    borderRadius: 8,
-    backgroundColor: "#2563eb",
-    alignItems: "center",
-  },
-  primaryText: {
-    color: "#fff",
-    fontWeight: "600",
-  },
-  secondaryButton: {
-    paddingVertical: 10,
-    borderRadius: 8,
-    backgroundColor: "#f3f4f6",
-    alignItems: "center",
-  },
-  secondaryText: {
-    fontWeight: "600",
-  },
-});

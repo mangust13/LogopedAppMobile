@@ -1,13 +1,22 @@
-//src\screens\auth\RegisterScreen.tsx
+//src/screens/auth/RegisterScreen.tsx
 import { useState } from "react";
-import { Button, Text, TextInput, View, Alert, Pressable } from "react-native";
+import { View, Text, Alert, TouchableOpacity } from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+
 import { Screen } from "../../shared/ui/Screen";
+import { Button } from "../../shared/ui/Button";
+import { Input } from "../../shared/ui/Input";
 import { authApi } from "../../api/authApi";
 import { useAuthStore } from "../../store/authStore";
+import { AuthStackParamList } from "../../navigation/AuthStack";
+import { cn } from "../../shared/utils/cn";
 
 type Role = "User" | "Logoped";
 
 export function RegisterScreen() {
+  const navigation =
+    useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
   const setAuth = useAuthStore((s) => s.setAuth);
 
   const [email, setEmail] = useState("");
@@ -15,99 +24,130 @@ export function RegisterScreen() {
   const [role, setRole] = useState<Role>("User");
   const [loading, setLoading] = useState(false);
 
-  // const onRegister = async () => {
-  //   try {
-  //     setLoading(true);
-
-  //     const res = await authApi.register({
-  //       email,
-  //       password,
-  //       role,
-  //     });
-
-  //     await setAuth(res.token, res.role);
-  //   } catch (e) {
-  //     Alert.alert("Register error", "Failed to register. Try again.");
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-
   const onRegister = async () => {
-  try {
-    setLoading(true);
+    if (!email || !password) {
+      Alert.alert("Помилка", "Будь ласка, заповніть всі поля");
+      return;
+    }
 
-    const res = await authApi.register({
-      email,
-      password,
-      role,
-    });
+    try {
+      setLoading(true);
+      const res = await authApi.register({
+        email,
+        password,
+        role,
+      });
 
-    await setAuth(res.token, res.role, email);
-  } catch (e: any) {
-    Alert.alert(
-      "Register error",
-      e?.response?.data?.message ??
-        "Failed to register. See console log."
+      await setAuth(res.token, res.role, email);
+    } catch (e: any) {
+      Alert.alert(
+        "Помилка реєстрації",
+        e?.response?.data?.message ?? "Щось пішло не так. Спробуйте пізніше.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const RoleCard = ({
+    value,
+    label,
+    description,
+  }: {
+    value: Role;
+    label: string;
+    description: string;
+  }) => {
+    const isSelected = role === value;
+    return (
+      <TouchableOpacity
+        onPress={() => setRole(value)}
+        activeOpacity={0.8}
+        className={cn(
+          "flex-1 p-4 rounded-2xl border-2 items-center justify-center space-y-2",
+          isSelected
+            ? "border-primary bg-primary/10"
+            : "border-gray-200 bg-surface",
+        )}
+      >
+        <Text
+          className={cn(
+            "text-lg font-bold",
+            isSelected ? "text-primary" : "text-text-main",
+          )}
+        >
+          {label}
+        </Text>
+        <Text className="text-xs text-center text-text-muted">
+          {description}
+        </Text>
+      </TouchableOpacity>
     );
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   return (
-    <Screen>
-      <Text style={{ fontSize: 22, fontWeight: "600" }}>Register</Text>
-
-      <View style={{ height: 16 }} />
-
-      <TextInput
-        placeholder="Email"
-        autoCapitalize="none"
-        value={email}
-        onChangeText={setEmail}
-        style={{ borderWidth: 1, padding: 12, borderRadius: 8 }}
-      />
-
-      <View style={{ height: 12 }} />
-
-      <TextInput
-        placeholder="Password"
-        secureTextEntry
-        value={password}
-        onChangeText={setPassword}
-        style={{ borderWidth: 1, padding: 12, borderRadius: 8 }}
-      />
-
-      <View style={{ height: 16 }} />
-
-      <Text style={{ fontWeight: "500" }}>Role</Text>
-
-      <View style={{ flexDirection: "row", gap: 12, marginTop: 8 }}>
-        {(["User", "Logoped"] as Role[]).map((r) => (
-          <Pressable
-            key={r}
-            onPress={() => setRole(r)}
-            style={{
-              padding: 12,
-              borderWidth: 1,
-              borderRadius: 8,
-              backgroundColor: role === r ? "#ddd" : "transparent",
-            }}
-          >
-            <Text>{r}</Text>
-          </Pressable>
-        ))}
+    <Screen className="pt-12 px-6">
+      <View className="mb-8">
+        <Text className="text-3xl font-bold text-primary mb-2">
+          Створити акаунт 🚀
+        </Text>
+        <Text className="text-text-muted text-base">
+          Заповніть дані для реєстрації
+        </Text>
       </View>
 
-      <View style={{ height: 24 }} />
+      <View className="space-y-4 w-full">
+        <Input
+          label="Email"
+          placeholder="user@example.com"
+          autoCapitalize="none"
+          keyboardType="email-address"
+          value={email}
+          onChangeText={setEmail}
+        />
 
-      <Button
-        title={loading ? "Loading..." : "Register"}
-        onPress={onRegister}
-        disabled={loading}
-      />
+        <Input
+          label="Пароль"
+          placeholder="••••••••"
+          secureTextEntry
+          value={password}
+          onChangeText={setPassword}
+        />
+
+        <View>
+          <Text className="text-sm font-medium text-text-muted mb-3 ml-1">
+            Хто буде користуватися додатком?
+          </Text>
+          <View className="flex-row gap-4 h-32">
+            <RoleCard
+              value="User"
+              label="Батьки"
+              description="Займаюся з дитиною вдома"
+            />
+            <RoleCard
+              value="Logoped"
+              label="Логопед"
+              description="Проводжу логопедичні заняття"
+            />
+          </View>
+        </View>
+
+        <View className="h-4" />
+
+        <Button
+          title="Зареєструватися"
+          onPress={onRegister}
+          isLoading={loading}
+        />
+
+        <Button
+          title="Вже є акаунт? Увійти"
+          variant="ghost"
+          onPress={() => navigation.navigate("Login")}
+          disabled={loading}
+          className="mt-2"
+        />
+      </View>
     </Screen>
   );
 }
