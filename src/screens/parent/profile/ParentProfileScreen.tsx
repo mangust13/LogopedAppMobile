@@ -1,11 +1,14 @@
-//src\screens\parent\profile\ParentProfileScreen.tsx
+//src/screens/parent/profile/ParentProfileScreen.tsx
 import { useNavigation } from "@react-navigation/native";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, Alert } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { Screen } from "../../../shared/ui/Screen";
+import { Card } from "../../../shared/ui/Card";
+import { Button } from "../../../shared/ui/Button";
 import { useAuthStore } from "../../../store/authStore";
 import { useChildStore } from "../../../store/childStore";
-import { ProfileActionButton } from "../../profile/components/ProfileActionButton";
-import { ProfileSettingRow } from "../../profile/components/ProfileSettingRow";
+import { cn } from "../../../shared/utils/cn";
+import ScreenHeader from "../../../shared/ui/ScreenHeader ";
 
 export function ParentProfileScreen() {
   const navigation = useNavigation<any>();
@@ -13,122 +16,138 @@ export function ParentProfileScreen() {
   const logout = useAuthStore((s) => s.logout);
   const selectedChild = useChildStore((s) => s.selectedChild);
 
+  const handleLogout = () => {
+    Alert.alert("Вихід", "Ви дійсно хочете вийти з акаунту?", [
+      { text: "Скасувати", style: "cancel" },
+      { text: "Вийти", style: "destructive", onPress: logout },
+    ]);
+  };
+
+  const ProfileItem = ({
+    icon,
+    label,
+    value,
+    onPress,
+    isLink = false,
+  }: {
+    icon: keyof typeof Ionicons.glyphMap;
+    label: string;
+    value?: string;
+    onPress?: () => void;
+    isLink?: boolean;
+  }) => (
+    <TouchableOpacity
+      onPress={onPress}
+      disabled={!onPress}
+      className={cn(
+        "flex-row items-center py-3 border-b border-gray-100 last:border-0",
+        onPress ? "active:opacity-70" : "",
+      )}
+    >
+      <View className="w-8 h-8 rounded-full bg-primary/10 items-center justify-center mr-3">
+        <Ionicons name={icon} size={18} color="#6C63FF" />
+      </View>
+      <View className="flex-1">
+        <Text className="text-text-main font-medium">{label}</Text>
+      </View>
+      <View className="flex-row items-center">
+        {value && <Text className="text-text-muted text-sm mr-2">{value}</Text>}
+        {isLink && (
+          <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+        )}
+      </View>
+    </TouchableOpacity>
+  );
+
   return (
     <Screen>
-      <ScrollView contentContainerStyle={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Профіль батьків</Text>
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>User</Text>
+      <ScreenHeader subtitle="Налаштування" title={"Профіль ⚙️"} center />
+
+      <ScrollView
+        contentContainerStyle={{
+          paddingHorizontal: 24,
+          paddingBottom: 100,
+          gap: 20,
+        }}
+        showsVerticalScrollIndicator={false}
+      >
+        <Card className="items-center p-6">
+          <View className="w-20 h-20 bg-primary/10 rounded-full items-center justify-center mb-3 border-2 border-primary/20">
+            <Text className="text-3xl font-bold text-primary">
+              {email ? email.charAt(0).toUpperCase() : "U"}
+            </Text>
           </View>
-        </View>
-
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Акаунт</Text>
-          <Text style={styles.line}>Email: {email ?? "Невідомо"}</Text>
-          <Text style={styles.line}>
-            Активна дитина: {selectedChild?.name ?? "не обрано"}
+          <Text className="text-lg font-bold text-text-main mb-1">
+            {email || "Користувач"}
           </Text>
-          <Text style={styles.muted}>
-            Тут тільки персональна інформація і керування, без дублювання прогрес-метрик.
-          </Text>
-        </View>
+          <View className="bg-green-100 px-3 py-1 rounded-full">
+            <Text className="text-green-700 text-xs font-bold uppercase">
+              Батьківський акаунт
+            </Text>
+          </View>
+        </Card>
 
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Налаштування домашніх занять</Text>
-          <ProfileSettingRow label="Нагадування" value="19:00 щодня (mock)" />
-          <ProfileSettingRow
-            label="Тривалість сесії"
-            value="10 хв за замовчуванням (mock)"
+        <Card className="p-0 px-4">
+          <Text className="text-sm font-bold text-text-muted mt-4 mb-2 uppercase">
+            Інформація
+          </Text>
+          <ProfileItem
+            icon="people"
+            label="Активна дитина"
+            value={selectedChild?.name ?? "Не обрано"}
           />
-          <ProfileSettingRow label="Темп" value="М'який (mock)" />
-        </View>
+          <ProfileItem icon="mail" label="Email" value={email ?? ""} />
+        </Card>
 
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Швидкі переходи</Text>
-          <ProfileActionButton
+        <Card className="p-0 px-4">
+          <Text className="text-sm font-bold text-text-muted mt-4 mb-2 uppercase">
+            Параметри занять (Демо)
+          </Text>
+          <ProfileItem icon="alarm" label="Нагадування" value="19:00" />
+          <ProfileItem icon="timer" label="Тривалість сесії" value="10 хв" />
+          <ProfileItem
+            icon="speedometer"
+            label="Темп навчання"
+            value="М'який"
+          />
+        </Card>
+
+        <Card className="p-0 px-4">
+          <Text className="text-sm font-bold text-text-muted mt-4 mb-2 uppercase">
+            Керування
+          </Text>
+          <ProfileItem
+            icon="people-circle"
             label="Керувати дітьми"
+            isLink
             onPress={() => navigation.navigate("Children")}
           />
-          <ProfileActionButton
-            label="Відкрити Games"
+          <ProfileItem
+            icon="game-controller"
+            label="Каталог ігор"
+            isLink
             onPress={() => navigation.navigate("Games")}
           />
-          <ProfileActionButton
-            label="Переглянути Progress"
+          <ProfileItem
+            icon="stats-chart"
+            label="Загальний прогрес"
+            isLink
             onPress={() => navigation.navigate("Progress")}
           />
-        </View>
+        </Card>
 
-        <Pressable style={styles.logoutButton} onPress={logout}>
-          <Text style={styles.logoutText}>Вийти з акаунту</Text>
-        </Pressable>
+        <Button
+          title="Вийти з акаунту"
+          onPress={handleLogout}
+          variant="ghost"
+          className="bg-red-50 border-red-100 mt-4"
+          textClassName="text-red-600"
+        />
+
+        <Text className="text-center text-xs text-gray-400 mt-2">
+          Version 1.0.0
+        </Text>
       </ScrollView>
     </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    paddingTop: 6,
-    paddingBottom: 24,
-    gap: 12,
-  },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: "#111827",
-  },
-  badge: {
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderWidth: 1,
-    borderColor: "#a5f3fc",
-    backgroundColor: "#ecfeff",
-  },
-  badgeText: {
-    fontSize: 12,
-    color: "#1f2937",
-    fontWeight: "700",
-  },
-  card: {
-    backgroundColor: "#fff",
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
-    padding: 14,
-    gap: 10,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#111827",
-  },
-  line: {
-    fontSize: 14,
-    color: "#1f2937",
-  },
-  muted: {
-    fontSize: 12,
-    color: "#6b7280",
-  },
-  logoutButton: {
-    marginTop: 2,
-    borderRadius: 10,
-    paddingVertical: 12,
-    alignItems: "center",
-    backgroundColor: "#fee2e2",
-    borderWidth: 1,
-    borderColor: "#fecaca",
-  },
-  logoutText: {
-    color: "#991b1b",
-    fontWeight: "700",
-  },
-});

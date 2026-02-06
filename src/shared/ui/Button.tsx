@@ -8,8 +8,9 @@ import { cn } from "../utils/cn";
 
 interface ButtonProps extends TouchableOpacityProps {
   title: string;
-  variant?: "primary" | "secondary" | "ghost";
+  variant?: "primary" | "secondary" | "ghost" | "outline";
   isLoading?: boolean;
+  textClassName?: string;
 }
 
 export function Button({
@@ -17,19 +18,23 @@ export function Button({
   variant = "primary",
   isLoading,
   className,
+  textClassName,
   ...props
 }: ButtonProps) {
   const variants = {
-    primary: "bg-primary active:bg-primary-dark shadow-sm shadow-primary/30",
+    primary:
+      "bg-primary active:bg-primary-dark shadow-sm shadow-primary/30 border-2 border-transparent",
     secondary:
-      "bg-secondary active:bg-secondary-light shadow-sm shadow-secondary/30",
-    ghost: "bg-transparent",
+      "bg-secondary active:bg-secondary-light shadow-sm shadow-secondary/30 border-2 border-transparent",
+    ghost: "bg-transparent border-2 border-transparent",
+    outline: "bg-transparent border-2 border-primary active:bg-primary/5",
   };
 
   const textVariants = {
     primary: "text-white font-bold text-lg",
     secondary: "text-white font-bold text-lg",
     ghost: "text-primary font-semibold text-base",
+    outline: "text-primary font-bold text-lg",
   };
 
   return (
@@ -44,9 +49,17 @@ export function Button({
       {...props}
     >
       {isLoading ? (
-        <ActivityIndicator color={variant === "ghost" ? "#6C63FF" : "#FFF"} />
+        <ActivityIndicator
+          color={
+            variant === "primary" || variant === "secondary"
+              ? "#FFF"
+              : "#6C63FF"
+          }
+        />
       ) : (
-        <Text className={textVariants[variant]}>{title}</Text>
+        <Text className={cn(textVariants[variant], textClassName)}>
+          {title}
+        </Text>
       )}
     </TouchableOpacity>
   );

@@ -1,15 +1,10 @@
-// src/screens/parent/children/ParentChildrenScreen.tsx
+//src/screens/parent/children/ParentChildrenScreen.tsx
 import { useEffect, useState } from "react";
-import {
-  FlatList,
-  Text,
-  View,
-  Button,
-  ActivityIndicator,
-  Alert,
-} from "react-native";
+import { FlatList, View, Alert, ActivityIndicator } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { Screen } from "../../../shared/ui/Screen";
+import { Button } from "../../../shared/ui/Button";
+import { Text } from "react-native"; // Або імпорт твого Text компонента, якщо є
 import { childrenApi } from "../../../api/childrenApi";
 import { ChildDto } from "../../../api/types/child";
 import { ChildCard } from "./components/ChildCard";
@@ -17,6 +12,7 @@ import { AddChildModal } from "./components/AddChildModal";
 import { AssignLogopedModal } from "./components/AssignLogopedModal";
 import { EditChildModal } from "./components/EditChildModal";
 import { useChildStore } from "../../../store/childStore";
+import ScreenHeader from "../../../shared/ui/ScreenHeader ";
 
 export function ParentChildrenScreen() {
   const navigation = useNavigation<any>();
@@ -59,21 +55,27 @@ export function ParentChildrenScreen() {
 
   if (loading) {
     return (
-      <Screen>
-        <ActivityIndicator size="large" />
+      <Screen className="justify-center items-center">
+        <ActivityIndicator size="large" color="#6C63FF" />
       </Screen>
     );
   }
 
   return (
     <Screen>
-      <Text style={{ fontSize: 22, fontWeight: "600" }}>👶 Мої діти</Text>
-      <View style={{ height: 16 }} />
+      {/* Header */}
+      <ScreenHeader title="Мої діти 👶" center />
 
       <FlatList
         data={children}
         keyExtractor={(item) => String(item.id)}
-        ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
+        contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 100 }}
+        ItemSeparatorComponent={() => <View className="h-4" />}
+        ListEmptyComponent={
+          <View className="items-center mt-10">
+            <Text className="text-gray-400 mb-4">Список порожній</Text>
+          </View>
+        }
         renderItem={({ item }) => (
           <ChildCard
             child={item}
@@ -98,6 +100,14 @@ export function ParentChildrenScreen() {
         )}
       />
 
+      <View className="absolute bottom-6 left-6 right-6">
+        <Button
+          title="+ Додати дитину"
+          onPress={() => setShowAddChild(true)}
+          className="shadow-lg shadow-primary/40"
+        />
+      </View>
+
       {showEditModal && editChild && (
         <EditChildModal
           child={editChild}
@@ -106,9 +116,6 @@ export function ParentChildrenScreen() {
           onUpdated={loadChildren}
         />
       )}
-
-      <View style={{ height: 16 }} />
-      <Button title="+ Додати дитину" onPress={() => setShowAddChild(true)} />
 
       <AddChildModal
         visible={showAddChild}

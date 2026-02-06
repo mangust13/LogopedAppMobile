@@ -31,13 +31,13 @@ export function ChildSelector({ children, selectedChildId, onSelect }: Props) {
               key={child.id}
               onPress={() => onSelect(child)}
               activeOpacity={0.8}
-              className="items-center space-y-2"
+              className="items-center"
             >
               <View
                 className={cn(
                   "w-14 h-14 rounded-full items-center justify-center border-2",
                   active
-                    ? "bg-primary border-primary shadow-sm shadow-primary/40"
+                    ? "bg-primary border-primary"
                     : "bg-surface border-gray-200",
                 )}
               >
@@ -53,7 +53,7 @@ export function ChildSelector({ children, selectedChildId, onSelect }: Props) {
 
               <Text
                 className={cn(
-                  "text-xs font-medium",
+                  "text-xs font-medium mt-2",
                   active ? "text-primary" : "text-text-muted",
                 )}
               >

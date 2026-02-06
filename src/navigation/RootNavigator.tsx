@@ -5,7 +5,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { SplashScreen } from "../screens/SplashScreen";
 import { AuthStack } from "./AuthStack";
 import { AppTabs } from "./AppTabs";
-import { ChildStatsScreen } from "../screens/parent/stats/ChildProgressScreen";
+import { ChildStatsScreen } from "../screens/parent/stats/ChildStatsScreen";
 import { useAuthStore } from "../store/authStore";
 
 export type RootStackParamList = {

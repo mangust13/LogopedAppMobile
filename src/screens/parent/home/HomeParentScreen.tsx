@@ -17,6 +17,7 @@ import { HabitTracker } from "./components/HabitTracker";
 import { SoundProgressBar } from "./components/SoundProgressBar";
 import { BadgesGrid } from "./components/BadgesGrid";
 import { buildHabit } from "../../../shared/utils/habit";
+import ScreenHeader from "../../../shared/ui/ScreenHeader ";
 
 export function HomeParentScreen() {
   const navigation = useNavigation<any>();
@@ -65,7 +66,6 @@ export function HomeParentScreen() {
     }, [selectedChildId]),
   );
 
-  // Стан: Завантаження
   if (loading && children.length === 0) {
     return (
       <Screen className="justify-center items-center">
@@ -74,7 +74,6 @@ export function HomeParentScreen() {
     );
   }
 
-  // Стан: Немає дітей
   if (children.length === 0) {
     return (
       <Screen className="justify-center px-6">
@@ -94,7 +93,6 @@ export function HomeParentScreen() {
     );
   }
 
-  // Стан: Діти є, але не обрано
   if (!selectedChild) {
     return (
       <Screen className="justify-center">
@@ -114,10 +112,8 @@ export function HomeParentScreen() {
 
   return (
     <Screen className="px-0 pb-0">
-      {/* Хедер сторінки */}
-      <View className="px-6 pt-6 pb-3 items-center">
-        <Text className="text-2xl font-bold text-primary">Головна</Text>
-      </View>
+      {/* Header */}
+      <ScreenHeader title="Головна" center />
 
       <ScrollView
         contentContainerStyle={{
@@ -130,17 +126,14 @@ export function HomeParentScreen() {
           <RefreshControl refreshing={loading} onRefresh={load} />
         }
       >
-        {/* Селектор дітей */}
         <ChildSelector
           children={children}
           selectedChildId={selectedChildId}
           onSelect={setSelectedChild}
         />
 
-        {/* Трекер звички */}
         <HabitTracker streak={habit.streak} days={habit.days} />
 
-        {/* План на сьогодні */}
         <Card className="border-l-4 border-l-primary">
           <Text className="text-lg font-bold mb-2">План на сьогодні 📝</Text>
           <View className="space-y-2 mb-4">
@@ -153,12 +146,11 @@ export function HomeParentScreen() {
           </View>
           <Button
             title="Почати заняття"
-            onPress={() => navigation.navigate("GamesEntry")}
+            onPress={() => navigation.navigate("Games")}
             className="h-12"
           />
         </Card>
 
-        {/* Прогрес звуків */}
         <Card>
           <Text className="text-lg font-bold mb-4">Звуки в роботі</Text>
           <SoundProgressBar sound="Р" progress={65} />
@@ -173,7 +165,6 @@ export function HomeParentScreen() {
           />
         </Card>
 
-        {/* Бейджі */}
         <BadgesGrid />
       </ScrollView>
     </Screen>

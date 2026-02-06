@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react';
-import { progressApi } from '../api/progressApi';
+import { useEffect, useState } from "react";
+import { progressApi } from "../api/progressApi";
 import {
   ProgressAttemptDto,
   ProgressSummaryDto,
   TrendPointDto,
-} from '../api/types/progress';
+} from "../api/types/progress";
 
 type UseProgressResult = {
   summary: ProgressSummaryDto | null;
@@ -37,7 +37,7 @@ export function useProgress(childId?: number): UseProgressResult {
       setLast(lastRes);
       setTrend(trendRes);
     } catch {
-      setError('Не вдалося завантажити прогрес');
+      setError("Не вдалося завантажити прогрес");
     } finally {
       setLoading(false);
     }
@@ -45,7 +45,6 @@ export function useProgress(childId?: number): UseProgressResult {
 
   useEffect(() => {
     if (childId === undefined) {
-      // скидаємо стан, коли дитина не вибрана
       setSummary(null);
       setLast([]);
       setTrend([]);

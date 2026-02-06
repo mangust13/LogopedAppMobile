@@ -1,7 +1,12 @@
-// src/screens/logoped/home/HomeLogopedScreen.tsx
-import { View, Text, FlatList, Pressable, StyleSheet } from "react-native";
+import { View, Text, FlatList, TouchableOpacity } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useState } from "react";
+
+import { Screen } from "../../../shared/ui/Screen";
+import { Card } from "../../../shared/ui/Card";
+import { Button } from "../../../shared/ui/Button";
+import { cn } from "../../../shared/utils/cn";
+import ScreenHeader from "../../../shared/ui/ScreenHeader ";
 
 type AttentionLevel = "high" | "medium" | "low";
 
@@ -66,223 +71,143 @@ export function HomeLogopedScreen() {
 
   const renderAttentionItem = (item: AttentionItem) => {
     return (
-      <View style={[styles.attentionRow, styles[`level_${item.level}`]]}>
-        <View>
-          <View style={styles.attentionHeader}>
-            <Text style={styles.attentionName}>{item.childName}</Text>
+      <View
+        key={item.id}
+        className={cn(
+          "flex-row justify-between items-center p-3 rounded-xl border mb-2",
+          item.level === "high" && "bg-red-50 border-red-100",
+          item.level === "medium" && "bg-orange-50 border-orange-100",
+          item.level === "low" && "bg-cyan-50 border-cyan-100",
+        )}
+      >
+        <View className="flex-1">
+          <View className="flex-row items-center space-x-2 mb-1">
+            <Text className="font-bold text-text-main">{item.childName}</Text>
             <PriorityBadge level={item.level} />
           </View>
-
-          <Text style={styles.attentionReason}>{item.reason}</Text>
+          <Text className="text-xs text-text-muted">{item.reason}</Text>
         </View>
 
-        <Pressable onPress={() => navigation.navigate("Children")}>
-          <Text style={styles.attentionAction}>Деталі</Text>
-        </Pressable>
+        <TouchableOpacity onPress={() => navigation.navigate("Children")}>
+          <Text className="text-primary font-bold text-sm">Деталі</Text>
+        </TouchableOpacity>
       </View>
     );
   };
 
+  const Stat = ({ label, value }: { label: string; value: any }) => (
+    <View className="items-center flex-1">
+      <Text className="text-2xl font-bold text-primary mb-1">{value}</Text>
+      <Text className="text-xs text-text-muted uppercase font-bold tracking-wider text-center">
+        {label}
+      </Text>
+    </View>
+  );
+
   return (
-    <FlatList
-      ListHeaderComponent={
-        <View style={styles.container}>
-          <Text style={styles.title}>Домашня сторінка</Text>
+    <Screen>
+      {/* Header */}
+      <ScreenHeader title="Головна" center />
 
-          <View style={styles.card}>
-            <Text style={styles.subtitle}>Сьогодні</Text>
+      <FlatList
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{
+          paddingHorizontal: 24,
+          paddingBottom: 100,
+          gap: 20,
+        }}
+        ListHeaderComponent={
+          <View className="gap-5">
+            <Card>
+              <Text className="text-lg font-bold mb-4 text-text-main">
+                Сьогодні 📅
+              </Text>
+              <View className="flex-row justify-between divide-x divide-gray-100">
+                <Stat label="Занять" value={todayStats.sessionsToday} />
+                <Stat label="Учнів" value={todayStats.activeChildren} />
+                <Stat label="Точність" value={`${todayStats.avgAccuracy}%`} />
+              </View>
+            </Card>
 
-            <View style={styles.statsRow}>
-              <Stat label="Занять" value={todayStats.sessionsToday} />
-              <Stat label="Дітей" value={todayStats.activeChildren} />
-              <Stat label="Точність" value={`${todayStats.avgAccuracy}%`} />
+            <Card>
+              <Text className="text-lg font-bold mb-3 text-text-main">
+                Потребують уваги ⚠️
+              </Text>
+              <View>
+                {needAttention.map((item) => renderAttentionItem(item))}
+              </View>
+            </Card>
+
+            <View>
+              <Text className="text-lg font-bold mb-3 text-text-main">
+                Швидкі дії
+              </Text>
+              <View className="flex-row gap-3">
+                <Button
+                  title="Всі учні"
+                  variant="secondary"
+                  className="flex-1"
+                  onPress={() => navigation.navigate("Children")}
+                />
+                <Button
+                  title="Звіти"
+                  variant="outline"
+                  className="flex-1"
+                  onPress={() => navigation.navigate("Progress")}
+                />
+              </View>
             </View>
+
+            <Text className="text-lg font-bold mt-2 text-text-main">
+              Остання активність
+            </Text>
           </View>
-
-          <View style={styles.card}>
-            <Text style={styles.subtitle}>Потребують уваги</Text>
-
-            <View style={{ gap: 8 }}>
-              {needAttention.map((item) => (
-                <View key={item.id}>{renderAttentionItem(item)}</View>
-              ))}
+        }
+        data={recentActivities}
+        keyExtractor={(i) => i.id}
+        renderItem={({ item }) => (
+          <View className="flex-row justify-between items-center py-3 border-b border-gray-100">
+            <View>
+              <Text className="font-bold text-text-main text-base">
+                {item.childName}
+              </Text>
+              <Text className="text-text-muted text-sm">{item.action}</Text>
             </View>
+            <Text className="text-xs text-text-muted bg-gray-50 px-2 py-1 rounded-md">
+              {item.time}
+            </Text>
           </View>
-
-          <View style={styles.card}>
-            <Text style={styles.subtitle}>Швидкі дії</Text>
-
-            <Pressable
-              style={styles.actionButton}
-              onPress={() => navigation.navigate("Children")}
-            >
-              <Text style={styles.actionText}>Усі учні</Text>
-            </Pressable>
-
-            <Pressable
-              style={styles.actionButton}
-              onPress={() => navigation.navigate("Progress")}
-            >
-              <Text style={styles.actionText}>Статистика</Text>
-            </Pressable>
-          </View>
-
-          <Text style={styles.subtitle}>Остання активність</Text>
-        </View>
-      }
-      data={recentActivities}
-      keyExtractor={(i) => i.id}
-      renderItem={({ item }) => (
-        <View style={styles.activityRow}>
-          <Text style={styles.activityName}>{item.childName}</Text>
-          <Text>{item.action}</Text>
-          <Text style={styles.activityTime}>{item.time}</Text>
-        </View>
-      )}
-    />
+        )}
+      />
+    </Screen>
   );
 }
 
 function PriorityBadge({ level }: { level: AttentionLevel }) {
-  const map = {
-    high: { text: "Високий", style: styles.badgeHigh },
-    medium: { text: "Середній", style: styles.badgeMedium },
-    low: { text: "Низький", style: styles.badgeLow },
+  const styles = {
+    high: "bg-red-100 text-red-700",
+    medium: "bg-orange-100 text-orange-700",
+    low: "bg-cyan-100 text-cyan-700",
+  };
+
+  const labels = {
+    high: "Високий",
+    medium: "Середній",
+    low: "Низький",
   };
 
   return (
-    <View style={[styles.badge, map[level].style]}>
-      <Text style={styles.badgeText}>{map[level].text}</Text>
+    <View
+      className={cn(
+        "px-2 py-0.5 rounded-full ml-2",
+        styles[level].split(" ")[0],
+      )}
+    >
+      <Text
+        className={cn("text-[10px] font-bold", styles[level].split(" ")[1])}
+      >
+        {labels[level]}
+      </Text>
     </View>
   );
 }
-
-function Stat({ label, value }: { label: string; value: any }) {
-  return (
-    <View style={styles.statBox}>
-      <Text style={styles.statValue}>{value}</Text>
-      <Text style={styles.statLabel}>{label}</Text>
-    </View>
-  );
-}
-
-const styles = StyleSheet.create({
-  container: {
-    padding: 16,
-    gap: 16,
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: "600",
-  },
-  subtitle: {
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  card: {
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
-    backgroundColor: "#fff",
-    gap: 12,
-  },
-
-  statsRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  statBox: {
-    alignItems: "center",
-    flex: 1,
-  },
-  statValue: {
-    fontSize: 18,
-    fontWeight: "600",
-  },
-  statLabel: {
-    color: "#6b7280",
-  },
-
-  attentionRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: 12,
-    borderRadius: 10,
-    borderWidth: 1,
-  },
-  attentionHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  attentionName: {
-    fontWeight: "600",
-  },
-  attentionReason: {
-    fontSize: 13,
-    color: "#374151",
-  },
-  attentionAction: {
-    color: "#2563eb",
-    fontWeight: "600",
-  },
-
-  level_high: {
-    backgroundColor: "#fff1f2",
-    borderColor: "#fecaca",
-  },
-  level_medium: {
-    backgroundColor: "#fffbeb",
-    borderColor: "#fde68a",
-  },
-  level_low: {
-    backgroundColor: "#ecfeff",
-    borderColor: "#67e8f9",
-  },
-
-  badge: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 999,
-  },
-  badgeText: {
-    fontSize: 11,
-    fontWeight: "600",
-  },
-  badgeHigh: {
-    backgroundColor: "#dc2626",
-  },
-  badgeMedium: {
-    backgroundColor: "#f59e0b",
-  },
-  badgeLow: {
-    backgroundColor: "#0891b2",
-  },
-
-  actionButton: {
-    paddingVertical: 10,
-    borderRadius: 8,
-    backgroundColor: "#f3f4f6",
-    alignItems: "center",
-  },
-  actionText: {
-    fontWeight: "600",
-  },
-
-  activityRow: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderColor: "#e5e7eb",
-    gap: 2,
-  },
-  activityName: {
-    fontWeight: "600",
-  },
-  activityTime: {
-    color: "#6b7280",
-    fontSize: 12,
-  },
-});
