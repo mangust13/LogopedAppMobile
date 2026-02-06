@@ -1,3 +1,5 @@
+// src\screens\parent\stats\ChildStatsScreen.tsx
+
 import { View, Text, FlatList, ActivityIndicator } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useChildStore } from "../../../store/childStore";

@@ -1,4 +1,8 @@
-import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
+//src\screens\games\shared\GameResultModal.tsx
+import { Modal, View, Text, Pressable } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { Button } from "../../../shared/ui/Button";
+import { Card } from "../../../shared/ui/Card";
 
 type Props = {
   visible: boolean;
@@ -20,93 +24,75 @@ export function GameResultModal({
   onGoToProgress,
 }: Props) {
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onFinish}>
-      <View style={styles.backdrop}>
-        <View style={styles.card}>
-          <Text style={styles.title}>Молодець!</Text>
-          <Text style={styles.status}>
-            Результат: {success ? "успішно" : "неуспішно"}
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      onRequestClose={onFinish}
+    >
+      <View className="flex-1 bg-black/50 justify-center items-center p-6">
+        <Card className="w-full p-6 items-center">
+          {/* Іконка результату */}
+          <View className="mb-4">
+            {success ? (
+              <View className="w-20 h-20 bg-green-100 rounded-full items-center justify-center border-4 border-green-50">
+                <Text className="text-4xl">🎉</Text>
+              </View>
+            ) : (
+              <View className="w-20 h-20 bg-orange-100 rounded-full items-center justify-center border-4 border-orange-50">
+                <Text className="text-4xl">💪</Text>
+              </View>
+            )}
+          </View>
+
+          <Text className="text-2xl font-bold text-text-main mb-2 text-center">
+            {success ? "Чудова робота!" : "Гарна спроба!"}
           </Text>
-          <Text style={styles.meta}>Точність: {accuracy}% (mock)</Text>
-          <Text style={styles.meta}>Session: {sessionId ?? "mock-session"}</Text>
 
-          <Pressable style={[styles.button, styles.primary]} onPress={onRetry}>
-            <Text style={[styles.buttonText, styles.primaryText]}>Повторити</Text>
-          </Pressable>
+          <Text className="text-text-muted text-center mb-6">
+            {success
+              ? "Ти впорався із завданням на відмінно."
+              : "Не засмучуйся, наступного разу вийде краще!"}
+          </Text>
 
-          <Pressable style={[styles.button, styles.secondary]} onPress={onFinish}>
-            <Text style={[styles.buttonText, styles.secondaryText]}>Завершити</Text>
-          </Pressable>
+          {/* Результати */}
+          <View className="w-full flex-row gap-3 mb-8">
+            <View className="flex-1 bg-gray-50 p-3 rounded-xl border border-gray-100 items-center">
+              <Text className="text-2xl font-bold text-primary">
+                {accuracy}%
+              </Text>
+              <Text className="text-xs text-text-muted font-bold uppercase">
+                Точність
+              </Text>
+            </View>
+            <View className="flex-1 bg-gray-50 p-3 rounded-xl border border-gray-100 items-center justify-center">
+              <Text className="text-xs text-text-muted font-bold uppercase text-center">
+                Session ID
+              </Text>
+              <Text className="text-xs text-gray-400 mt-1" numberOfLines={1}>
+                #{sessionId ? sessionId.slice(-6) : "TEST"}
+              </Text>
+            </View>
+          </View>
 
-          <Pressable style={[styles.button, styles.progress]} onPress={onGoToProgress}>
-            <Text style={[styles.buttonText, styles.progressText]}>
-              Перейти до Progress
-            </Text>
-          </Pressable>
-        </View>
+          {/* Кнопки */}
+          <View className="w-full gap-3">
+            <Button title="Спробувати ще раз" onPress={onRetry} />
+
+            <Button
+              title="До списку ігор"
+              variant="outline"
+              onPress={onFinish}
+            />
+
+            <Button
+              title="Подивитись прогрес"
+              variant="ghost"
+              onPress={onGoToProgress}
+            />
+          </View>
+        </Card>
       </View>
     </Modal>
   );
 }
-
-const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: "rgba(15, 23, 42, 0.5)",
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 20,
-  },
-  card: {
-    width: "100%",
-    backgroundColor: "#ffffff",
-    borderRadius: 16,
-    padding: 18,
-    gap: 10,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: "800",
-    color: "#1a202c",
-  },
-  status: {
-    fontSize: 15,
-    color: "#2d3748",
-  },
-  meta: {
-    fontSize: 13,
-    color: "#4a5568",
-  },
-  button: {
-    borderRadius: 10,
-    paddingVertical: 10,
-    alignItems: "center",
-    marginTop: 2,
-  },
-  buttonText: {
-    fontSize: 14,
-    fontWeight: "700",
-  },
-  primary: {
-    backgroundColor: "#2b6cb0",
-  },
-  primaryText: {
-    color: "#fff",
-  },
-  secondary: {
-    backgroundColor: "#f7fafc",
-    borderWidth: 1,
-    borderColor: "#cbd5e0",
-  },
-  secondaryText: {
-    color: "#2d3748",
-  },
-  progress: {
-    backgroundColor: "#ebf8ff",
-    borderWidth: 1,
-    borderColor: "#90cdf4",
-  },
-  progressText: {
-    color: "#2c5282",
-  },
-});

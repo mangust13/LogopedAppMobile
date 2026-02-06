@@ -1,10 +1,12 @@
 // src/screens/logoped/children/LogopedChildrenScreen.tsx
+
 import { useEffect, useState } from "react";
-import { FlatList, Text, View, ActivityIndicator, Alert } from "react-native";
+import { FlatList, View, ActivityIndicator, Alert, Text } from "react-native";
 import { Screen } from "../../../shared/ui/Screen";
 import { logopedApi } from "../../../api/logopedApi";
 import { ChildDto } from "../../../api/types/child";
 import { ChildRow } from "./components/ChildRow";
+import ScreenHeader from "../../../shared/ui/ScreenHeader ";
 
 export function LogopedChildrenScreen() {
   const [children, setChildren] = useState<ChildDto[]>([]);
@@ -29,21 +31,30 @@ export function LogopedChildrenScreen() {
 
   if (loading) {
     return (
-      <Screen>
-        <ActivityIndicator size="large" />
+      <Screen className="justify-center items-center">
+        <ActivityIndicator size="large" color="#6C63FF" />
       </Screen>
     );
   }
 
   return (
     <Screen>
-      <Text style={{ fontSize: 22, fontWeight: "600" }}>🧑‍🏫 Мої учні</Text>
-      <View style={{ height: 16 }} />
+      <ScreenHeader subtitle="Кабінет" title={"Мої учні 🎓"} center />
 
       <FlatList
         data={children}
         keyExtractor={(item) => String(item.id)}
-        ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
+        contentContainerStyle={{
+          paddingHorizontal: 24,
+          paddingBottom: 100,
+          gap: 12,
+        }}
+        showsVerticalScrollIndicator={false}
+        ListEmptyComponent={
+          <View className="mt-10 items-center">
+            <Text className="text-gray-400">У вас поки немає учнів</Text>
+          </View>
+        }
         renderItem={({ item }) => <ChildRow child={item} />}
       />
     </Screen>

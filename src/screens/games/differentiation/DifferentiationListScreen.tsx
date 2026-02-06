@@ -1,6 +1,8 @@
 //src\screens\games\differentiation\DifferentiationListScreen.tsx
-import { ScrollView, StyleSheet, Text } from "react-native";
+
+import { ScrollView, Text, View } from "react-native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
+import { Ionicons } from "@expo/vector-icons";
 import { Screen } from "../../../shared/ui/Screen";
 import { GamesStackParamList } from "../../../navigation/games/GamesStack";
 import { ExerciseCard } from "../preparation/components/ExerciseCard";
@@ -16,6 +18,7 @@ const tasks = [
     prompt: "Оберіть правильне звучання для картинки.",
     correctAnswer: "ша",
     options: ["са", "ша"],
+    icon: "ear-outline" as keyof typeof Ionicons.glyphMap,
   },
   {
     title: "Вибір правильного звука",
@@ -25,6 +28,7 @@ const tasks = [
     prompt: "Який звук чутно на початку: шапка?",
     correctAnswer: "ш",
     options: ["с", "ш"],
+    icon: "ear-outline" as keyof typeof Ionicons.glyphMap,
   },
   {
     title: "Сюжетне завдання",
@@ -34,19 +38,28 @@ const tasks = [
     prompt: "У лісі росте...",
     correctAnswer: "шишка",
     options: ["сиска", "шишка", "сішка"],
+    icon: "chatbubbles-outline" as keyof typeof Ionicons.glyphMap,
   },
 ];
 
 export function DifferentiationListScreen({ navigation }: Props) {
   return (
     <Screen>
+      <View className="px-6 pt-2 pb-4">
+        <Text className="text-text-muted text-xs uppercase font-bold tracking-widest">
+          Вправи
+        </Text>
+        <Text className="text-2xl font-bold text-primary">
+          Диференціація 👂
+        </Text>
+      </View>
+
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 100 }}
       >
-        <Text style={styles.title}>Диференціація / зв'язне мовлення</Text>
-        <Text style={styles.subtitle}>
-          Оберіть завдання з картками та вибором відповідей.
+        <Text className="text-text-main text-base mb-6 leading-6">
+          Розвивайте фонематичний слух, обираючи правильні варіанти вимови.
         </Text>
 
         {tasks.map((task) => (
@@ -56,6 +69,7 @@ export function DifferentiationListScreen({ navigation }: Props) {
             description={task.description}
             difficulty={task.difficulty}
             estimatedTime={task.estimatedTime}
+            icon={task.icon}
             onPress={() =>
               navigation.navigate("DifferentiationGame", {
                 title: task.title,
@@ -70,20 +84,3 @@ export function DifferentiationListScreen({ navigation }: Props) {
     </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  content: {
-    paddingBottom: 24,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: "800",
-    color: "#1a202c",
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: "#4a5568",
-    marginBottom: 14,
-  },
-});

@@ -1,7 +1,10 @@
+// src\screens\games\preparation\PreparationGameScreen.tsx
 import { useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { View, Text, ScrollView } from "react-native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { Screen } from "../../../shared/ui/Screen";
+import { Card } from "../../../shared/ui/Card";
+import { Button } from "../../../shared/ui/Button";
 import { useChildStore } from "../../../store/childStore";
 import { GamesStackParamList } from "../../../navigation/games/GamesStack";
 import { GameSessionHeader } from "../shared/GameSessionHeader";
@@ -12,7 +15,7 @@ type Props = NativeStackScreenProps<GamesStackParamList, "PreparationGame">;
 
 export function PreparationGameScreen({ navigation, route }: Props) {
   const { title, instruction, durationSec, difficulty } = route.params;
-  const childName = useChildStore((s) => s.selectedChild?.name ?? "Дитина не вибрана");
+  const childName = useChildStore((s) => s.selectedChild?.name ?? "Дитина");
 
   const [isRunning, setIsRunning] = useState(false);
   const [resetKey, setResetKey] = useState(0);
@@ -31,7 +34,8 @@ export function PreparationGameScreen({ navigation, route }: Props) {
   };
 
   const finishByTimer = () => {
-    const mockAccuracy = Math.floor(65 + Math.random() * 31);
+    // Емуляція результату (в реальному додатку тут була б обробка ML або ручна оцінка)
+    const mockAccuracy = Math.floor(65 + Math.random() * 31); // 65-95%
     setAccuracy(mockAccuracy);
     setSuccess(mockAccuracy >= 75);
     setIsRunning(false);
@@ -40,25 +44,50 @@ export function PreparationGameScreen({ navigation, route }: Props) {
 
   return (
     <Screen>
-      <GameSessionHeader title={title} childName={childName} onExit={() => navigation.goBack()} />
-
-      <GameTimer
-        mode="countdown"
-        seconds={durationSec}
-        isRunning={isRunning}
-        resetKey={resetKey}
-        onComplete={finishByTimer}
+      <GameSessionHeader
+        title={title}
+        childName={childName}
+        onExit={() => navigation.goBack()}
       />
 
-      <View style={styles.card}>
-        <Text style={styles.label}>Інструкція</Text>
-        <Text style={styles.text}>{instruction}</Text>
-        <Text style={styles.meta}>Складність: {difficulty}</Text>
+      <ScrollView
+        contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 40 }}
+        showsVerticalScrollIndicator={false}
+      >
+        <View className="items-center py-8">
+          <GameTimer
+            mode="countdown"
+            seconds={durationSec}
+            isRunning={isRunning}
+            resetKey={resetKey}
+            onComplete={finishByTimer}
+          />
+        </View>
 
-        <Pressable style={styles.startButton} onPress={startSession}>
-          <Text style={styles.startText}>{isRunning ? "Перезапустити" : "Почати"}</Text>
-        </Pressable>
-      </View>
+        <Card className="p-5 mb-6">
+          <Text className="text-xs font-bold text-text-muted uppercase tracking-wider mb-2">
+            Інструкція
+          </Text>
+          <Text className="text-lg text-text-main font-medium leading-7 mb-4">
+            {instruction}
+          </Text>
+
+          <View className="flex-row items-center">
+            <Text className="text-sm text-text-muted mr-2">Складність:</Text>
+            <View className="bg-gray-100 px-2 py-1 rounded">
+              <Text className="text-xs font-bold text-gray-700">
+                {difficulty}
+              </Text>
+            </View>
+          </View>
+        </Card>
+
+        <Button
+          title={isRunning ? "Перезапустити" : "Почати вправу"}
+          onPress={startSession}
+          variant={isRunning ? "secondary" : "primary"}
+        />
+      </ScrollView>
 
       <GameResultModal
         visible={modalVisible}
@@ -78,42 +107,3 @@ export function PreparationGameScreen({ navigation, route }: Props) {
     </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#e2e8f0",
-    padding: 14,
-    gap: 10,
-  },
-  label: {
-    fontSize: 12,
-    textTransform: "uppercase",
-    letterSpacing: 0.6,
-    color: "#718096",
-    fontWeight: "700",
-  },
-  text: {
-    fontSize: 15,
-    lineHeight: 22,
-    color: "#1a202c",
-  },
-  meta: {
-    fontSize: 13,
-    color: "#4a5568",
-  },
-  startButton: {
-    marginTop: 4,
-    backgroundColor: "#2f855a",
-    borderRadius: 10,
-    paddingVertical: 11,
-    alignItems: "center",
-  },
-  startText: {
-    color: "#fff",
-    fontWeight: "700",
-    fontSize: 15,
-  },
-});

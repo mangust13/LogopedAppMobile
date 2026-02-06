@@ -1,7 +1,11 @@
+// src\screens\games\differentiation\DifferentiationGameScreen.tsx
+
 import { useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { View, Text, ScrollView } from "react-native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { Screen } from "../../../shared/ui/Screen";
+import { Card } from "../../../shared/ui/Card";
+import { Button } from "../../../shared/ui/Button";
 import { GamesStackParamList } from "../../../navigation/games/GamesStack";
 import { useChildStore } from "../../../store/childStore";
 import { ChoiceCard } from "./components/ChoiceCard";
@@ -13,13 +17,12 @@ type Props = NativeStackScreenProps<GamesStackParamList, "DifferentiationGame">;
 
 export function DifferentiationGameScreen({ navigation, route }: Props) {
   const { title, prompt, options, correctAnswer } = route.params;
-  const childName = useChildStore((s) => s.selectedChild?.name ?? "Дитина не вибрана");
+  const childName = useChildStore((s) => s.selectedChild?.name ?? "Дитина");
 
   const [started, setStarted] = useState(false);
   const [running, setRunning] = useState(false);
   const [resetKey, setResetKey] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
-  const [feedback, setFeedback] = useState<string>("");
   const [accuracy, setAccuracy] = useState(0);
   const [showResult, setShowResult] = useState(false);
 
@@ -27,63 +30,91 @@ export function DifferentiationGameScreen({ navigation, route }: Props) {
     setStarted(true);
     setRunning(true);
     setSelected(null);
-    setFeedback("");
     setAccuracy(0);
     setShowResult(false);
     setResetKey((prev) => prev + 1);
   };
 
   const handleChoice = (value: string) => {
-    if (!running) {
-      return;
-    }
+    if (!running) return;
 
     setSelected(value);
 
     const correct = value.toLowerCase() === correctAnswer.toLowerCase();
-    setFeedback(correct ? "Правильно!" : "Спробуй ще раз.");
-
-    const mockAccuracy = correct ? 92 : 58;
+    const mockAccuracy = correct ? 100 : 0;
     setAccuracy(mockAccuracy);
 
+    // Затримка перед показом результату
     setTimeout(() => {
       setRunning(false);
       setShowResult(true);
-    }, 450);
+    }, 800);
   };
 
   return (
     <Screen>
-      <GameSessionHeader title={title} childName={childName} onExit={() => navigation.goBack()} />
+      <GameSessionHeader
+        title={title}
+        childName={childName}
+        onExit={() => navigation.goBack()}
+      />
 
-      <GameTimer mode="countdown" seconds={40} isRunning={running} resetKey={resetKey} />
-
-      <View style={styles.card}>
-        <Text style={styles.label}>Інструкція</Text>
-        <Text style={styles.prompt}>{prompt}</Text>
-
-        <Pressable style={styles.startButton} onPress={startGame}>
-          <Text style={styles.startText}>{started ? "Почати знову" : "Почати"}</Text>
-        </Pressable>
-
-        <View style={styles.choices}>
-          {options.map((option) => {
-            const isSelected = selected === option;
-            return (
-              <ChoiceCard
-                key={option}
-                label={option}
-                selected={isSelected}
-                correct={isSelected && option.toLowerCase() === correctAnswer.toLowerCase()}
-                disabled={!running}
-                onPress={() => handleChoice(option)}
-              />
-            );
-          })}
+      <ScrollView
+        contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 40 }}
+        showsVerticalScrollIndicator={false}
+      >
+        <View className="items-center py-6">
+          <GameTimer
+            mode="countdown"
+            seconds={40}
+            isRunning={running}
+            resetKey={resetKey}
+            onComplete={() => {
+              setAccuracy(0);
+              setRunning(false);
+              setShowResult(true);
+            }}
+          />
         </View>
 
-        {feedback ? <Text style={styles.feedback}>{feedback}</Text> : null}
-      </View>
+        <Card className="p-5 mb-6">
+          <Text className="text-xs font-bold text-text-muted uppercase tracking-wider mb-2">
+            Завдання
+          </Text>
+          <Text className="text-xl font-bold text-text-main mb-6 leading-7">
+            {prompt}
+          </Text>
+
+          {!started ? (
+            <View className="py-4 items-center">
+              <Text className="text-text-muted text-center mb-4">
+                Натисніть "Почати", щоб побачити варіанти відповідей.
+              </Text>
+            </View>
+          ) : (
+            <View className="gap-2">
+              {options.map((option) => {
+                const isSelected = selected === option;
+                return (
+                  <ChoiceCard
+                    key={option}
+                    label={option}
+                    selected={isSelected}
+                    correct={
+                      isSelected &&
+                      option.toLowerCase() === correctAnswer.toLowerCase()
+                    }
+                    disabled={!running}
+                    onPress={() => handleChoice(option)}
+                  />
+                );
+              })}
+            </View>
+          )}
+        </Card>
+
+        {!started && <Button title="Почати гру" onPress={startGame} />}
+      </ScrollView>
 
       <GameResultModal
         visible={showResult}
@@ -103,47 +134,3 @@ export function DifferentiationGameScreen({ navigation, route }: Props) {
     </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#e2e8f0",
-    padding: 14,
-    gap: 10,
-  },
-  label: {
-    fontSize: 12,
-    textTransform: "uppercase",
-    letterSpacing: 0.6,
-    color: "#718096",
-    fontWeight: "700",
-  },
-  prompt: {
-    fontSize: 15,
-    color: "#1a202c",
-    lineHeight: 22,
-  },
-  startButton: {
-    backgroundColor: "#2f855a",
-    borderRadius: 10,
-    paddingVertical: 11,
-    alignItems: "center",
-  },
-  startText: {
-    color: "#fff",
-    fontWeight: "700",
-    fontSize: 15,
-  },
-  choices: {
-    gap: 8,
-    marginTop: 2,
-  },
-  feedback: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: "#2c5282",
-    marginTop: 4,
-  },
-});

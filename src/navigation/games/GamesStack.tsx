@@ -1,4 +1,4 @@
-//src\navigation\games\GamesStack.tsx
+// src\navigation\games\GamesStack.tsx
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { GamesCatalogScreen } from "../../screens/games/catalog/GamesCatalogScreen";
 import { PreparationListScreen } from "../../screens/games/preparation/PreparationListScreen";

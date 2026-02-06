@@ -1,9 +1,13 @@
 // src/screens/logoped/children/components/ChildRow.tsx
-import { View, Text, Pressable } from "react-native";
+
+import { View, Text, TouchableOpacity } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { Ionicons } from "@expo/vector-icons";
 import { RootStackParamList } from "../../../../navigation/RootNavigator";
 import { ChildDto } from "../../../../api/types/child";
+import { Card } from "../../../../shared/ui/Card";
+import { calcAge } from "../../../../shared/utils/age";
 
 type NavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -18,45 +22,57 @@ export function ChildRow({ child }: Props) {
   const navigation = useNavigation<NavigationProp>();
 
   return (
-    <View
-      style={{
-        padding: 12,
-        borderRadius: 12,
-        backgroundColor: "#fff",
-        borderWidth: 1,
-        borderColor: "#e5e7eb",
-      }}
+    <TouchableOpacity
+      activeOpacity={0.8}
+      onPress={() =>
+        navigation.navigate("ChildProgress", {
+          childId: Number(child.id),
+          childName: child.name,
+        })
+      }
     >
-      <Text style={{ fontSize: 16, fontWeight: "600" }}>{child.name}</Text>
+      <Card className="p-4 border border-gray-100 flex-row items-center">
+        {/* Аватар */}
+        <View className="w-12 h-12 bg-blue-50 rounded-full items-center justify-center mr-4 border border-blue-100">
+          <Text className="text-xl font-bold text-blue-600">
+            {child.name.charAt(0).toUpperCase()}
+          </Text>
+        </View>
 
-      <Text style={{ marginTop: 4, color: "#6b7280" }}>
-        Дата народження: {child.birthDate}
-      </Text>
+        {/* Інформація */}
+        <View className="flex-1">
+          <Text className="text-lg font-bold text-text-main mb-1">
+            {child.name}
+          </Text>
 
-      {child.problemSounds && (
-        <Text style={{ marginTop: 4, color: "#374151" }}>
-          Проблемні звуки: {child.problemSounds}
-        </Text>
-      )}
+          <View className="flex-row items-center mb-1">
+            <Text className="text-sm text-text-muted mr-3">
+              Вік: {calcAge(child.birthDate)}
+            </Text>
+          </View>
 
-      <View style={{ height: 8 }} />
+          {child.problemSounds && (
+            <View className="flex-row flex-wrap items-center gap-1 mt-1">
+              <Text className="text-xs text-text-muted mr-1">
+                Проблемні звуки:
+              </Text>
 
-      <Pressable
-        onPress={() =>
-          navigation.navigate("ChildProgress", { childId: Number(child.id) })
-        }
-        style={{
-          paddingVertical: 8,
-          paddingHorizontal: 12,
-          alignSelf: "flex-start",
-          borderRadius: 8,
-          backgroundColor: "#2563eb",
-        }}
-      >
-        <Text style={{ color: "#fff", fontWeight: "600" }}>
-          Переглянути прогрес
-        </Text>
-      </Pressable>
-    </View>
+              {child.problemSounds.split(",").map((sound, i) => (
+                <View
+                  key={i}
+                  className="bg-red-50 px-1.5 py-0.5 rounded border border-red-100"
+                >
+                  <Text className="text-[10px] font-bold text-red-600">
+                    {sound.trim()}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          )}
+        </View>
+
+        <Ionicons name="chevron-forward" size={20} color="#CBD5E1" />
+      </Card>
+    </TouchableOpacity>
   );
 }

@@ -1,4 +1,5 @@
-// src/screens/tabs/components/TrendChart.tsx
+// src\screens\logoped\children\components\TrendChart.tsx
+
 import { View, StyleSheet } from "react-native";
 import { TrendPointDto } from "../../../../api/types/progress";
 

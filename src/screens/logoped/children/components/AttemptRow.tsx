@@ -1,4 +1,4 @@
-// src/screens/tabs/components/AttemptRow.tsx
+// src\screens\logoped\children\components\AttemptRow.tsx
 import { View, Text, StyleSheet } from "react-native";
 import { ProgressAttemptDto } from "../../../../api/types/progress";
 

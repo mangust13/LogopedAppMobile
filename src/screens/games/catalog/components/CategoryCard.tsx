@@ -1,78 +1,91 @@
-import { Pressable, StyleSheet, Text, View } from "react-native";
+// src\screens\games\catalog\components\CategoryCard.tsx
+import { Text, View, TouchableOpacity, Image } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { Card } from "../../../../shared/ui/Card";
+import { cn } from "../../../../shared/utils/cn";
 
 type Props = {
   title: string;
   description: string;
-  recommended: boolean;
+  recommended?: boolean;
   onPress: () => void;
+  icon: keyof typeof Ionicons.glyphMap;
+  color: string; // "blue" | "green" | "orange"
 };
 
-export function CategoryCard({ title, description, recommended, onPress }: Props) {
+export function CategoryCard({
+  title,
+  description,
+  recommended,
+  onPress,
+  icon,
+  color,
+}: Props) {
+  const bgColors = {
+    blue: "bg-blue-50 border-blue-100",
+    green: "bg-green-50 border-green-100",
+    orange: "bg-orange-50 border-orange-100",
+    purple: "bg-purple-50 border-purple-100",
+  };
+
+  const iconColors = {
+    blue: "#3b82f6",
+    green: "#10b981",
+    orange: "#f97316",
+    purple: "#8b5cf6",
+  };
+
+  // Типізація для ключів об'єктів
+  const bgColorClass =
+    bgColors[color as keyof typeof bgColors] || bgColors.blue;
+  const iconColor =
+    iconColors[color as keyof typeof iconColors] || iconColors.blue;
+
   return (
-    <View style={styles.card}>
-      <View style={styles.headerRow}>
-        <Text style={styles.title}>{title}</Text>
-        {recommended ? (
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>Рекомендовано логопедом</Text>
+    <TouchableOpacity onPress={onPress} activeOpacity={0.9} className="mb-4">
+      <Card className={cn("p-4 border-2", bgColorClass)}>
+        <View className="flex-row items-start">
+          {/* Іконка категорії */}
+          <View className="w-12 h-12 rounded-xl bg-white items-center justify-center mr-4 shadow-sm">
+            <Ionicons name={icon} size={28} color={iconColor} />
           </View>
-        ) : null}
-      </View>
-      <Text style={styles.description}>{description}</Text>
-      <Pressable style={styles.ctaButton} onPress={onPress}>
-        <Text style={styles.ctaText}>Перейти</Text>
-      </Pressable>
-    </View>
+
+          <View className="flex-1">
+            <View className="flex-row flex-wrap items-start mb-1">
+              <Text
+                className="text-lg font-bold text-text-main mr-2"
+                style={{ flexShrink: 1 }}
+              >
+                {title}
+              </Text>
+
+              {recommended && (
+                <View className="bg-green-100 px-2 py-0.5 rounded-md border border-green-200 mt-1">
+                  <Text className="text-[10px] font-bold text-green-700 uppercase">
+                    Рекомендовано
+                  </Text>
+                </View>
+              )}
+            </View>
+
+            <Text className="text-sm text-text-muted leading-5 mb-3">
+              {description}
+            </Text>
+
+            <View className="flex-row items-center">
+              <Text className="text-sm font-bold" style={{ color: iconColor }}>
+                Почати
+              </Text>
+              <Ionicons
+                name="arrow-forward"
+                size={16}
+                color={iconColor}
+                style={{ marginLeft: 4 }}
+              />
+            </View>
+          </View>
+        </View>
+      </Card>
+    </TouchableOpacity>
   );
 }
-
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: "#f7fafc",
-    borderRadius: 14,
-    padding: 16,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: "#e2e8f0",
-    gap: 10,
-  },
-  headerRow: {
-    gap: 8,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#1a202c",
-  },
-  description: {
-    fontSize: 14,
-    color: "#4a5568",
-    lineHeight: 20,
-  },
-  badge: {
-    alignSelf: "flex-start",
-    backgroundColor: "#e6fffa",
-    borderColor: "#81e6d9",
-    borderWidth: 1,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 999,
-  },
-  badgeText: {
-    color: "#234e52",
-    fontSize: 12,
-    fontWeight: "600",
-  },
-  ctaButton: {
-    backgroundColor: "#2b6cb0",
-    borderRadius: 10,
-    paddingVertical: 10,
-    alignItems: "center",
-    marginTop: 4,
-  },
-  ctaText: {
-    color: "#fff",
-    fontSize: 14,
-    fontWeight: "700",
-  },
-});

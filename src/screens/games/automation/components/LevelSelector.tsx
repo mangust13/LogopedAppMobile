@@ -1,4 +1,6 @@
-import { Pressable, StyleSheet, Text, View } from "react-native";
+// src\screens\games\automation\components\LevelSelector.tsx
+import { Pressable, Text, View, TouchableOpacity } from "react-native";
+import { cn } from "../../../../shared/utils/cn";
 
 type Props = {
   levels: number[];
@@ -8,48 +10,33 @@ type Props = {
 
 export function LevelSelector({ levels, selectedLevel, onSelect }: Props) {
   return (
-    <View style={styles.row}>
+    <View className="flex-row gap-3 mb-4">
       {levels.map((level) => {
         const active = level === selectedLevel;
 
         return (
-          <Pressable
+          <TouchableOpacity
             key={level}
-            style={[styles.item, active && styles.itemActive]}
             onPress={() => onSelect(level)}
+            activeOpacity={0.7}
+            className={cn(
+              "flex-1 py-3 rounded-xl border items-center justify-center",
+              active
+                ? "bg-primary border-primary shadow-sm shadow-primary/30"
+                : "bg-surface border-gray-200",
+            )}
           >
-            <Text style={[styles.text, active && styles.textActive]}>Рівень {level}</Text>
-          </Pressable>
+            <Text
+              className={cn(
+                "font-bold text-base",
+                active ? "text-white" : "text-text-muted",
+              )}
+            >
+              Рівень {level}
+            </Text>
+          </TouchableOpacity>
         );
       })}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: "row",
-    gap: 8,
-  },
-  item: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: "#cbd5e0",
-    borderRadius: 8,
-    paddingVertical: 9,
-    alignItems: "center",
-    backgroundColor: "#f7fafc",
-  },
-  itemActive: {
-    backgroundColor: "#2b6cb0",
-    borderColor: "#2b6cb0",
-  },
-  text: {
-    color: "#2d3748",
-    fontSize: 13,
-    fontWeight: "700",
-  },
-  textActive: {
-    color: "#fff",
-  },
-});

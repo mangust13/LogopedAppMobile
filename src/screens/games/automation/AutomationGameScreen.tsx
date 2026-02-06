@@ -1,7 +1,10 @@
+// src\screens\games\automation\AutomationGameScreen.tsx
 import { useMemo, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { View, Text, ScrollView } from "react-native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { Screen } from "../../../shared/ui/Screen";
+import { Card } from "../../../shared/ui/Card";
+import { Button } from "../../../shared/ui/Button";
 import { GamesStackParamList } from "../../../navigation/games/GamesStack";
 import { useChildStore } from "../../../store/childStore";
 import { GameSessionHeader } from "../shared/GameSessionHeader";
@@ -13,7 +16,7 @@ type Props = NativeStackScreenProps<GamesStackParamList, "AutomationGame">;
 
 export function AutomationGameScreen({ navigation, route }: Props) {
   const { sound, position, level } = route.params;
-  const childName = useChildStore((s) => s.selectedChild?.name ?? "Дитина не вибрана");
+  const childName = useChildStore((s) => s.selectedChild?.name ?? "Дитина");
 
   const [selectedLevel, setSelectedLevel] = useState(level);
   const [attempts, setAttempts] = useState(0);
@@ -32,10 +35,9 @@ export function AutomationGameScreen({ navigation, route }: Props) {
   };
 
   const finishMock = () => {
-    if (!isRunning) {
-      return;
-    }
+    if (!isRunning) return;
 
+    // Емуляція результату
     const mockAccuracy = Math.floor(55 + Math.random() * 40);
     setAccuracy(mockAccuracy);
     setIsRunning(false);
@@ -45,36 +47,70 @@ export function AutomationGameScreen({ navigation, route }: Props) {
   return (
     <Screen>
       <GameSessionHeader
-        title={`Автоматизація [${sound}]`}
+        title={`Звук [${sound}]`}
         childName={childName}
         onExit={() => navigation.goBack()}
       />
 
-      <GameTimer mode="elapsed" isRunning={isRunning} resetKey={resetKey} />
-
-      <View style={styles.card}>
-        <Text style={styles.label}>Параметри</Text>
-        <Text style={styles.text}>Звук: {sound}</Text>
-        <Text style={styles.text}>Позиція: {position}</Text>
-        <Text style={styles.text}>Спроб: {attempts}</Text>
-
-        <Text style={styles.levelTitle}>Складність</Text>
-        <LevelSelector
-          levels={[1, 2, 3]}
-          selectedLevel={selectedLevel}
-          onSelect={setSelectedLevel}
-        />
-
-        <View style={styles.actions}>
-          <Pressable style={styles.startButton} onPress={startSession}>
-            <Text style={styles.startText}>Почати</Text>
-          </Pressable>
-
-          <Pressable style={styles.finishButton} onPress={finishMock}>
-            <Text style={styles.finishText}>Завершити спробу (mock)</Text>
-          </Pressable>
+      <ScrollView
+        contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 40 }}
+        showsVerticalScrollIndicator={false}
+      >
+        <View className="items-center py-6">
+          <GameTimer mode="elapsed" isRunning={isRunning} resetKey={resetKey} />
         </View>
-      </View>
+
+        <Card className="p-5 mb-6">
+          <View className="flex-row justify-between mb-4">
+            <View>
+              <Text className="text-xs font-bold text-text-muted uppercase tracking-wider mb-1">
+                Звук
+              </Text>
+              <Text className="text-2xl font-bold text-primary">[{sound}]</Text>
+            </View>
+            <View>
+              <Text className="text-xs font-bold text-text-muted uppercase tracking-wider mb-1">
+                Позиція
+              </Text>
+              <Text className="text-lg font-bold text-text-main">
+                {position}
+              </Text>
+            </View>
+            <View>
+              <Text className="text-xs font-bold text-text-muted uppercase tracking-wider mb-1">
+                Спроба
+              </Text>
+              <Text className="text-lg font-bold text-text-main">
+                #{attempts + 1}
+              </Text>
+            </View>
+          </View>
+
+          <Text className="text-sm font-bold text-text-muted uppercase tracking-wider mb-3 mt-2">
+            Складність рівня
+          </Text>
+          <LevelSelector
+            levels={[1, 2, 3]}
+            selectedLevel={selectedLevel}
+            onSelect={setSelectedLevel}
+          />
+
+          <View className="bg-blue-50 p-3 rounded-lg border border-blue-100 mt-2">
+            <Text className="text-blue-800 text-sm leading-5">
+              💡 Повторюйте слова за диктором, слідкуючи за чіткістю вимови
+              звука [{sound}].
+            </Text>
+          </View>
+        </Card>
+
+        <View className="gap-3">
+          <Button
+            title={isRunning ? "Завершити вправу" : "Почати вправу"}
+            onPress={isRunning ? finishMock : startSession}
+            variant={isRunning ? "secondary" : "primary"}
+          />
+        </View>
+      </ScrollView>
 
       <GameResultModal
         visible={modalVisible}
@@ -94,57 +130,3 @@ export function AutomationGameScreen({ navigation, route }: Props) {
     </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#e2e8f0",
-    padding: 14,
-    gap: 10,
-  },
-  label: {
-    fontSize: 12,
-    textTransform: "uppercase",
-    letterSpacing: 0.6,
-    color: "#718096",
-    fontWeight: "700",
-  },
-  text: {
-    fontSize: 15,
-    color: "#1a202c",
-  },
-  levelTitle: {
-    fontSize: 14,
-    color: "#2d3748",
-    fontWeight: "700",
-    marginTop: 2,
-  },
-  actions: {
-    gap: 8,
-    marginTop: 4,
-  },
-  startButton: {
-    backgroundColor: "#2f855a",
-    borderRadius: 10,
-    paddingVertical: 10,
-    alignItems: "center",
-  },
-  startText: {
-    color: "#fff",
-    fontWeight: "700",
-  },
-  finishButton: {
-    backgroundColor: "#edf2f7",
-    borderRadius: 10,
-    paddingVertical: 10,
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#cbd5e0",
-  },
-  finishText: {
-    color: "#2d3748",
-    fontWeight: "700",
-  },
-});
