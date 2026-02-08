@@ -7,9 +7,15 @@ type Props = {
   children: ChildDto[];
   selectedChildId: number | null;
   onSelect: (child: ChildDto) => void;
+  onAddChild: () => void;
 };
 
-export function ChildSelector({ children, selectedChildId, onSelect }: Props) {
+export function ChildSelector({
+  children,
+  selectedChildId,
+  onSelect,
+  onAddChild,
+}: Props) {
   return (
     <View className="gap-3">
       <View className="flex-row items-center justify-between px-1">
@@ -63,9 +69,16 @@ export function ChildSelector({ children, selectedChildId, onSelect }: Props) {
           );
         })}
 
-        <View className="w-14 h-14 rounded-full bg-gray-100 items-center justify-center border-2 border-dashed border-gray-300 opacity-50">
-          <Text className="text-2xl text-gray-400">+</Text>
-        </View>
+        <TouchableOpacity
+          onPress={onAddChild}
+          activeOpacity={0.8}
+          className="items-center ml-2"
+        >
+          <View className="w-14 h-14 rounded-full bg-surface items-center justify-center border-2 border-dashed border-primary/50">
+            <Text className="text-2xl text-primary font-bold">+</Text>
+          </View>
+          <Text className="text-xs font-medium mt-2 opacity-0">_</Text>
+        </TouchableOpacity>
       </ScrollView>
     </View>
   );

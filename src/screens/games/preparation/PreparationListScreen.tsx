@@ -6,7 +6,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Screen } from "../../../shared/ui/Screen";
 import { GamesStackParamList } from "../../../navigation/games/GamesStack";
 import { ExerciseCard } from "./components/ExerciseCard";
-import ScreenHeader from "../../../shared/ui/ScreenHeader ";
+import ScreenHeader from "../../../shared/ui/ScreenHeader";
 
 type Props = NativeStackScreenProps<GamesStackParamList, "PreparationList">;
 

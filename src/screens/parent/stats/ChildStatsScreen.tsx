@@ -1,4 +1,4 @@
-// src\screens\parent\stats\ChildStatsScreen.tsx
+// src/screens/parent/stats/ChildStatsScreen.tsx
 
 import { View, Text, FlatList, ActivityIndicator } from "react-native";
 import { useNavigation } from "@react-navigation/native";
@@ -6,7 +6,7 @@ import { useChildStore } from "../../../store/childStore";
 import { useProgress } from "../../../hooks/useProgress";
 import { Screen } from "../../../shared/ui/Screen";
 import { Button } from "../../../shared/ui/Button";
-import ScreenHeader from "../../../shared/ui/ScreenHeader ";
+import ScreenHeader from "../../../shared/ui/ScreenHeader";
 
 import { AttemptItem } from "./components/AttemptItem";
 import { StatsOverview } from "./components/StatsOverview";
@@ -14,8 +14,13 @@ import { WeeklyChart } from "./components/WeeklyChart";
 
 export function ChildStatsScreen() {
   const navigation = useNavigation<any>();
+
   const selectedChildId = useChildStore((s) => s.selectedChildId);
   const selectedChild = useChildStore((s) => s.selectedChild);
+
+  const { summary, last, trend, loading, refresh } = useProgress(
+    selectedChildId ?? undefined,
+  );
 
   if (!selectedChildId || !selectedChild) {
     return (
@@ -35,9 +40,6 @@ export function ChildStatsScreen() {
     );
   }
 
-  const { summary, last, trend, loading, refresh } =
-    useProgress(selectedChildId);
-
   if (loading && !summary) {
     return (
       <Screen className="justify-center items-center">
@@ -48,7 +50,6 @@ export function ChildStatsScreen() {
 
   return (
     <Screen>
-      {/* Header */}
       <ScreenHeader subtitle="Статистика" title={selectedChild.name} center />
 
       <FlatList

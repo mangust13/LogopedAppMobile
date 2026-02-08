@@ -1,3 +1,5 @@
+//src\shared\ui\Button.tsx
+
 import {
   Text,
   TouchableOpacity,
@@ -31,10 +33,10 @@ export function Button({
   };
 
   const textVariants = {
-    primary: "text-white font-bold text-lg",
-    secondary: "text-white font-bold text-lg",
-    ghost: "text-primary font-semibold text-base",
-    outline: "text-primary font-bold text-lg",
+    primary: "text-white font-bold text-lg text-center leading-6",
+    secondary: "text-white font-bold text-lg text-center leading-6",
+    ghost: "text-primary font-semibold text-base text-center leading-6",
+    outline: "text-primary font-bold text-lg text-center leading-6",
   };
 
   return (

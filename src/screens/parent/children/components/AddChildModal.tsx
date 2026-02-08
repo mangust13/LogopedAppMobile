@@ -27,14 +27,8 @@ export function AddChildModal({ visible, onClose, onCreated }: Props) {
   const [loading, setLoading] = useState(false);
 
   const onSubmit = async () => {
-    if (!name.trim()) {
-      Alert.alert("Помилка", "Введіть ім'я");
-      return;
-    }
-    if (!birthDate) {
-      Alert.alert("Помилка", "Оберіть дату народження");
-      return;
-    }
+    if (!name.trim()) return Alert.alert("Помилка", "Введіть ім'я");
+    if (!birthDate) return Alert.alert("Помилка", "Оберіть дату народження");
 
     setLoading(true);
     try {
@@ -46,13 +40,14 @@ export function AddChildModal({ visible, onClose, onCreated }: Props) {
           .map((s) => s.trim())
           .join(","),
       });
-      onCreated();
-      onClose();
+
+      onCreated(); // ✅ Оновлюємо список дітей
+      onClose(); // ✅ Закриваємо модалку
 
       setName("");
       setBirthDate(null);
       setProblemSounds("");
-    } catch (e: any) {
+    } catch {
       Alert.alert("Помилка", "Не вдалося створити профіль");
     } finally {
       setLoading(false);

@@ -3,7 +3,7 @@ import { View, Text, ScrollView } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Screen } from "../../../shared/ui/Screen";
 import { Card } from "../../../shared/ui/Card";
-import ScreenHeader from "../../../shared/ui/ScreenHeader ";
+import ScreenHeader from "../../../shared/ui/ScreenHeader";
 
 export function LogopedStatsScreen() {
   const stats = [

@@ -8,7 +8,7 @@ import { Button } from "../../../shared/ui/Button";
 import { useAuthStore } from "../../../store/authStore";
 import { useChildStore } from "../../../store/childStore";
 import { cn } from "../../../shared/utils/cn";
-import ScreenHeader from "../../../shared/ui/ScreenHeader ";
+import ScreenHeader from "../../../shared/ui/ScreenHeader";
 
 export function ParentProfileScreen() {
   const navigation = useNavigation<any>();

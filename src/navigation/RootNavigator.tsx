@@ -11,10 +11,12 @@ import { ChildStatsScreen } from "../screens/parent/stats/ChildStatsScreen";
 import { LogopedStudentStatsScreen } from "../screens/logoped/stats/LogopedStudentStatsScreen";
 
 import { useAuthStore } from "../store/authStore";
+import { NavigatorScreenParams } from "@react-navigation/native";
+import { AppTabsParamList } from "./AppTabs";
 
 export type RootStackParamList = {
   Splash: undefined;
-  App: undefined;
+  App: NavigatorScreenParams<AppTabsParamList>;
   Auth: undefined;
   ChildProgress: { childId: number; childName: string };
 };
@@ -43,7 +45,6 @@ export function RootNavigator() {
         {isHydrated && token && (
           <>
             <Stack.Screen name="App" component={AppTabs} />
-
             <Stack.Screen
               name="ChildProgress"
               component={

@@ -6,7 +6,7 @@ import { Screen } from "../../../shared/ui/Screen";
 import { Card } from "../../../shared/ui/Card";
 import { Button } from "../../../shared/ui/Button";
 import { cn } from "../../../shared/utils/cn";
-import ScreenHeader from "../../../shared/ui/ScreenHeader ";
+import ScreenHeader from "../../../shared/ui/ScreenHeader";
 
 type AttentionLevel = "high" | "medium" | "low";
 

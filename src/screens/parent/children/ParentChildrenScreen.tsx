@@ -1,37 +1,32 @@
-//src/screens/parent/children/ParentChildrenScreen.tsx
-import { useEffect, useState } from "react";
+// src/screens/parent/children/ParentChildrenScreen.tsx
+import { useCallback, useState } from "react";
 import { FlatList, View, Alert, ActivityIndicator } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
+
 import { Screen } from "../../../shared/ui/Screen";
 import { Button } from "../../../shared/ui/Button";
-import { Text } from "react-native"; // Або імпорт твого Text компонента, якщо є
+import { Text } from "react-native";
+
 import { childrenApi } from "../../../api/childrenApi";
 import { ChildDto } from "../../../api/types/child";
 import { ChildCard } from "./components/ChildCard";
 import { AddChildModal } from "./components/AddChildModal";
-import { AssignLogopedModal } from "./components/AssignLogopedModal";
-import { EditChildModal } from "./components/EditChildModal";
 import { useChildStore } from "../../../store/childStore";
-import ScreenHeader from "../../../shared/ui/ScreenHeader ";
+import ScreenHeader from "../../../shared/ui/ScreenHeader";
 
 export function ParentChildrenScreen() {
   const navigation = useNavigation<any>();
 
-  const selectedChild = useChildStore((s) => s.selectedChild);
-  const setSelectedChild = useChildStore((s) => s.setSelectedChild);
+  const { selectedChild, setSelectedChild } = useChildStore();
 
   const [children, setChildren] = useState<ChildDto[]>([]);
   const [loading, setLoading] = useState(true);
-
   const [showAddChild, setShowAddChild] = useState(false);
-  const [assignChildId, setAssignChildId] = useState<number | null>(null);
-
-  const [editChild, setEditChild] = useState<ChildDto | null>(null);
-  const [showEditModal, setShowEditModal] = useState(false);
 
   const loadChildren = async () => {
     try {
       setLoading(true);
+
       const data = await childrenApi.getMyChildren();
       setChildren(data);
 
@@ -39,19 +34,17 @@ export function ParentChildrenScreen() {
         setSelectedChild(data[0]);
       }
     } catch (e) {
-      Alert.alert("Error", "Failed to load children");
+      Alert.alert("Помилка", "Не вдалося завантажити дітей");
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    loadChildren();
-  }, []);
-
-  const assignSelectedChild = assignChildId
-    ? children.find((c) => c.id === assignChildId)
-    : undefined;
+  useFocusEffect(
+    useCallback(() => {
+      loadChildren();
+    }, []),
+  );
 
   if (loading) {
     return (
@@ -63,7 +56,6 @@ export function ParentChildrenScreen() {
 
   return (
     <Screen>
-      {/* Header */}
       <ScreenHeader title="Мої діти 👶" center />
 
       <FlatList
@@ -79,21 +71,20 @@ export function ParentChildrenScreen() {
         renderItem={({ item }) => (
           <ChildCard
             child={item}
-            onViewProgress={() => {
-              setSelectedChild(item);
-              navigation.navigate("Progress");
-            }}
-            onAssignPress={(id) => setAssignChildId(id)}
-            onEditPress={(child) => {
-              setEditChild(child);
-              setShowEditModal(true);
-            }}
+            onViewProgress={() =>
+              navigation.navigate("ChildProgress", {
+                childId: item.id,
+                childName: item.name,
+              })
+            }
+            onAssignPress={(id) => console.log("Assign logoped for", id)}
+            onEditPress={(child) => console.log("Edit child", child.name)}
             onDeletePress={async (id) => {
               try {
                 await childrenApi.deleteChild(id);
                 loadChildren();
               } catch {
-                Alert.alert("Error", "Failed to delete child");
+                Alert.alert("Помилка", "Не вдалося видалити дитину");
               }
             }}
           />
@@ -108,31 +99,14 @@ export function ParentChildrenScreen() {
         />
       </View>
 
-      {showEditModal && editChild && (
-        <EditChildModal
-          child={editChild}
-          visible={showEditModal}
-          onClose={() => setShowEditModal(false)}
-          onUpdated={loadChildren}
-        />
-      )}
-
       <AddChildModal
         visible={showAddChild}
         onClose={() => setShowAddChild(false)}
-        onCreated={loadChildren}
+        onCreated={() => {
+          setShowAddChild(false);
+          loadChildren();
+        }}
       />
-
-      {assignChildId && assignSelectedChild && (
-        <AssignLogopedModal
-          key={assignChildId}
-          childId={assignChildId}
-          visible
-          onClose={() => setAssignChildId(null)}
-          onAssigned={loadChildren}
-          currentLogopedEmail={assignSelectedChild.logopedEmail ?? null}
-        />
-      )}
     </Screen>
   );
 }

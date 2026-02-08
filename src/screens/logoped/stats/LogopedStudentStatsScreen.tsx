@@ -17,7 +17,7 @@ import { RootStackParamList } from "../../../navigation/RootNavigator";
 import { AttemptItem } from "../../parent/stats/components/AttemptItem";
 import { StatsOverview } from "../../parent/stats/components/StatsOverview";
 import { WeeklyChart } from "../../parent/stats/components/WeeklyChart";
-import ScreenHeader from "../../../shared/ui/ScreenHeader ";
+import ScreenHeader from "../../../shared/ui/ScreenHeader";
 
 type ScreenRouteProp = RouteProp<RootStackParamList, "ChildProgress">;
 

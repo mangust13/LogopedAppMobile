@@ -6,7 +6,7 @@ import { Screen } from "../../../shared/ui/Screen";
 import { logopedApi } from "../../../api/logopedApi";
 import { ChildDto } from "../../../api/types/child";
 import { ChildRow } from "./components/ChildRow";
-import ScreenHeader from "../../../shared/ui/ScreenHeader ";
+import ScreenHeader from "../../../shared/ui/ScreenHeader";
 
 export function LogopedChildrenScreen() {
   const [children, setChildren] = useState<ChildDto[]>([]);

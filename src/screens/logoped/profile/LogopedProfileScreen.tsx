@@ -7,7 +7,7 @@ import { Card } from "../../../shared/ui/Card";
 import { Button } from "../../../shared/ui/Button";
 import { useAuthStore } from "../../../store/authStore";
 import { cn } from "../../../shared/utils/cn";
-import ScreenHeader from "../../../shared/ui/ScreenHeader ";
+import ScreenHeader from "../../../shared/ui/ScreenHeader";
 
 export function LogopedProfileScreen() {
   const navigation = useNavigation<any>();
