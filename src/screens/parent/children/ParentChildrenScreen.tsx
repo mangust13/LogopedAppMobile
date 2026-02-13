@@ -13,6 +13,8 @@ import { ChildCard } from "./components/ChildCard";
 import { AddChildModal } from "./components/AddChildModal";
 import { useChildStore } from "../../../store/childStore";
 import ScreenHeader from "../../../shared/ui/ScreenHeader";
+import { AssignLogopedModal } from "./components/AssignLogopedModal";
+import { EditChildModal } from "./components/EditChildModal";
 
 export function ParentChildrenScreen() {
   const navigation = useNavigation<any>();
@@ -22,6 +24,10 @@ export function ParentChildrenScreen() {
   const [children, setChildren] = useState<ChildDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddChild, setShowAddChild] = useState(false);
+  const [selectedChildForEdit, setSelectedChildForEdit] =
+    useState<ChildDto | null>(null);
+  const [selectedChildForAssign, setSelectedChildForAssign] =
+    useState<ChildDto | null>(null);
 
   const loadChildren = async () => {
     try {
@@ -77,8 +83,8 @@ export function ParentChildrenScreen() {
                 childName: item.name,
               })
             }
-            onAssignPress={(id) => console.log("Assign logoped for", id)}
-            onEditPress={(child) => console.log("Edit child", child.name)}
+            onAssignPress={() => setSelectedChildForAssign(item)}
+            onEditPress={() => setSelectedChildForEdit(item)}
             onDeletePress={async (id) => {
               try {
                 await childrenApi.deleteChild(id);
@@ -107,6 +113,25 @@ export function ParentChildrenScreen() {
           loadChildren();
         }}
       />
+
+      {selectedChildForEdit && (
+        <EditChildModal
+          child={selectedChildForEdit}
+          visible={!!selectedChildForEdit}
+          onClose={() => setSelectedChildForEdit(null)}
+          onUpdated={loadChildren}
+        />
+      )}
+
+      {selectedChildForAssign && (
+        <AssignLogopedModal
+          childId={selectedChildForAssign.id}
+          currentLogopedEmail={selectedChildForAssign.logopedEmail}
+          visible={!!selectedChildForAssign}
+          onClose={() => setSelectedChildForAssign(null)}
+          onAssigned={loadChildren}
+        />
+      )}
     </Screen>
   );
 }

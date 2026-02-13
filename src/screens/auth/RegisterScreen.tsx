@@ -40,10 +40,18 @@ export function RegisterScreen() {
 
       await setAuth(res.token, res.role, email);
     } catch (e: any) {
-      Alert.alert(
-        "Помилка реєстрації",
-        e?.response?.data?.message ?? "Щось пішло не так. Спробуйте пізніше.",
-      );
+      let message = "Щось пішло не так. Спробуйте пізніше.";
+
+      if (e.response) {
+        // Помилка від сервера
+        message =
+          e.response.data?.message ?? `Помилка сервера (${e.response.status})`;
+      } else if (e.request) {
+        // Запит не дійшов
+        message = "Немає зʼєднання з сервером";
+      }
+
+      Alert.alert("Помилка реєстрації", message);
     } finally {
       setLoading(false);
     }

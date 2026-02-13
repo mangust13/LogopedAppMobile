@@ -4,7 +4,6 @@ import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { Screen } from "../../../shared/ui/Screen";
 import { GamesStackParamList } from "../../../navigation/games/GamesStack";
 import { CategoryCard } from "./components/CategoryCard";
-import ScreenHeader from "../../../shared/ui/ScreenHeader";
 
 type Props = NativeStackScreenProps<GamesStackParamList, "GamesCatalog">;
 
@@ -13,8 +12,14 @@ export function GamesCatalogScreen({ navigation, route }: Props) {
 
   return (
     <Screen>
-      {/* Header */}
-      <ScreenHeader title="Каталог" subtitle="Ігри та вправи 🎮" center />
+      <View className="px-6 pt-2 pb-4">
+        <Text className="text-text-muted text-xs uppercase font-bold tracking-widest">
+          Каталог
+        </Text>
+        <Text className="text-2xl font-bold text-primary">
+          Ігри та вправи 🎮
+        </Text>
+      </View>
 
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -25,22 +30,22 @@ export function GamesCatalogScreen({ navigation, route }: Props) {
             👋{" "}
             {actor === "Logoped"
               ? "Обирайте категорію для проведення заняття з дитиною."
-              : "Вітаємо! Виконуйте рекомендовані вправи щодня для найкращого результату."}
+              : "Вітаємо! Виконуйте рекомендовані вправи щодня."}
           </Text>
         </View>
 
         <CategoryCard
           title="Артикуляційна гімнастика"
-          description="Розігрів мовного апарату. Базові вправи для язика, губ та щік перед початком занять."
+          description="Розігрів мовного апарату. Базові вправи для язика, губ та щік."
           recommended
           color="blue"
           icon="happy-outline"
-          onPress={() => navigation.navigate("PreparationList")}
+          onPress={() => navigation.navigate("PreparationCategories")}
         />
 
         <CategoryCard
           title="Автоматизація звуків"
-          description="Закріплення правильної вимови звуків у складах, словах та реченнях. Рівні складності."
+          description="Закріплення правильної вимови звуків у складах, словах та реченнях."
           recommended={actor === "Logoped"}
           color="orange"
           icon="mic-outline"
@@ -49,7 +54,7 @@ export function GamesCatalogScreen({ navigation, route }: Props) {
 
         <CategoryCard
           title="Диференціація звуків"
-          description="Вправи на розрізнення схожих звуків (С-Ш, Р-Л) та розвиток фонематичного слуху."
+          description="Вправи на розрізнення схожих звуків (С-Ш, Р-Л)."
           recommended={false}
           color="purple"
           icon="ear-outline"
@@ -62,7 +67,7 @@ export function GamesCatalogScreen({ navigation, route }: Props) {
           </Text>
           <CategoryCard
             title="Розвиток мовлення"
-            description="Сюжетні ігри для побудови зв'язного мовлення та розширення словникового запасу."
+            description="Сюжетні ігри для побудови зв'язного мовлення."
             recommended={false}
             color="green"
             icon="chatbubbles-outline"

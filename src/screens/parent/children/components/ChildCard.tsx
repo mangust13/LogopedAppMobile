@@ -69,7 +69,6 @@ export function ChildCard({
           <TouchableOpacity
             onPress={() => {
               onEditPress(child);
-              handleUpdated();
             }}
             className="p-2 rounded-full bg-gray-50"
           >

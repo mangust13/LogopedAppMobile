@@ -1,8 +1,11 @@
 // src\navigation\games\GamesStack.tsx
+
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { GamesCatalogScreen } from "../../screens/games/catalog/GamesCatalogScreen";
-import { PreparationListScreen } from "../../screens/games/preparation/PreparationListScreen";
-import { PreparationGameScreen } from "../../screens/games/preparation/PreparationGameScreen";
+import { PreparationCategoriesScreen } from "../../screens/games/preparation/PreparationCategoriesScreen";
+import { PreparationExerciseGalleryScreen } from "../../screens/games/preparation/PreparationExerciseGalleryScreen";
+import { PreparationExerciseDetailScreen } from "../../screens/games/preparation/PreparationExerciseDetailScreen";
+import { LogopedCreateComplexScreen } from "../../screens/games/preparation/LogopedCreateComplexScreen";
 import { AutomationListScreen } from "../../screens/games/automation/AutomationListScreen";
 import { AutomationGameScreen } from "../../screens/games/automation/AutomationGameScreen";
 import { DifferentiationListScreen } from "../../screens/games/differentiation/DifferentiationListScreen";
@@ -12,13 +15,26 @@ export type GamesActor = "User" | "Logoped";
 
 export type GamesStackParamList = {
   GamesCatalog: { actor: GamesActor };
-  PreparationList: undefined;
-  PreparationGame: {
-    title: string;
-    instruction: string;
-    durationSec: number;
-    difficulty: "Легко" | "Середньо" | "Складно";
+
+  PreparationCategories: undefined;
+
+  PreparationExerciseGallery: {
+    categoryId: string;
+    categoryTitle: string;
   };
+
+  PreparationExerciseDetail: {
+    exerciseId: number;
+    title: string;
+    videoUrl?: string;
+    description: string;
+    iconName: string;
+  };
+
+  LogopedCreateComplex: {
+    categoryId: string;
+  };
+
   AutomationList: undefined;
   AutomationGame: {
     sound: string;
@@ -48,8 +64,25 @@ export function GamesStack({ actor }: Props) {
         component={GamesCatalogScreen}
         initialParams={{ actor }}
       />
-      <Stack.Screen name="PreparationList" component={PreparationListScreen} />
-      <Stack.Screen name="PreparationGame" component={PreparationGameScreen} />
+
+      <Stack.Screen
+        name="PreparationCategories"
+        component={PreparationCategoriesScreen}
+      />
+      <Stack.Screen
+        name="PreparationExerciseGallery"
+        component={PreparationExerciseGalleryScreen}
+      />
+      <Stack.Screen
+        name="PreparationExerciseDetail"
+        component={PreparationExerciseDetailScreen}
+      />
+      <Stack.Screen
+        name="LogopedCreateComplex"
+        component={LogopedCreateComplexScreen}
+        options={{ presentation: "modal" }}
+      />
+
       <Stack.Screen name="AutomationList" component={AutomationListScreen} />
       <Stack.Screen name="AutomationGame" component={AutomationGameScreen} />
       <Stack.Screen
