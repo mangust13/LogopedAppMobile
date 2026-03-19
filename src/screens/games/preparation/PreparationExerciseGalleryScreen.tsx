@@ -1,5 +1,4 @@
-// src\screens\games\preparation\PreparationExerciseGalleryScreen.tsx
-
+// src/screens/games/preparation/PreparationExerciseGalleryScreen.tsx
 import { useEffect, useState } from "react";
 import {
   View,
@@ -9,17 +8,21 @@ import {
   Dimensions,
   ActivityIndicator,
   Image,
+  Modal,
+  ScrollView,
 } from "react-native";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { Ionicons } from "@expo/vector-icons";
 import { Screen } from "../../../shared/ui/Screen";
 import { Button } from "../../../shared/ui/Button";
 import { BackHeader } from "../../../shared/ui/BackHeader";
 import { GamesStackParamList } from "../../../navigation/games/GamesStack";
 import { useAuthStore } from "../../../store/authStore";
 import { exercisesApi } from "../../../api/exercisesApi";
-import { ExerciseDto } from "../../../api/types/exercise";
+import { ExerciseDto, ExerciseTagDto } from "../../../api/types/exercise";
 import { ENV } from "../../../config/env";
+import { cn } from "../../../shared/utils/cn";
 
 type NavProp = NativeStackNavigationProp<
   GamesStackParamList,
@@ -38,22 +41,86 @@ export function PreparationExerciseGalleryScreen() {
   const { categoryId, categoryTitle } = route.params;
   const role = useAuthStore((s) => s.role);
 
-  const [exercises, setExercises] = useState<ExerciseDto[]>([]);
+  const [allExercises, setAllExercises] = useState<ExerciseDto[]>([]);
+  const [filteredExercises, setFilteredExercises] = useState<ExerciseDto[]>([]);
+  const [availableTags, setAvailableTags] = useState<ExerciseTagDto[]>([]);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
     loadExercises();
   }, []);
 
+  useEffect(() => {
+    applyFilters();
+  }, [allExercises, selectedTags]);
+
   const loadExercises = async () => {
     try {
-      const data = await exercisesApi.getAll();
-      setExercises(data);
+      setLoading(true);
+      const exercises = await exercisesApi.getByCategory(categoryId);
+      setAllExercises(exercises);
+
+      const uniqueTags = new Map<string, ExerciseTagDto>();
+      exercises.forEach((exercise) => {
+        exercise.tags.forEach((tag) => {
+          uniqueTags.set(tag.name, tag);
+        });
+      });
+      setAvailableTags(Array.from(uniqueTags.values()));
     } catch (e) {
       console.error(e);
     } finally {
       setLoading(false);
     }
+  };
+
+  const applyFilters = () => {
+    if (selectedTags.length === 0) {
+      setFilteredExercises(allExercises);
+      return;
+    }
+
+    const filtered = allExercises.filter((exercise) =>
+      selectedTags.every((selectedTag) =>
+        exercise.tags.some((tag) => tag.name === selectedTag),
+      ),
+    );
+    setFilteredExercises(filtered);
+  };
+
+  const toggleTag = (tagName: string) => {
+    setSelectedTags((prev) =>
+      prev.includes(tagName)
+        ? prev.filter((t) => t !== tagName)
+        : [...prev, tagName],
+    );
+  };
+
+  const clearFilters = () => {
+    setSelectedTags([]);
+  };
+
+  const groupedTags = availableTags.reduce(
+    (acc, tag) => {
+      if (!acc[tag.category]) {
+        acc[tag.category] = [];
+      }
+      acc[tag.category].push(tag);
+      return acc;
+    },
+    {} as Record<string, ExerciseTagDto[]>,
+  );
+
+  const getCategoryDisplayName = (category: string) => {
+    const categoryNames: Record<string, string> = {
+      type: "Тип вправи",
+      organ: "Органи",
+      sound: "Звуки",
+      muscle: "М'язи",
+    };
+    return categoryNames[category] || category;
   };
 
   if (loading) {
@@ -66,12 +133,28 @@ export function PreparationExerciseGalleryScreen() {
 
   return (
     <Screen>
-      {/* Header */}
       <BackHeader title={categoryTitle} />
 
-      {/* Gallery */}
+      {availableTags.length > 0 && (
+        <View className="flex-row items-center justify-between px-4 py-2 bg-gray-50 border-b border-gray-100">
+          <Text className="text-sm text-text-muted">
+            {filteredExercises.length} з {allExercises.length} вправ
+          </Text>
+          <TouchableOpacity
+            onPress={() => setShowFilters(true)}
+            className="flex-row items-center"
+          >
+            <Ionicons name="filter" size={16} color="#6B7280" />
+            <Text className="text-sm text-text-muted ml-1">Фільтри</Text>
+            {selectedTags.length > 0 && (
+              <View className="w-2 h-2 bg-blue-500 rounded-full ml-1" />
+            )}
+          </TouchableOpacity>
+        </View>
+      )}
+
       <FlatList
-        data={exercises}
+        data={filteredExercises}
         keyExtractor={(item) => item.id.toString()}
         numColumns={COLUMNS}
         contentContainerStyle={{ padding: SPACING, paddingBottom: 100 }}
@@ -85,7 +168,7 @@ export function PreparationExerciseGalleryScreen() {
               navigation.navigate("PreparationExerciseDetail", {
                 exerciseId: item.id,
                 title: item.title,
-                videoUrl: item.videoUrl,
+                videoPath: item.videoPath,
                 description: item.description,
                 iconName: item.iconName,
               })
@@ -120,7 +203,6 @@ export function PreparationExerciseGalleryScreen() {
         )}
       />
 
-      {/* Button for Logoped */}
       {role === "Logoped" && (
         <View className="absolute bottom-8 left-4 right-4">
           <Button
@@ -134,6 +216,81 @@ export function PreparationExerciseGalleryScreen() {
           />
         </View>
       )}
+
+      <Modal
+        visible={showFilters}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setShowFilters(false)}
+      >
+        <View className="flex-1 justify-end">
+          <TouchableOpacity
+            className="flex-1"
+            activeOpacity={1}
+            onPress={() => setShowFilters(false)}
+          />
+
+          <View className="bg-white rounded-t-3xl max-h-[70%] shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
+            <View className="items-center pt-4 pb-2">
+              <View className="w-12 h-1.5 bg-gray-200 rounded-full" />
+            </View>
+
+            <View className="px-6 pb-8">
+              <View className="flex-row items-center justify-between mb-4">
+                <Text className="text-xl font-bold text-text-main">
+                  Фільтри
+                </Text>
+                {selectedTags.length > 0 && (
+                  <TouchableOpacity onPress={clearFilters}>
+                    <Text className="text-blue-500 font-medium">Очистити</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+
+              <ScrollView showsVerticalScrollIndicator={false}>
+                {Object.entries(groupedTags).map(([category, tags]) => (
+                  <View key={category} className="mb-6">
+                    <Text className="text-sm font-bold text-text-muted uppercase mb-2">
+                      {getCategoryDisplayName(category)}
+                    </Text>
+                    <View className="flex-row flex-wrap gap-2">
+                      {tags.map((tag) => (
+                        <TouchableOpacity
+                          key={tag.name}
+                          onPress={() => toggleTag(tag.name)}
+                          className={cn(
+                            "px-3 py-2 rounded-full border",
+                            selectedTags.includes(tag.name)
+                              ? "bg-blue-500 border-blue-500"
+                              : "bg-gray-50 border-gray-200",
+                          )}
+                        >
+                          <Text
+                            className={cn(
+                              "text-xs font-medium",
+                              selectedTags.includes(tag.name)
+                                ? "text-white"
+                                : "text-text-main",
+                            )}
+                          >
+                            {tag.displayName}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </View>
+                ))}
+              </ScrollView>
+
+              <Button
+                title="Застосувати"
+                onPress={() => setShowFilters(false)}
+                className="mt-4"
+              />
+            </View>
+          </View>
+        </View>
+      </Modal>
     </Screen>
   );
 }

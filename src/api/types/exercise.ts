@@ -1,24 +1,26 @@
+// src/api/types/exercise.ts
 export type ExerciseDto = {
   id: number;
   title: string;
   description: string;
-  videoUrl: string;
+  videoPath: string;
   iconName: string;
-  category: string;
+  mainCategory: string;
+  mainCategoryDisplayName: string;
+  tags: ExerciseTagDto[];
 };
 
-export type ComplexDto = {
+export type ExerciseTagDto = {
   id: number;
-  title: string;
-  exercises: ExerciseDto[];
+  name: string;
+  category: string;
+  displayName: string;
 };
 
-export type CreateComplexDto = {
-  title: string;
-  exerciseIds: number[];
-};
-
-export type AssignHomeworkDto = {
-  childId: number;
-  complexId: number;
+export type ExerciseMainCategoryDto = {
+  id: number;
+  name: string;
+  displayName: string;
+  folderName: string;
+  exerciseCount: number;
 };

@@ -1,9 +1,9 @@
+// src/api/exercisesApi.ts
 import { http } from "./http";
 import {
   ExerciseDto,
-  ComplexDto,
-  CreateComplexDto,
-  AssignHomeworkDto,
+  ExerciseMainCategoryDto,
+  ExerciseTagDto,
 } from "./types/exercise";
 
 export const exercisesApi = {
@@ -12,24 +12,32 @@ export const exercisesApi = {
     return res.data;
   },
 
-  createComplex: async (data: CreateComplexDto) => {
-    const res = await http.post("/exercises/complexes", data);
-    return res.data;
-  },
-
-  getMyComplexes: async () => {
-    const res = await http.get<ComplexDto[]>("/exercises/complexes/my");
-    return res.data;
-  },
-
-  assignToChild: async (data: AssignHomeworkDto) => {
-    await http.post("/exercises/complexes/assign", data);
-  },
-
-  getChildHomework: async (childId: number) => {
-    const res = await http.get<ComplexDto[]>(
-      `/exercises/complexes/child/${childId}`,
+  getMainCategories: async () => {
+    const res = await http.get<ExerciseMainCategoryDto[]>(
+      "/exercises/categories",
     );
+    return res.data;
+  },
+
+  getByCategory: async (categoryName: string) => {
+    const res = await http.get<ExerciseDto[]>(
+      `/exercises/categories/${categoryName}`,
+    );
+    return res.data;
+  },
+
+  getTags: async () => {
+    const res = await http.get<ExerciseTagDto[]>("/exercises/tags");
+    return res.data;
+  },
+
+  getTagsByCategory: async (category: string) => {
+    const res = await http.get<ExerciseTagDto[]>(`/exercises/tags/${category}`);
+    return res.data;
+  },
+
+  getById: async (id: number) => {
+    const res = await http.get<ExerciseDto>(`/exercises/${id}`);
     return res.data;
   },
 };

@@ -132,7 +132,7 @@ export function LogopedCreateComplexScreen() {
                 <Text className="font-bold text-text-main text-base">
                   {item.title}
                 </Text>
-                <Text className="text-xs text-text-muted">{item.category}</Text>
+                {/* <Text className="text-xs text-text-muted">{item.category}</Text> */}
               </View>
 
               <View

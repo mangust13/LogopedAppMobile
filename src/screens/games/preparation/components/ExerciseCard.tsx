@@ -1,4 +1,4 @@
-// src\screens\games\preparation\components\ExerciseCard.tsx
+// src/screens/games/preparation/components/ExerciseCard.tsx
 import { Text, View, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Card } from "../../../../shared/ui/Card";
@@ -7,6 +7,7 @@ import { cn } from "../../../../shared/utils/cn";
 type Props = {
   title: string;
   description: string;
+  categories: string[]; // змінено
   difficulty: "Легко" | "Середньо" | "Складно";
   estimatedTime: string;
   onPress: () => void;
@@ -16,6 +17,7 @@ type Props = {
 export function ExerciseCard({
   title,
   description,
+  categories,
   difficulty,
   estimatedTime,
   onPress,
@@ -42,9 +44,28 @@ export function ExerciseCard({
               </Text>
             </View>
 
-            <Text className="text-sm text-text-muted mb-3 leading-5">
+            <Text
+              className="text-sm text-text-muted mb-3 leading-5
+"
+            >
               {description}
             </Text>
+
+            {/* Показуємо категорії */}
+            {categories.length > 0 && (
+              <View className="flex-row flex-wrap gap-1 mb-3">
+                {categories.map((category, index) => (
+                  <View
+                    key={index}
+                    className="px-2 py-1 rounded bg-blue-50 border border-blue-100"
+                  >
+                    <Text className="text-xs font-medium text-blue-600">
+                      {category}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            )}
 
             <View className="flex-row gap-2">
               <View className={cn("px-2 py-1 rounded border", difficultyColor)}>

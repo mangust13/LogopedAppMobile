@@ -1,5 +1,4 @@
 // src/screens/games/preparation/PreparationExerciseDetailScreen.tsx
-
 import { useState } from "react";
 import {
   View,
@@ -12,7 +11,6 @@ import {
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { VideoView, useVideoPlayer } from "expo-video";
-import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Screen } from "../../../shared/ui/Screen";
 import { GamesStackParamList } from "../../../navigation/games/GamesStack";
@@ -27,34 +25,33 @@ const { width } = Dimensions.get("window");
 export function PreparationExerciseDetailScreen() {
   const navigation = useNavigation();
   const route = useRoute<RouteProps>();
-  const { title, description, videoUrl } = route.params;
+  const { title, description, videoPath } = route.params; // тепер videoPath доступний
 
   const [showDescription, setShowDescription] = useState(false);
 
   const player = useVideoPlayer(
-    videoUrl
-      ? { uri: `${ENV.API_BASE_URL}/exercises/${videoUrl}` }
+    videoPath
+      ? { uri: `${ENV.API_BASE_URL}/exercises/${videoPath}` }
       : { uri: "" },
   );
 
   const handleOpenDescription = () => {
-    if (videoUrl) player.pause();
+    if (videoPath) player.pause();
     setShowDescription(true);
   };
 
   const handleCloseDescription = () => {
     setShowDescription(false);
-    if (videoUrl) player.play();
+    if (videoPath) player.play();
   };
 
-  if (videoUrl && !showDescription) {
+  if (videoPath && !showDescription) {
     player.loop = true;
     player.play();
   }
 
   return (
     <Screen>
-      {/* === Header (Стиль як в інших екранах) === */}
       <BackHeader title={title} />
 
       <View className="flex-1 items-center justify-center px-4 bg-white">
@@ -62,7 +59,7 @@ export function PreparationExerciseDetailScreen() {
           className="w-full bg-gray-100 rounded-2xl overflow-hidden border border-gray-200"
           style={{ height: width * 0.65 }}
         >
-          {videoUrl ? (
+          {videoPath ? (
             <VideoView
               style={{ width: "100%", height: "100%" }}
               player={player}
@@ -78,17 +75,14 @@ export function PreparationExerciseDetailScreen() {
         </View>
       </View>
 
-      {/* === Bottom Button === */}
       <View className="px-6 pb-8">
         <Button
           title="Опис вправи"
           onPress={handleOpenDescription}
-          // Стандартна кнопка (синя)
           className="w-full"
         />
       </View>
 
-      {/* === Modal (Description) === */}
       <Modal
         visible={showDescription}
         animationType="slide"
@@ -96,18 +90,13 @@ export function PreparationExerciseDetailScreen() {
         onRequestClose={handleCloseDescription}
       >
         <View className="flex-1 justify-end">
-          {/* Прозорий фон (Touchable), щоб закрити кліком, 
-                АЛЕ без bg-black/XX, тому затемнення не буде.
-            */}
           <TouchableOpacity
             className="flex-1"
             activeOpacity={1}
             onPress={handleCloseDescription}
           />
 
-          {/* Контент модалки */}
           <View className="bg-white rounded-t-3xl h-[50%] shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] border-t border-gray-100">
-            {/* Drag Indicator */}
             <View className="items-center pt-4 pb-2">
               <View className="w-12 h-1.5 bg-gray-200 rounded-full" />
             </View>
