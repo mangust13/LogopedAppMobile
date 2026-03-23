@@ -7,7 +7,6 @@ import { cn } from "../../../../shared/utils/cn";
 type Props = {
   title: string;
   description: string;
-  recommended?: boolean;
   onPress: () => void;
   icon: keyof typeof Ionicons.glyphMap;
   color: string; // "blue" | "green" | "orange"
@@ -16,7 +15,6 @@ type Props = {
 export function CategoryCard({
   title,
   description,
-  recommended,
   onPress,
   icon,
   color,
@@ -58,14 +56,6 @@ export function CategoryCard({
               >
                 {title}
               </Text>
-
-              {recommended && (
-                <View className="bg-green-100 px-2 py-0.5 rounded-md border border-green-200 mt-1">
-                  <Text className="text-[10px] font-bold text-green-700 uppercase">
-                    Рекомендовано
-                  </Text>
-                </View>
-              )}
             </View>
 
             <Text className="text-sm text-text-muted leading-5 mb-3">

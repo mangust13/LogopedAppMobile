@@ -15,6 +15,7 @@ import { GamesStackParamList } from "../../../navigation/games/GamesStack";
 import { Card } from "../../../shared/ui/Card";
 import { exercisesApi } from "../../../api/exercisesApi";
 import { BackHeader } from "../../../shared/ui/BackHeader";
+import { getExercisesText } from "../../../shared/utils/getExercisesText";
 
 type NavProp = NativeStackNavigationProp<
   GamesStackParamList,
@@ -88,14 +89,23 @@ export function PreparationCategoriesScreen() {
                   color="#3B82F6"
                 />
               </View>
+
               <View className="flex-1">
                 <Text className="text-base font-semibold text-text-main">
-                  {item.displayName}
+                  {item.name === "all" ? "Всі вправи" : "Комплекс вправ"}
                 </Text>
-                <Text className="text-xs text-text-muted">
-                  {item.exerciseCount} вправ
+
+                {item.name !== "all" && (
+                  <Text className="text-sm text-text-muted mt-0.5">
+                    {item.displayName}
+                  </Text>
+                )}
+
+                <Text className="text-xs text-blue-600 mt-1">
+                  {getExercisesText(item.exerciseCount)}
                 </Text>
               </View>
+
               <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
             </Card>
           </TouchableOpacity>

@@ -37,7 +37,6 @@ export function GamesCatalogScreen({ navigation, route }: Props) {
         <CategoryCard
           title="Артикуляційна гімнастика"
           description="Розігрів мовного апарату. Базові вправи для язика, губ та щік."
-          recommended
           color="blue"
           icon="happy-outline"
           onPress={() => navigation.navigate("PreparationCategories")}
@@ -46,7 +45,6 @@ export function GamesCatalogScreen({ navigation, route }: Props) {
         <CategoryCard
           title="Автоматизація звуків"
           description="Закріплення правильної вимови звуків у складах, словах та реченнях."
-          recommended={actor === "Logoped"}
           color="orange"
           icon="mic-outline"
           onPress={() => navigation.navigate("AutomationList")}
@@ -55,7 +53,6 @@ export function GamesCatalogScreen({ navigation, route }: Props) {
         <CategoryCard
           title="Диференціація звуків"
           description="Вправи на розрізнення схожих звуків (С-Ш, Р-Л)."
-          recommended={false}
           color="purple"
           icon="ear-outline"
           onPress={() => navigation.navigate("DifferentiationList")}
@@ -68,7 +65,6 @@ export function GamesCatalogScreen({ navigation, route }: Props) {
           <CategoryCard
             title="Розвиток мовлення"
             description="Сюжетні ігри для побудови зв'язного мовлення."
-            recommended={false}
             color="green"
             icon="chatbubbles-outline"
             onPress={() => {}}

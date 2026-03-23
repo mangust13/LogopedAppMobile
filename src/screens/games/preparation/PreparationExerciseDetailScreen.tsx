@@ -25,8 +25,7 @@ const { width } = Dimensions.get("window");
 export function PreparationExerciseDetailScreen() {
   const navigation = useNavigation();
   const route = useRoute<RouteProps>();
-  const { title, description, videoPath } = route.params; // тепер videoPath доступний
-
+  const { title, description, videoPath } = route.params;
   const [showDescription, setShowDescription] = useState(false);
 
   const player = useVideoPlayer(

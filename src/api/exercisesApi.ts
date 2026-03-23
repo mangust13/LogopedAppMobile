@@ -8,7 +8,7 @@ import {
 
 export const exercisesApi = {
   getAll: async () => {
-    const res = await http.get<ExerciseDto[]>("/exercises");
+    const res = await http.get<ExerciseDto[]>("/exercises/all");
     return res.data;
   },
 

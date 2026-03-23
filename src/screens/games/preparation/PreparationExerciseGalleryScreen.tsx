@@ -11,6 +11,10 @@ import {
   Modal,
   ScrollView,
 } from "react-native";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
@@ -36,6 +40,7 @@ const SPACING = 12;
 const ITEM_WIDTH = (width - SPACING * (COLUMNS + 1)) / COLUMNS;
 
 export function PreparationExerciseGalleryScreen() {
+  const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavProp>();
   const route = useRoute<RouteProps>();
   const { categoryId, categoryTitle } = route.params;
@@ -118,7 +123,6 @@ export function PreparationExerciseGalleryScreen() {
       type: "Тип вправи",
       organ: "Органи",
       sound: "Звуки",
-      muscle: "М'язи",
     };
     return categoryNames[category] || category;
   };
@@ -203,7 +207,7 @@ export function PreparationExerciseGalleryScreen() {
         )}
       />
 
-      {role === "Logoped" && (
+      {role === "Logoped" && categoryId === "all" && (
         <View className="absolute bottom-8 left-4 right-4">
           <Button
             title="+ Створити комплекс"
@@ -230,24 +234,29 @@ export function PreparationExerciseGalleryScreen() {
             onPress={() => setShowFilters(false)}
           />
 
-          <View className="bg-white rounded-t-3xl max-h-[70%] shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
+          <View
+            className="bg-white rounded-t-3xl shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]"
+            style={{ height: "70%" }}
+          >
             <View className="items-center pt-4 pb-2">
               <View className="w-12 h-1.5 bg-gray-200 rounded-full" />
             </View>
 
-            <View className="px-6 pb-8">
-              <View className="flex-row items-center justify-between mb-4">
-                <Text className="text-xl font-bold text-text-main">
-                  Фільтри
-                </Text>
-                {selectedTags.length > 0 && (
-                  <TouchableOpacity onPress={clearFilters}>
-                    <Text className="text-blue-500 font-medium">Очистити</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
+            <View className="flex-row items-center justify-between mb-4 px-6">
+              <Text className="text-xl font-bold text-text-main">Фільтри</Text>
+              {selectedTags.length > 0 && (
+                <TouchableOpacity onPress={clearFilters}>
+                  <Text className="text-blue-500 font-medium">Очистити</Text>
+                </TouchableOpacity>
+              )}
+            </View>
 
-              <ScrollView showsVerticalScrollIndicator={false}>
+            <View style={{ flex: 1 }}>
+              <ScrollView
+                className="px-6"
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={{ paddingBottom: 100 }}
+              >
                 {Object.entries(groupedTags).map(([category, tags]) => (
                   <View key={category} className="mb-6">
                     <Text className="text-sm font-bold text-text-muted uppercase mb-2">
@@ -281,11 +290,15 @@ export function PreparationExerciseGalleryScreen() {
                   </View>
                 ))}
               </ScrollView>
+            </View>
 
+            <View
+              className="px-6 pt-4 bg-white border-t border-gray-100"
+              style={{ paddingBottom: Math.max(insets.bottom, 16) }}
+            >
               <Button
                 title="Застосувати"
                 onPress={() => setShowFilters(false)}
-                className="mt-4"
               />
             </View>
           </View>
