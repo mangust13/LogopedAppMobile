@@ -9,7 +9,11 @@ type AuthState = {
   role: UserRole | null;
   email: string | null;
   isHydrated: boolean;
-  setAuth: (token: string, role: UserRole, email?: string | null) => Promise<void>;
+  setAuth: (
+    token: string,
+    role: UserRole,
+    email?: string | null,
+  ) => Promise<void>;
   logout: () => Promise<void>;
   hydrate: () => Promise<void>;
 };

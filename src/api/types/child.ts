@@ -4,4 +4,5 @@ export type ChildDto = {
   birthDate: string;
   problemSounds?: string | null;
   logopedEmail?: string | null;
+  avatarUrl?: string | null;
 };

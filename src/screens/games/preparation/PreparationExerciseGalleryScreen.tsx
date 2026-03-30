@@ -1,4 +1,4 @@
-// src/screens/games/preparation/PreparationExerciseGalleryScreen.tsx
+// screens/games/preparation/PreparationExerciseGalleryScreen.tsx
 import { useEffect, useState } from "react";
 import {
   View,
@@ -43,7 +43,7 @@ export function PreparationExerciseGalleryScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavProp>();
   const route = useRoute<RouteProps>();
-  const { categoryId, categoryTitle } = route.params;
+  const { complexId, complexTitle } = route.params;
   const role = useAuthStore((s) => s.role);
 
   const [allExercises, setAllExercises] = useState<ExerciseDto[]>([]);
@@ -52,6 +52,7 @@ export function PreparationExerciseGalleryScreen() {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
+  const [isAllCategory, setIsAllCategory] = useState(false);
 
   useEffect(() => {
     loadExercises();
@@ -64,11 +65,21 @@ export function PreparationExerciseGalleryScreen() {
   const loadExercises = async () => {
     try {
       setLoading(true);
-      const exercises = await exercisesApi.getByCategory(categoryId);
-      setAllExercises(exercises);
+      const role = useAuthStore.getState().role;
+      const token = useAuthStore.getState().token;
+
+      let complex;
+      if (role && token) {
+        complex = await exercisesApi.getComplexById(complexId);
+      } else {
+        complex = await exercisesApi.getPublicComplexById(complexId);
+      }
+
+      setAllExercises(complex.exercises);
+      setIsAllCategory(complex.name === "all");
 
       const uniqueTags = new Map<string, ExerciseTagDto>();
-      exercises.forEach((exercise) => {
+      complex.exercises.forEach((exercise) => {
         exercise.tags.forEach((tag) => {
           uniqueTags.set(tag.name, tag);
         });
@@ -137,7 +148,7 @@ export function PreparationExerciseGalleryScreen() {
 
   return (
     <Screen>
-      <BackHeader title={categoryTitle} />
+      <BackHeader title={complexTitle} />
 
       {availableTags.length > 0 && (
         <View className="flex-row items-center justify-between px-4 py-2 bg-gray-50 border-b border-gray-100">
@@ -146,7 +157,8 @@ export function PreparationExerciseGalleryScreen() {
           </Text>
           <TouchableOpacity
             onPress={() => setShowFilters(true)}
-            className="flex-row items-center"
+            className="flex
+-row items-center"
           >
             <Ionicons name="filter" size={16} color="#6B7280" />
             <Text className="text-sm text-text-muted ml-1">Фільтри</Text>
@@ -207,18 +219,32 @@ export function PreparationExerciseGalleryScreen() {
         )}
       />
 
-      {role === "Logoped" && categoryId === "all" && (
+      {role === "Logoped" && isAllCategory && (
         <View className="absolute bottom-8 left-4 right-4">
           <Button
             title="+ Створити комплекс"
             onPress={() =>
               navigation.navigate("LogopedCreateComplex", {
-                categoryId: categoryId,
+                complexId: complexId,
               })
             }
             className="shadow-lg shadow-blue-500/30"
           />
         </View>
+      )}
+
+      {role === "Logoped" && (
+        <TouchableOpacity
+          onPress={() =>
+            navigation.navigate("LogopedAssignComplex", {
+              complexId: complexId,
+              complexTitle: complexTitle,
+            })
+          }
+          className="bg-blue-500 px-4 py-2 rounded-lg mb-4"
+        >
+          <Text className="text-white font-medium">Призначити дітям</Text>
+        </TouchableOpacity>
       )}
 
       <Modal

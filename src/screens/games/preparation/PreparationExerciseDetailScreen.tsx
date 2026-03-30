@@ -1,5 +1,5 @@
-// src/screens/games/preparation/PreparationExerciseDetailScreen.tsx
-import { useState } from "react";
+// screens/games/preparation/PreparationExerciseDetailScreen.tsx
+import { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   ScrollView,
   Dimensions,
   Modal,
+  ActivityIndicator,
 } from "react-native";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
@@ -17,6 +18,8 @@ import { GamesStackParamList } from "../../../navigation/games/GamesStack";
 import { Button } from "../../../shared/ui/Button";
 import { ENV } from "../../../config/env";
 import { BackHeader } from "../../../shared/ui/BackHeader";
+import { exercisesApi } from "../../../api/exercisesApi";
+import { ExerciseDto } from "../../../api/types/exercise";
 
 type RouteProps = RouteProp<GamesStackParamList, "PreparationExerciseDetail">;
 
@@ -25,14 +28,49 @@ const { width } = Dimensions.get("window");
 export function PreparationExerciseDetailScreen() {
   const navigation = useNavigation();
   const route = useRoute<RouteProps>();
-  const { title, description, videoPath } = route.params;
+  const {
+    exerciseId,
+    title: initialTitle,
+    videoPath: initialVideoPath,
+    description: initialDescription,
+  } = route.params;
+
+  const [exercise, setExercise] = useState<ExerciseDto | null>(null);
+  const [loading, setLoading] = useState(true);
   const [showDescription, setShowDescription] = useState(false);
+
+  const title = exercise?.title || initialTitle;
+  const description = exercise?.description || initialDescription;
+  const videoPath = exercise?.videoPath || initialVideoPath;
 
   const player = useVideoPlayer(
     videoPath
       ? { uri: `${ENV.API_BASE_URL}/exercises/${videoPath}` }
       : { uri: "" },
   );
+
+  useEffect(() => {
+    loadExerciseDetails();
+  }, []);
+
+  useEffect(() => {
+    if (videoPath && !showDescription) {
+      player.loop = true;
+      player.play();
+    }
+  }, [videoPath, showDescription, player]);
+
+  const loadExerciseDetails = async () => {
+    try {
+      setLoading(true);
+      const data = await exercisesApi.getById(exerciseId);
+      setExercise(data);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleOpenDescription = () => {
     if (videoPath) player.pause();
@@ -44,9 +82,12 @@ export function PreparationExerciseDetailScreen() {
     if (videoPath) player.play();
   };
 
-  if (videoPath && !showDescription) {
-    player.loop = true;
-    player.play();
+  if (loading) {
+    return (
+      <Screen className="justify-center items-center">
+        <ActivityIndicator size="large" color="#3B82F6" />
+      </Screen>
+    );
   }
 
   return (

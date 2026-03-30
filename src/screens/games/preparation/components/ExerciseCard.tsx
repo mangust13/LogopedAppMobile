@@ -7,7 +7,7 @@ import { cn } from "../../../../shared/utils/cn";
 type Props = {
   title: string;
   description: string;
-  categories: string[]; // змінено
+  categories: string[];
   difficulty: "Легко" | "Середньо" | "Складно";
   estimatedTime: string;
   onPress: () => void;
@@ -51,7 +51,6 @@ export function ExerciseCard({
               {description}
             </Text>
 
-            {/* Показуємо категорії */}
             {categories.length > 0 && (
               <View className="flex-row flex-wrap gap-1 mb-3">
                 {categories.map((category, index) => (

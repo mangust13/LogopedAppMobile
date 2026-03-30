@@ -16,6 +16,6 @@ export type ProgressAttemptDto = {
 };
 
 export type TrendPointDto = {
-  date: string; // ISO or YYYY-MM-DD
+  date: string;
   value: number;
 };
