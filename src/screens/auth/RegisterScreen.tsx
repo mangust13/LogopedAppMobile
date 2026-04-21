@@ -43,11 +43,9 @@ export function RegisterScreen() {
       let message = "Щось пішло не так. Спробуйте пізніше.";
 
       if (e.response) {
-        // Помилка від сервера
         message =
           e.response.data?.message ?? `Помилка сервера (${e.response.status})`;
       } else if (e.request) {
-        // Запит не дійшов
         message = "Немає зʼєднання з сервером";
       }
 

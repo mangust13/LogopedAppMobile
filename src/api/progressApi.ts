@@ -1,42 +1,35 @@
 // src/api/progressApi.ts
-import { http } from './http';
+import { http } from "./http";
 import {
   ProgressSummaryDto,
   ProgressAttemptDto,
   TrendPointDto,
-} from './types/progress';
+} from "./types/progress";
 
 export const progressApi = {
-  async getSummary(childId: number){
+  async getSummary(childId: number) {
     const res = await http.get<ProgressSummaryDto>(
-      `/progress/child/${childId}/summary`
+      `/progress/child/${childId}/summary`,
     );
     return res.data;
   },
 
-  async getLastAttempts(
-    childId: number,
-    limit = 10
-  ) {
+  async getLastAttempts(childId: number, limit = 10) {
     const res = await http.get<ProgressAttemptDto[]>(
       `/progress/child/${childId}/last`,
-      { params: { limit } }
+      { params: { limit } },
     );
     return res.data;
   },
 
-  async getTrend(
-    childId: number,
-    days = 14
-  ): Promise<TrendPointDto[]> {
+  async getTrend(childId: number, days = 14): Promise<TrendPointDto[]> {
     try {
       const res = await http.get<TrendPointDto[]>(
         `/progress/child/${childId}/trend`,
-        { params: { days } }
+        { params: { days } },
       );
       return res.data;
     } catch {
-      // мок, щоб екран жив
       return mockTrend(days);
     }
   },

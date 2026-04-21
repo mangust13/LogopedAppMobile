@@ -1,6 +1,6 @@
-//src\store\authStore.ts
 import { create } from "zustand";
 import { tokenStorage } from "../storage/tokenStorage";
+import { jwtDecode } from "jwt-decode";
 
 type UserRole = "User" | "Logoped";
 
@@ -16,6 +16,7 @@ type AuthState = {
   ) => Promise<void>;
   logout: () => Promise<void>;
   hydrate: () => Promise<void>;
+  isTokenValid: () => boolean;
 };
 
 const decodeEmailFromToken = (token: string): string | null => {
@@ -43,7 +44,7 @@ const decodeEmailFromToken = (token: string): string | null => {
   }
 };
 
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>((set, get) => ({
   token: null,
   role: null,
   email: null,
@@ -69,5 +70,18 @@ export const useAuthStore = create<AuthState>((set) => ({
       });
     }
     set({ isHydrated: true });
+  },
+
+  isTokenValid: () => {
+    const { token } = get();
+    if (!token) return false;
+
+    try {
+      const decoded = jwtDecode<{ exp: number }>(token);
+      const currentTime = Date.now() / 1000;
+      return decoded.exp > currentTime;
+    } catch {
+      return false;
+    }
   },
 }));

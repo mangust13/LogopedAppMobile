@@ -50,6 +50,7 @@ export function LogopedComplexListScreen() {
             onPress={() =>
               navigation.navigate("LogopedAssignComplex", {
                 complexId: item.id,
+                complexTitle: item.displayName,
               })
             }
           >

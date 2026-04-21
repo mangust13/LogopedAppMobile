@@ -7,6 +7,11 @@ import { PreparationExerciseDetailScreen } from "../../screens/games/preparation
 import { LogopedCreateComplexScreen } from "../../screens/games/preparation/LogopedCreateComplexScreen";
 import { LogopedComplexListScreen } from "../../screens/games/preparation/LogopedComplexListScreen";
 import { LogopedAssignComplexScreen } from "../../screens/games/preparation/LogopedAssignComplexScreen";
+import { AutomationListScreen } from "../../screens/games/automation/AutomationListScreen";
+import { AutomationGamesScreen } from "../../screens/games/automation/AutomationGamesScreen";
+import { SwipeGameScreen } from "../../screens/games/automation/gameTypes/SwipeGameScreen";
+import { MatchingGameScreen } from "../../screens/games/automation/gameTypes/MatchingGameScreen";
+import { ClassificationGameScreen } from "../../screens/games/automation/gameTypes/ClassificationGameScreen";
 
 export type GamesActor = "User" | "Logoped";
 
@@ -35,6 +40,12 @@ export type GamesStackParamList = {
   };
 
   LogopedComplexList: undefined;
+  AutomationList: undefined;
+  AutomationGames: { sound: string };
+  SwipeGame: { sound: string };
+  MatchingGame: { sound: string };
+  ClassificationGame: { sound: string };
+  DifferentiationList: undefined;
 };
 
 type Props = {
@@ -76,6 +87,14 @@ export function GamesStack({ actor }: Props) {
         name="LogopedAssignComplex"
         component={LogopedAssignComplexScreen}
         options={{ headerShown: false }}
+      />
+      <Stack.Screen name="AutomationList" component={AutomationListScreen} />
+      <Stack.Screen name="AutomationGames" component={AutomationGamesScreen} />
+      <Stack.Screen name="SwipeGame" component={SwipeGameScreen} />
+      <Stack.Screen name="MatchingGame" component={MatchingGameScreen} />
+      <Stack.Screen
+        name="ClassificationGame"
+        component={ClassificationGameScreen}
       />
     </Stack.Navigator>
   );

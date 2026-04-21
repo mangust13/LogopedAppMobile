@@ -4,6 +4,7 @@ import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { Screen } from "../../../shared/ui/Screen";
 import { GamesStackParamList } from "../../../navigation/games/GamesStack";
 import { CategoryCard } from "./components/CategoryCard";
+import ScreenHeader from "../../../shared/ui/ScreenHeader";
 
 type Props = NativeStackScreenProps<GamesStackParamList, "GamesCatalog">;
 
@@ -13,12 +14,7 @@ export function GamesCatalogScreen({ navigation, route }: Props) {
   return (
     <Screen>
       <View className="px-6 pt-2 pb-4">
-        <Text className="text-text-muted text-xs uppercase font-bold tracking-widest">
-          Каталог
-        </Text>
-        <Text className="text-2xl font-bold text-primary">
-          Ігри та вправи 🎮
-        </Text>
+        <ScreenHeader subtitle="Каталог" title={"Ігри та вправи 🎮"} center />
       </View>
 
       <ScrollView

@@ -219,32 +219,34 @@ export function PreparationExerciseGalleryScreen() {
         )}
       />
 
-      {role === "Logoped" && isAllCategory && (
-        <View className="absolute bottom-8 left-4 right-4">
-          <Button
-            title="+ Створити комплекс"
-            onPress={() =>
-              navigation.navigate("LogopedCreateComplex", {
-                complexId: complexId,
-              })
-            }
-            className="shadow-lg shadow-blue-500/30"
-          />
-        </View>
-      )}
-
       {role === "Logoped" && (
-        <TouchableOpacity
-          onPress={() =>
-            navigation.navigate("LogopedAssignComplex", {
-              complexId: complexId,
-              complexTitle: complexTitle,
-            })
-          }
-          className="bg-blue-500 px-4 py-2 rounded-lg mb-4"
+        <View
+          className="absolute left-4 right-4"
+          style={{ bottom: Math.max(insets.bottom + 12, 24) }}
         >
-          <Text className="text-white font-medium">Призначити дітям</Text>
-        </TouchableOpacity>
+          {isAllCategory ? (
+            <Button
+              title="+ Створити комплекс"
+              onPress={() =>
+                navigation.navigate("LogopedCreateComplex", {
+                  complexId: complexId,
+                })
+              }
+              className="shadow-lg shadow-primary/30"
+            />
+          ) : (
+            <Button
+              title="Призначити дітям"
+              onPress={() =>
+                navigation.navigate("LogopedAssignComplex", {
+                  complexId: complexId,
+                  complexTitle: complexTitle,
+                })
+              }
+              className="shadow-lg shadow-blue-500/30"
+            />
+          )}
+        </View>
       )}
 
       <Modal

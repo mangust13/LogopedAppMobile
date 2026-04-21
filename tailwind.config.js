@@ -1,6 +1,5 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  // Вкажи шляхи до всіх своїх файлів
   content: ["./src/**/*.{js,jsx,ts,tsx}"],
   darkMode: "class",
   presets: [require("nativewind/preset")],
@@ -8,19 +7,19 @@ module.exports = {
     extend: {
       colors: {
         primary: {
-          DEFAULT: "#6C63FF", // Основний фіолетовий (довіра, навчання)
+          DEFAULT: "#6C63FF",
           light: "#A5A6F6",
           dark: "#4B45B2",
         },
         secondary: {
-          DEFAULT: "#FFB84C", // Помаранчевий (акцент, гра, мотивація)
+          DEFAULT: "#FFB84C",
           light: "#FFD68A",
         },
-        background: "#F8F9FA", // Світло-сірий фон (не ріже очі як чистий білий)
-        surface: "#FFFFFF", // Колір карток
+        background: "#F8F9FA",
+        surface: "#FFFFFF",
         text: {
-          main: "#2D3748", // Темно-сірий для основного тексту
-          muted: "#718096", // Для підписів
+          main: "#2D3748",
+          muted: "#718096",
         },
         success: "#48BB78",
         error: "#F56565",

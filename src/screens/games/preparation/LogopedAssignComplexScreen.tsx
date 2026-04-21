@@ -93,7 +93,6 @@ export function LogopedAssignComplexScreen() {
     const now = new Date();
     let age = now.getFullYear() - birth.getFullYear();
 
-    // Перевіряємо, чи вже був день народження в цьому році
     if (
       now.getMonth() < birth.getMonth() ||
       (now.getMonth() === birth.getMonth() && now.getDate() < birth.getDate())
