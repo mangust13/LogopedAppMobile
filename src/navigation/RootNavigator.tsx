@@ -1,4 +1,3 @@
-// src/navigation/RootNavigator.tsx
 import { useEffect } from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
@@ -10,11 +9,12 @@ import { AppTabs } from "./AppTabs";
 
 import { ChildStatsScreen } from "../screens/parent/stats/ChildStatsScreen";
 import { LogopedStudentStatsScreen } from "../screens/logoped/stats/LogopedStudentStatsScreen";
+import { SoundAnalysisScreen } from "../screens/analysis/SoundAnalysisScreen";
+import { AnalysisResultScreen } from "../screens/analysis/AnalysisResultScreen";
 
 import { useAuthStore } from "../store/authStore";
 import { NavigatorScreenParams } from "@react-navigation/native";
 import { AppTabsParamList } from "./AppTabs";
-import { SoundAnalysisScreen } from "../screens/analysis/SoundAnalysisScreen";
 
 export type RootStackParamList = {
   Splash: undefined;
@@ -22,6 +22,7 @@ export type RootStackParamList = {
   Auth: undefined;
   ChildProgress: { childId: number; childName: string };
   SoundAnalysis: undefined;
+  AnalysisResult: { problemSounds: string[]; groupLabel: string };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -91,6 +92,10 @@ export function RootNavigator() {
             <Stack.Screen
               name="SoundAnalysis"
               component={SoundAnalysisScreen}
+            />
+            <Stack.Screen
+              name="AnalysisResult"
+              component={AnalysisResultScreen}
             />
           </>
         )}

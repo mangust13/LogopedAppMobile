@@ -2,7 +2,7 @@
 import { View, Text } from "react-native";
 import { Card } from "../../../../shared/ui/Card";
 import { cn } from "../../../../shared/utils/cn";
-import { TrendPointDto } from "../../../../api/types/progress";
+import { TrendPointDto } from "../../../../api/progressApi";
 
 type Props = {
   data: TrendPointDto[];

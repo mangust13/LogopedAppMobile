@@ -1,7 +1,7 @@
 // src\screens\logoped\children\components\TrendChart.tsx
 
 import { View, StyleSheet } from "react-native";
-import { TrendPointDto } from "../../../../api/types/progress";
+import { TrendPointDto } from "../../../../api/progressApi";
 
 export function TrendChart({ data }: { data: TrendPointDto[] }) {
   const max = Math.max(...data.map((d) => d.value), 100);

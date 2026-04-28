@@ -18,8 +18,7 @@ import type { GamesStackParamList } from "../../../navigation/games/GamesStack";
 import { Button } from "../../../shared/ui/Button";
 import { ENV } from "../../../config/env";
 import { BackHeader } from "../../../shared/ui/BackHeader";
-import { exercisesApi } from "../../../api/exercisesApi";
-import { ExerciseDto } from "../../../api/types/exercise";
+import { exercisesApi, ExerciseDto } from "../../../api/exercisesApi";
 
 type RouteProps = RouteProp<GamesStackParamList, "PreparationExerciseDetail">;
 

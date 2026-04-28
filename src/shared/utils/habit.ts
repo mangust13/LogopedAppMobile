@@ -1,5 +1,5 @@
 // src/shared/utils/habit.ts
-import { ProgressAttemptDto } from "../../api/types/progress";
+import { ProgressAttemptDto } from "../../api/progressApi";
 
 export function buildHabit(attempts: ProgressAttemptDto[], days = 7) {
   const today = new Date();

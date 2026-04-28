@@ -45,7 +45,6 @@ export type GamesStackParamList = {
   SwipeGame: { sound: string };
   MatchingGame: { sound: string };
   ClassificationGame: { sound: string };
-  DifferentiationList: undefined;
 };
 
 type Props = {

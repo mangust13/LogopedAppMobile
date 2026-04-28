@@ -4,12 +4,15 @@ import { useEffect, useState } from "react";
 import { FlatList, View, ActivityIndicator, Alert, Text } from "react-native";
 import { Screen } from "../../../shared/ui/Screen";
 import { logopedApi } from "../../../api/logopedApi";
-import { ChildDto } from "../../../api/types/child";
+import { ChildDto } from "../../../api/childrenApi";
 import { ChildRow } from "./components/ChildRow";
 import ScreenHeader from "../../../shared/ui/ScreenHeader";
+import { EditProblemSoundsModal } from "./components/EditProblemSoundsModal";
 
 export function LogopedChildrenScreen() {
   const [children, setChildren] = useState<ChildDto[]>([]);
+  const [selectedChildForEdit, setSelectedChildForEdit] =
+    useState<ChildDto | null>(null);
   const [loading, setLoading] = useState(true);
 
   const loadChildren = async () => {
@@ -55,8 +58,22 @@ export function LogopedChildrenScreen() {
             <Text className="text-gray-400">У вас поки немає учнів</Text>
           </View>
         }
-        renderItem={({ item }) => <ChildRow child={item} />}
+        renderItem={({ item }) => (
+          <ChildRow
+            child={item}
+            onEditProblemSounds={setSelectedChildForEdit}
+          />
+        )}
       />
+
+      {selectedChildForEdit && (
+        <EditProblemSoundsModal
+          child={selectedChildForEdit}
+          visible={!!selectedChildForEdit}
+          onClose={() => setSelectedChildForEdit(null)}
+          onUpdated={loadChildren}
+        />
+      )}
     </Screen>
   );
 }

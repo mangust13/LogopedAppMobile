@@ -4,7 +4,7 @@ import {
   ProgressAttemptDto,
   ProgressSummaryDto,
   TrendPointDto,
-} from "../api/types/progress";
+} from "../api/progressApi";
 
 type UseProgressResult = {
   summary: ProgressSummaryDto | null;

@@ -1,4 +1,4 @@
-import { View, Text, FlatList, TouchableOpacity } from "react-native";
+import { View, Text, TouchableOpacity, ScrollView } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useState } from "react";
 
@@ -15,13 +15,6 @@ type AttentionItem = {
   childName: string;
   reason: string;
   level: AttentionLevel;
-};
-
-type ActivityItem = {
-  id: string;
-  childName: string;
-  action: string;
-  time: string;
 };
 
 export function HomeLogopedScreen() {
@@ -54,21 +47,6 @@ export function HomeLogopedScreen() {
     },
   ]);
 
-  const recentActivities: ActivityItem[] = [
-    {
-      id: "1",
-      childName: "Марко",
-      action: "Автоматизація /с/",
-      time: "10 хв тому",
-    },
-    {
-      id: "2",
-      childName: "Софія",
-      action: "Пропущено заняття",
-      time: "Вчора",
-    },
-  ];
-
   const renderAttentionItem = (item: AttentionItem) => {
     return (
       <View
@@ -85,6 +63,7 @@ export function HomeLogopedScreen() {
             <Text className="font-bold text-text-main">{item.childName}</Text>
             <PriorityBadge level={item.level} />
           </View>
+
           <Text className="text-xs text-text-muted">{item.reason}</Text>
         </View>
 
@@ -98,6 +77,7 @@ export function HomeLogopedScreen() {
   const Stat = ({ label, value }: { label: string; value: any }) => (
     <View className="items-center flex-1">
       <Text className="text-2xl font-bold text-primary mb-1">{value}</Text>
+
       <Text className="text-xs text-text-muted uppercase font-bold tracking-wider text-center">
         {label}
       </Text>
@@ -108,76 +88,56 @@ export function HomeLogopedScreen() {
     <Screen>
       <ScreenHeader title="Головна" center />
 
-      <FlatList
+      <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
           paddingHorizontal: 24,
           paddingBottom: 100,
           gap: 20,
         }}
-        ListHeaderComponent={
-          <View className="gap-5">
-            <Card>
-              <Text className="text-lg font-bold mb-4 text-text-main">
-                Сьогодні 📅
-              </Text>
-              <View className="flex-row justify-between divide-x divide-gray-100">
-                <Stat label="Занять" value={todayStats.sessionsToday} />
-                <Stat label="Учнів" value={todayStats.activeChildren} />
-                <Stat label="Точність" value={`${todayStats.avgAccuracy}%`} />
-              </View>
-            </Card>
+      >
+        <Card>
+          <Text className="text-lg font-bold mb-4 text-text-main">
+            Сьогодні 📅
+          </Text>
 
-            <Card>
-              <Text className="text-lg font-bold mb-3 text-text-main">
-                Потребують уваги ⚠️
-              </Text>
-              <View>
-                {needAttention.map((item) => renderAttentionItem(item))}
-              </View>
-            </Card>
-
-            <View>
-              <Text className="text-lg font-bold mb-3 text-text-main">
-                Швидкі дії
-              </Text>
-              <View className="flex-row gap-3">
-                <Button
-                  title="Всі учні"
-                  variant="secondary"
-                  className="flex-1"
-                  onPress={() => navigation.navigate("Children")}
-                />
-                <Button
-                  title="Звіти"
-                  variant="outline"
-                  className="flex-1"
-                  onPress={() => navigation.navigate("Progress")}
-                />
-              </View>
-            </View>
-
-            <Text className="text-lg font-bold mt-2 text-text-main">
-              Остання активність
-            </Text>
+          <View className="flex-row justify-between divide-x divide-gray-100">
+            <Stat label="Занять" value={todayStats.sessionsToday} />
+            <Stat label="Учнів" value={todayStats.activeChildren} />
+            <Stat label="Точність" value={`${todayStats.avgAccuracy}%`} />
           </View>
-        }
-        data={recentActivities}
-        keyExtractor={(i) => i.id}
-        renderItem={({ item }) => (
-          <View className="flex-row justify-between items-center py-3 border-b border-gray-100">
-            <View>
-              <Text className="font-bold text-text-main text-base">
-                {item.childName}
-              </Text>
-              <Text className="text-text-muted text-sm">{item.action}</Text>
-            </View>
-            <Text className="text-xs text-text-muted bg-gray-50 px-2 py-1 rounded-md">
-              {item.time}
-            </Text>
+        </Card>
+
+        <Card>
+          <Text className="text-lg font-bold mb-3 text-text-main">
+            Потребують уваги ⚠️
+          </Text>
+
+          <View>{needAttention.map((item) => renderAttentionItem(item))}</View>
+        </Card>
+
+        <View>
+          <Text className="text-lg font-bold mb-3 text-text-main">
+            Швидкі дії
+          </Text>
+
+          <View className="flex-row gap-3">
+            <Button
+              title="Всі учні"
+              variant="secondary"
+              className="flex-1"
+              onPress={() => navigation.navigate("Children")}
+            />
+
+            <Button
+              title="Звіти"
+              variant="outline"
+              className="flex-1"
+              onPress={() => navigation.navigate("Progress")}
+            />
           </View>
-        )}
-      />
+        </View>
+      </ScrollView>
     </Screen>
   );
 }

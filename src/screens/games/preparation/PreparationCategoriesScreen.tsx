@@ -13,11 +13,10 @@ import { Ionicons } from "@expo/vector-icons";
 import { Screen } from "../../../shared/ui/Screen";
 import type { GamesStackParamList } from "../../../navigation/games/GamesStack";
 import { Card } from "../../../shared/ui/Card";
-import { exercisesApi } from "../../../api/exercisesApi";
+import { exercisesApi, ComplexDto } from "../../../api/exercisesApi";
 import { BackHeader } from "../../../shared/ui/BackHeader";
 import { getExercisesText } from "../../../shared/utils/getExercisesText";
 import { useAuthStore } from "../../../store/authStore";
-import { ComplexDto } from "../../../api/types/exercise";
 
 type NavProp = NativeStackNavigationProp<
   GamesStackParamList,

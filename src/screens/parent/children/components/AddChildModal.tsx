@@ -12,6 +12,8 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import { childrenApi } from "../../../../api/childrenApi";
 import { Button } from "../../../../shared/ui/Button";
 import { Input } from "../../../../shared/ui/Input";
+import { formatProblemSounds } from "../../../../shared/constants/sounds";
+import { ProblemSoundsPicker } from "../../../../shared/ui/ProblemSoundsPicker";
 
 type Props = {
   visible: boolean;
@@ -23,7 +25,7 @@ export function AddChildModal({ visible, onClose, onCreated }: Props) {
   const [name, setName] = useState("");
   const [birthDate, setBirthDate] = useState<Date | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [problemSounds, setProblemSounds] = useState("");
+  const [problemSounds, setProblemSounds] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
 
   const onSubmit = async () => {
@@ -35,10 +37,7 @@ export function AddChildModal({ visible, onClose, onCreated }: Props) {
       await childrenApi.createChild({
         name,
         birthDate: birthDate.toISOString(),
-        problemSounds: problemSounds
-          .split(",")
-          .map((s) => s.trim())
-          .join(","),
+        problemSounds: formatProblemSounds(problemSounds),
       });
 
       onCreated(); // ✅ Оновлюємо список дітей
@@ -46,7 +45,7 @@ export function AddChildModal({ visible, onClose, onCreated }: Props) {
 
       setName("");
       setBirthDate(null);
-      setProblemSounds("");
+      setProblemSounds([]);
     } catch {
       Alert.alert("Помилка", "Не вдалося створити профіль");
     } finally {
@@ -106,11 +105,9 @@ export function AddChildModal({ visible, onClose, onCreated }: Props) {
             />
           )}
 
-          <Input
-            label="Проблемні звуки"
-            placeholder="Наприклад: Р, Л, С (через кому)"
+          <ProblemSoundsPicker
             value={problemSounds}
-            onChangeText={setProblemSounds}
+            onChange={setProblemSounds}
           />
         </View>
 

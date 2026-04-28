@@ -1,5 +1,13 @@
 import { http } from "./http";
-import { ChildDto } from "./types/child";
+
+export type ChildDto = {
+  id: number;
+  name: string;
+  birthDate: string;
+  problemSounds?: string | null;
+  logopedEmail?: string | null;
+  avatarUrl?: string | null;
+};
 
 export type CreateChildRequest = {
   name: string;

@@ -97,19 +97,7 @@ export function ParentProfileScreen() {
             value={selectedChild?.name ?? "Не обрано"}
           />
           <ProfileItem icon="mail" label="Email" value={email ?? ""} />
-        </Card>
-
-        <Card className="p-0 px-4">
-          <Text className="text-sm font-bold text-text-muted mt-4 mb-2 uppercase">
-            Параметри занять (Демо)
-          </Text>
           <ProfileItem icon="alarm" label="Нагадування" value="19:00" />
-          <ProfileItem icon="timer" label="Тривалість сесії" value="10 хв" />
-          <ProfileItem
-            icon="speedometer"
-            label="Темп навчання"
-            value="М'який"
-          />
         </Card>
 
         <Card className="p-0 px-4">

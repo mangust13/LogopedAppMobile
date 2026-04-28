@@ -1,6 +1,6 @@
 // src\screens\logoped\children\components\AttemptRow.tsx
 import { View, Text, StyleSheet } from "react-native";
-import { ProgressAttemptDto } from "../../../../api/types/progress";
+import { ProgressAttemptDto } from "../../../../api/progressApi";
 
 export function AttemptRow({ item }: { item: ProgressAttemptDto }) {
   return (

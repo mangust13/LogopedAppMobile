@@ -17,7 +17,7 @@ import { Button } from "../../../shared/ui/Button";
 import { BackHeader } from "../../../shared/ui/BackHeader";
 import { exercisesApi } from "../../../api/exercisesApi";
 import { logopedApi } from "../../../api/logopedApi";
-import { ChildDto } from "../../../api/types/child";
+import { ChildDto } from "../../../api/childrenApi";
 import type { GamesStackParamList } from "../../../navigation/games/GamesStack";
 import { ENV } from "../../../config/env";
 

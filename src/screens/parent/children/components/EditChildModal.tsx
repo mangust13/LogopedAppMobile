@@ -13,9 +13,14 @@ import {
   childrenApi,
   UpdateChildProfileDto,
 } from "../../../../api/childrenApi";
-import { ChildDto } from "../../../../api/types/child";
+import { ChildDto } from "../../../../api/childrenApi";
 import { Button } from "../../../../shared/ui/Button";
 import { Input } from "../../../../shared/ui/Input";
+import {
+  formatProblemSounds,
+  parseProblemSounds,
+} from "../../../../shared/constants/sounds";
+import { ProblemSoundsPicker } from "../../../../shared/ui/ProblemSoundsPicker";
 
 type Props = {
   child: ChildDto & { problemSounds?: string | null };
@@ -27,7 +32,9 @@ type Props = {
 export function EditChildModal({ child, visible, onClose, onUpdated }: Props) {
   const [name, setName] = useState(child.name);
   const [birthDate, setBirthDate] = useState(new Date(child.birthDate));
-  const [problemSounds, setProblemSounds] = useState(child.problemSounds || "");
+  const [problemSounds, setProblemSounds] = useState<string[]>(
+    parseProblemSounds(child.problemSounds),
+  );
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -42,12 +49,8 @@ export function EditChildModal({ child, visible, onClose, onUpdated }: Props) {
       const dto: UpdateChildProfileDto = {
         name,
         birthDate: birthDate.toISOString(),
-        problemSounds: problemSounds
-          ? problemSounds
-              .split(",")
-              .map((s) => s.trim())
-              .join(",")
-          : null,
+        problemSounds:
+          problemSounds.length > 0 ? formatProblemSounds(problemSounds) : null,
       };
 
       await childrenApi.updateChild(child.id, dto);
@@ -101,11 +104,9 @@ export function EditChildModal({ child, visible, onClose, onUpdated }: Props) {
             />
           )}
 
-          <Input
-            label="Проблемні звуки"
+          <ProblemSoundsPicker
             value={problemSounds}
-            onChangeText={setProblemSounds}
-            placeholder="Р, Л, С..."
+            onChange={setProblemSounds}
           />
         </View>
 

@@ -15,8 +15,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Screen } from "../../../shared/ui/Screen";
 import { Button } from "../../../shared/ui/Button";
 import { BackHeader } from "../../../shared/ui/BackHeader";
-import { exercisesApi } from "../../../api/exercisesApi";
-import { ExerciseDto } from "../../../api/types/exercise";
+import { exercisesApi, ExerciseDto } from "../../../api/exercisesApi";
 import type { GamesStackParamList } from "../../../navigation/games/GamesStack";
 
 type NavProp = NativeStackNavigationProp<

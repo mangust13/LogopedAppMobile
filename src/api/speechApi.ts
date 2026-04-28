@@ -1,4 +1,4 @@
-import { http } from "../http";
+import { http } from "./http";
 
 export type AnalyzeResponse = {
   recognized_text: string;

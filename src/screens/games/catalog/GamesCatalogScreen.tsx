@@ -46,23 +46,15 @@ export function GamesCatalogScreen({ navigation, route }: Props) {
           onPress={() => navigation.navigate("AutomationList")}
         />
 
-        <CategoryCard
-          title="Диференціація звуків"
-          description="Вправи на розрізнення схожих звуків (С-Ш, Р-Л)."
-          color="purple"
-          icon="ear-outline"
-          onPress={() => navigation.navigate("DifferentiationList")}
-        />
-
         <View className="mt-4 opacity-50">
           <Text className="text-center text-gray-400 text-sm mb-2">
             Незабаром
           </Text>
           <CategoryCard
-            title="Розвиток мовлення"
-            description="Сюжетні ігри для побудови зв'язного мовлення."
-            color="green"
-            icon="chatbubbles-outline"
+            title="Диференціація звуків"
+            description="Вправи на розрізнення схожих звуків (С-Ш, Р-Л)."
+            color="purple"
+            icon="ear-outline"
             onPress={() => {}}
           />
         </View>

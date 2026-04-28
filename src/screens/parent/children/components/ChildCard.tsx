@@ -1,11 +1,12 @@
 //src/screens/parent/children/components/ChildCard.tsx
 import { Text, View, Alert, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { ChildDto } from "../../../../api/types/child";
+import { ChildDto } from "../../../../api/childrenApi";
 import { calcAge } from "../../../../shared/utils/age";
 import { Card } from "../../../../shared/ui/Card";
 import { Button } from "../../../../shared/ui/Button";
 import { cn } from "../../../../shared/utils/cn";
+import { parseProblemSounds } from "../../../../shared/constants/sounds";
 
 type Props = {
   child: ChildDto & { problemSounds?: string | null };
@@ -13,7 +14,6 @@ type Props = {
   onEditPress: (child: ChildDto) => void;
   onDeletePress: (childId: number) => void;
   onViewProgress: () => void;
-  onUpdated?: () => void;
 };
 
 export function ChildCard({
@@ -22,13 +22,9 @@ export function ChildCard({
   onEditPress,
   onDeletePress,
   onViewProgress,
-  onUpdated,
 }: Props) {
   const hasLogoped = !!child.logopedEmail;
-
-  const handleUpdated = () => {
-    if (onUpdated) onUpdated();
-  };
+  const problemSounds = parseProblemSounds(child.problemSounds);
 
   const handleDelete = () => {
     Alert.alert(
@@ -84,28 +80,50 @@ export function ChildCard({
       </View>
 
       <View className="mb-4">
-        {child.problemSounds && child.problemSounds.length > 0 && (
-          <View className="mb-4">
-            {child.problemSounds && child.problemSounds.length > 0 && (
-              <View className="flex-row flex-wrap items-center gap-2">
-                <Text className="text-xs text-text-muted ml-1">
-                  Проблемні звуки:
-                </Text>
-
-                {child.problemSounds.split(",").map((sound, index) => (
-                  <View
-                    key={index}
-                    className="bg-red-50 px-2 py-0.5 rounded border border-red-100"
-                  >
-                    <Text className="text-red-600 font-bold text-xs">
-                      {sound.trim()}
-                    </Text>
-                  </View>
-                ))}
-              </View>
+        <View
+          className={cn(
+            "mb-4 border rounded-lg px-3 py-2",
+            problemSounds.length > 0
+              ? "bg-red-50/60 border-red-100"
+              : "bg-gray-50 border-gray-100",
+          )}
+        >
+          <Text
+            className={cn(
+              "text-xs font-semibold mb-2",
+              problemSounds.length > 0 ? "text-red-700" : "text-text-muted",
             )}
-          </View>
-        )}
+          >
+            Проблемні звуки:
+          </Text>
+
+          {problemSounds.length > 0 ? (
+            <View className="flex-row flex-wrap gap-2">
+              {problemSounds.map((sound, index) => (
+                <View
+                  key={`${sound}-${index}`}
+                  className="bg-white px-2.5 py-1 rounded-full border border-red-100"
+                >
+                  <Text className="text-red-600 font-bold text-xs">
+                    {sound.toUpperCase()}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          ) : (
+            <View className="flex-row items-center">
+              <Ionicons
+                name="checkmark-circle-outline"
+                size={16}
+                color="#16A34A"
+                style={{ marginRight: 6 }}
+              />
+              <Text className="text-xs font-medium text-green-700">
+                Не вказано
+              </Text>
+            </View>
+          )}
+        </View>
 
         <View
           className={cn(

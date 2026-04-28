@@ -23,8 +23,11 @@ import { Button } from "../../../shared/ui/Button";
 import { BackHeader } from "../../../shared/ui/BackHeader";
 import type { GamesStackParamList } from "../../../navigation/games/GamesStack";
 import { useAuthStore } from "../../../store/authStore";
-import { exercisesApi } from "../../../api/exercisesApi";
-import { ExerciseDto, ExerciseTagDto } from "../../../api/types/exercise";
+import {
+  exercisesApi,
+  ExerciseDto,
+  ExerciseTagDto,
+} from "../../../api/exercisesApi";
 import { ENV } from "../../../config/env";
 import { cn } from "../../../shared/utils/cn";
 

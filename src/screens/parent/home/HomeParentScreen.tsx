@@ -3,8 +3,7 @@ import { View, Text, ScrollView, RefreshControl } from "react-native";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { useCallback, useState } from "react";
 
-import { childrenApi } from "../../../api/childrenApi";
-import { ChildDto } from "../../../api/types/child";
+import { childrenApi, ChildDto } from "../../../api/childrenApi";
 import { useChildStore } from "../../../store/childStore";
 import { useProgress } from "../../../hooks/useProgress";
 
@@ -143,26 +142,19 @@ export function HomeParentScreen() {
           <HabitTracker streak={habit.streak} days={habit.days} />
 
           <Card className="border-l-4 border-l-primary">
-            <Text className="text-lg font-bold mb-2">План на сьогодні 📝</Text>
-            <View className="space-y-2 mb-4">
-              <Text className="text-text-main text-base">
-                • Артикуляційна гімнастика
-              </Text>
-              <Text className="text-text-main text-base">
-                • Гра "Поймай звук"
-              </Text>
-            </View>
+            <Text className="text-lg font-bold mb-4">План на сьогодні 📝</Text>
 
             <Button
               title="🎙 Аналіз вимови"
               variant="outline"
               onPress={() => navigation.navigate("SoundAnalysis")}
-              className="h-12 mt-2"
+              className="h-12"
             />
+
             <Button
               title="Почати заняття"
               onPress={() => navigation.navigate("Games")}
-              className="h-12"
+              className="h-12 mt-3"
             />
           </Card>
 

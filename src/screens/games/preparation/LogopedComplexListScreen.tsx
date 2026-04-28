@@ -6,8 +6,7 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
 import { Screen } from "../../../shared/ui/Screen";
 import { BackHeader } from "../../../shared/ui/BackHeader";
-import { exercisesApi } from "../../../api/exercisesApi";
-import { ComplexDto } from "../../../api/types/exercise";
+import { exercisesApi, ComplexDto } from "../../../api/exercisesApi";
 import type { GamesStackParamList } from "../../../navigation/games/GamesStack";
 
 type NavProp = NativeStackNavigationProp<

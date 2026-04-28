@@ -4,18 +4,9 @@ import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { Screen } from "../../../shared/ui/Screen";
 import { BackHeader } from "../../../shared/ui/BackHeader";
 import type { GamesStackParamList } from "../../../navigation/games/GamesStack";
+import { UKRAINIAN_SOUND_OPTIONS } from "../../../shared/constants/sounds";
 
 type Props = NativeStackScreenProps<GamesStackParamList, "AutomationList">;
-
-const ukrainianAlphabet = [
-  { letter: "С", color: "#F8A15F" },
-  { letter: "З", color: "#6FA8DC" },
-  { letter: "Ц", color: "#B6D7A8" },
-  { letter: "Ж", color: "#6FA8DC" },
-  { letter: "Ш", color: "#D5A6BD" },
-  { letter: "Л", color: "#B6D7A8" },
-  { letter: "Р", color: "#F47C7C" },
-];
 
 export function AutomationListScreen({ navigation }: Props) {
   return (
@@ -32,7 +23,7 @@ export function AutomationListScreen({ navigation }: Props) {
         className="px-6 py-6"
       >
         <View className="flex-1 flex-row flex-wrap justify-center items-center gap-4">
-          {ukrainianAlphabet.map((item, index) => (
+          {UKRAINIAN_SOUND_OPTIONS.map((item, index) => (
             <TouchableOpacity
               key={`${item.letter}-${index}`}
               onPress={() =>

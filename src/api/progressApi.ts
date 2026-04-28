@@ -1,10 +1,25 @@
 // src/api/progressApi.ts
 import { http } from "./http";
-import {
-  ProgressSummaryDto,
-  ProgressAttemptDto,
-  TrendPointDto,
-} from "./types/progress";
+
+export type ProgressSummaryDto = {
+  childId: number;
+  totalAttempts: number;
+  avgAccuracy: number;
+  lastActivityAt?: string | null;
+};
+
+export type ProgressAttemptDto = {
+  id: number;
+  exerciseId: number;
+  exerciseName: string;
+  accuracy?: number | null;
+  createdAt: string;
+};
+
+export type TrendPointDto = {
+  date: string;
+  value: number;
+};
 
 export const progressApi = {
   async getSummary(childId: number) {

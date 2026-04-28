@@ -7,8 +7,7 @@ import { Screen } from "../../../shared/ui/Screen";
 import { Button } from "../../../shared/ui/Button";
 import { Text } from "react-native";
 
-import { childrenApi } from "../../../api/childrenApi";
-import { ChildDto } from "../../../api/types/child";
+import { childrenApi, ChildDto } from "../../../api/childrenApi";
 import { ChildCard } from "./components/ChildCard";
 import { AddChildModal } from "./components/AddChildModal";
 import { useChildStore } from "../../../store/childStore";

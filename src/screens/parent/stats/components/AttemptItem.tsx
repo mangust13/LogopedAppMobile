@@ -1,7 +1,7 @@
 import { View, Text } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { cn } from "../../../../shared/utils/cn";
-import { ProgressAttemptDto } from "../../../../api/types/progress";
+import { ProgressAttemptDto } from "../../../../api/progressApi";
 
 type Props = {
   item: ProgressAttemptDto;

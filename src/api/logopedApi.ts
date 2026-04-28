@@ -1,5 +1,5 @@
 import { http } from "./http";
-import { ChildDto } from "./types/child";
+import { ChildDto, UpdateChildProfileDto } from "./childrenApi";
 
 export type LogopedDto = {
   id: string;
@@ -16,5 +16,9 @@ export const logopedApi = {
   getLogopedChildren: async () => {
     const res = await http.get<ChildDto[]>("/users/logoped/children");
     return res.data;
+  },
+
+  updateLogopedChild: async (childId: number, dto: UpdateChildProfileDto) => {
+    await http.put(`/users/logoped/children/${childId}`, dto);
   },
 };

@@ -1,16 +1,100 @@
-// api/exercisesApi.ts - додаємо метод assignComplexToChildren
+// api/exercisesApi.ts
 import { http } from "./http";
-import {
-  ExerciseDto,
-  ExerciseTagDto,
-  ComplexDto,
-  CreateComplexRequest,
-  ComplexAssignmentDto,
-} from "./types/exercise";
+
+export type ExerciseDto = {
+  id: number;
+  title: string;
+  description: string;
+  videoPath: string;
+  iconName: string;
+  tags: ExerciseTagDto[];
+};
+
+export type ExerciseTagDto = {
+  id: number;
+  name: string;
+  category: string;
+  displayName: string;
+};
+
+export type ExerciseMainCategoryDto = {
+  id: number;
+  name: string;
+  displayName: string;
+  folderName: string;
+  exerciseCount: number;
+};
+
+export interface ComplexDto {
+  id: number;
+  name: string;
+  displayName: string;
+  description: string;
+  logopedId?: number;
+  isDefault: boolean;
+  createdAt: string;
+  isActive: boolean;
+  exerciseCount: number;
+  exercises: ExerciseDto[];
+}
+
+export interface CreateComplexRequest {
+  name: string;
+  description: string;
+  exerciseIds: number[];
+}
+
+export interface ComplexAssignmentDto {
+  id: number;
+  complexId: number;
+  complexName: string;
+  childId: number;
+  assignedAt: string;
+  completedAt?: string;
+  isActive: boolean;
+}
 
 export const exercisesApi = {
   getAll: async () => {
     const res = await http.get<ExerciseDto[]>("/exercises/all");
+    return res.data;
+  },
+
+  getBySound: async (sound: string): Promise<ExerciseDto[]> => {
+    const SOUND_TO_TAG: Record<string, string> = {
+      а: "a",
+      б: "b",
+      в: "v",
+      г: "h",
+      ґ: "g",
+      д: "d",
+      дж: "dzh",
+      дз: "dz",
+      е: "e",
+      ж: "zh",
+      з: "z",
+      и: "y",
+      і: "i",
+      к: "k",
+      л: "l",
+      м: "m",
+      н: "n",
+      о: "o",
+      п: "p",
+      р: "r",
+      с: "s",
+      т: "t",
+      у: "u",
+      ф: "f",
+      х: "kh",
+      ц: "ts",
+      ч: "ch",
+      ш: "sh",
+    };
+    const tagCode = SOUND_TO_TAG[sound.toLowerCase()];
+    const res = await http.get<ExerciseDto[]>("/exercises/all", {
+      params: tagCode ? { sound: tagCode } : undefined,
+    });
     return res.data;
   },
 

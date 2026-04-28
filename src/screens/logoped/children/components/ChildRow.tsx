@@ -5,9 +5,10 @@ import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
 import { RootStackParamList } from "../../../../navigation/RootNavigator";
-import { ChildDto } from "../../../../api/types/child";
+import { ChildDto } from "../../../../api/childrenApi";
 import { Card } from "../../../../shared/ui/Card";
 import { calcAge } from "../../../../shared/utils/age";
+import { parseProblemSounds } from "../../../../shared/constants/sounds";
 
 type NavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -16,10 +17,12 @@ type NavigationProp = NativeStackNavigationProp<
 
 type Props = {
   child: ChildDto;
+  onEditProblemSounds: (child: ChildDto) => void;
 };
 
-export function ChildRow({ child }: Props) {
+export function ChildRow({ child, onEditProblemSounds }: Props) {
   const navigation = useNavigation<NavigationProp>();
+  const problemSounds = parseProblemSounds(child.problemSounds);
 
   return (
     <TouchableOpacity
@@ -49,13 +52,13 @@ export function ChildRow({ child }: Props) {
             </Text>
           </View>
 
-          {child.problemSounds && (
+          {problemSounds.length > 0 && (
             <View className="flex-row flex-wrap items-center gap-1 mt-1">
               <Text className="text-xs text-text-muted mr-1">
                 Проблемні звуки:
               </Text>
 
-              {child.problemSounds.split(",").map((sound, i) => (
+              {problemSounds.map((sound, i) => (
                 <View
                   key={i}
                   className="bg-red-50 px-1.5 py-0.5 rounded border border-red-100"
@@ -69,7 +72,19 @@ export function ChildRow({ child }: Props) {
           )}
         </View>
 
-        <Ionicons name="chevron-forward" size={20} color="#CBD5E1" />
+        <View className="flex-row items-center gap-1">
+          <TouchableOpacity
+            onPress={(event) => {
+              event.stopPropagation();
+              onEditProblemSounds(child);
+            }}
+            className="p-2 rounded-full bg-gray-50"
+          >
+            <Ionicons name="pencil-outline" size={18} color="#6B7280" />
+          </TouchableOpacity>
+
+          <Ionicons name="chevron-forward" size={20} color="#CBD5E1" />
+        </View>
       </Card>
     </TouchableOpacity>
   );
