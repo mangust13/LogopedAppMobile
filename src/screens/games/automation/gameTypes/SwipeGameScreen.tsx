@@ -6,15 +6,23 @@ import {
   Image,
   Dimensions,
   Animated,
+  ActivityIndicator,
 } from "react-native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { Screen } from "../../../../shared/ui/Screen";
-import { GamesStackParamList } from "../../../../navigation/games/GamesStack";
+import type { GamesStackParamList } from "../../../../navigation/games/GamesStack";
 import { Ionicons } from "@expo/vector-icons";
-import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import {
+  Gesture,
+  GestureDetector,
+  GestureHandlerRootView,
+} from "react-native-gesture-handler";
 import { BackHeader } from "../../../../shared/ui/BackHeader";
 import { VoiceInstruction } from "../../../../shared/ui/VoiceInstruction";
-import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { GameProgressBar } from "../../../../shared/ui/GameProgressBar";
+import { InstructionButton } from "../../../../shared/ui/InstructionButton";
+import { useSessionInstruction } from "../../../../hooks/useSessionInstruction";
+import { soundCardsApi } from "../../../../api/soundCardsApi";
 
 type Props = NativeStackScreenProps<GamesStackParamList, "SwipeGame">;
 type FeedbackType = "correct" | "incorrect" | null;
@@ -22,7 +30,8 @@ type FeedbackType = "correct" | "incorrect" | null;
 type SwipeItem = {
   id: number;
   word: string;
-  image: string;
+  imageUrl: string;
+  positionCode: number;
 };
 
 const { width } = Dimensions.get("window");
@@ -34,12 +43,15 @@ export function SwipeGameScreen({ navigation, route }: Props) {
   const [deck, setDeck] = useState<SwipeItem[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [completed, setCompleted] = useState(false);
-  const [showInstruction, setShowInstruction] = useState(true);
   const [showFeedback, setShowFeedback] = useState<FeedbackType>(null);
   const [correctCount, setCorrectCount] = useState(0);
   const [incorrectCount, setIncorrectCount] = useState(0);
   const [wrongItems, setWrongItems] = useState<SwipeItem[]>([]);
   const [retryMode, setRetryMode] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const { showInstruction, openInstruction, closeInstruction } =
+    useSessionInstruction("SwipeGame");
 
   const position = useRef(new Animated.ValueXY()).current;
 
@@ -49,39 +61,50 @@ export function SwipeGameScreen({ navigation, route }: Props) {
     extrapolate: "clamp",
   });
 
-  const allImages: SwipeItem[] = [
-    { id: 1, word: "Абрикос", image: "https://via.placeholder.com/400" },
-    { id: 2, word: "Ананас", image: "https://via.placeholder.com/400" },
-    { id: 3, word: "Автобус", image: "https://via.placeholder.com/400" },
-    { id: 4, word: "Акула", image: "https://via.placeholder.com/400" },
-    { id: 5, word: "Банан", image: "https://via.placeholder.com/400" },
-    { id: 6, word: "Кіт", image: "https://via.placeholder.com/400" },
-    { id: 7, word: "Лимон", image: "https://via.placeholder.com/400" },
-    { id: 8, word: "Мишка", image: "https://via.placeholder.com/400" },
-  ];
-
-  const instructionText = `Подивіться на картинку. Якщо слово починається на звук ${sound}, оберіть вправо. Якщо ні — вліво.`;
+  const instructionText = `Подивіться на картинку. Оберіть веселий зелений смайлик або проведіть вправо, щоб відповісти правильно. Оберіть сумний червоний смайлик або проведіть вліво, щоб відповісти неправильно.`;
 
   useEffect(() => {
-    initGame();
+    loadCards();
   }, []);
 
-  const normalizeValue = (value: string) => value.trim().toLowerCase();
+  useEffect(() => {
+    position.setValue({ x: 0, y: 0 });
+  }, [currentIndex]);
 
-  const isMatchBySound = (word: string) =>
-    normalizeValue(word).startsWith(normalizeValue(sound));
+  const orderCards = (array: SwipeItem[]) =>
+    [...array].sort(
+      (a, b) =>
+        a.positionCode - b.positionCode ||
+        a.id - b.id ||
+        a.word.localeCompare(b.word, "uk"),
+    );
 
-  const shuffleArray = (array: SwipeItem[]) => {
-    const newArray = [...array];
-    for (let i = newArray.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+  const preloadImages = (items: SwipeItem[]) => {
+    items.forEach((item) => Image.prefetch(item.imageUrl));
+  };
+
+  const loadCards = async () => {
+    try {
+      setIsLoading(true);
+      const cards = await soundCardsApi.getBySound(sound);
+      const items: SwipeItem[] = cards.map((c) => ({
+        id: c.id,
+        word: c.word,
+        imageUrl: c.imageUrl,
+        positionCode: c.position.code,
+      }));
+      const orderedItems = orderCards(items);
+      preloadImages(orderedItems);
+      setDeck(orderedItems);
+    } catch (e) {
+      console.log("Error loading cards:", e);
+    } finally {
+      setIsLoading(false);
     }
-    return newArray;
   };
 
   const initGame = () => {
-    setDeck(shuffleArray(allImages));
+    loadCards();
     setCurrentIndex(0);
     setCompleted(false);
     setShowFeedback(null);
@@ -89,6 +112,23 @@ export function SwipeGameScreen({ navigation, route }: Props) {
     setIncorrectCount(0);
     setWrongItems([]);
     setRetryMode(false);
+    position.setValue({ x: 0, y: 0 });
+  };
+
+  const retryWrongAnswers = () => {
+    if (wrongItems.length === 0) return;
+
+    const orderedWrongItems = orderCards(wrongItems);
+    preloadImages(orderedWrongItems);
+
+    setDeck(orderedWrongItems);
+    setCurrentIndex(0);
+    setCompleted(false);
+    setShowFeedback(null);
+    setCorrectCount(0);
+    setIncorrectCount(0);
+    setWrongItems([]);
+    setRetryMode(true);
     position.setValue({ x: 0, y: 0 });
   };
 
@@ -100,13 +140,11 @@ export function SwipeGameScreen({ navigation, route }: Props) {
     }).start();
   };
 
-  const handleAnswer = (pickedMatch: boolean, direction: "left" | "right") => {
+  const handleAnswer = (isCorrect: boolean, direction: "left" | "right") => {
     if (completed || showFeedback) return;
 
     const currentItem = deck[currentIndex];
     if (!currentItem) return;
-
-    const isCorrect = pickedMatch === isMatchBySound(currentItem.word);
 
     setShowFeedback(isCorrect ? "correct" : "incorrect");
 
@@ -114,32 +152,34 @@ export function SwipeGameScreen({ navigation, route }: Props) {
       toValue: { x: direction === "right" ? width : -width, y: 0 },
       duration: 250,
       useNativeDriver: true,
-    }).start();
+    }).start(({ finished }) => {
+      if (!finished) return;
 
-    setTimeout(() => {
-      if (isCorrect) {
-        setCorrectCount((p) => p + 1);
-      } else {
-        setIncorrectCount((p) => p + 1);
-        setWrongItems((p) =>
-          p.some((i) => i.id === currentItem.id) ? p : [...p, currentItem],
-        );
-      }
+      setTimeout(() => {
+        if (isCorrect) {
+          setCorrectCount((prev) => prev + 1);
+        } else {
+          setIncorrectCount((prev) => prev + 1);
+          setWrongItems((prev) =>
+            prev.some((item) => item.id === currentItem.id)
+              ? prev
+              : [...prev, currentItem],
+          );
+        }
 
-      const next = currentIndex + 1;
+        const nextIndex = currentIndex + 1;
 
-      if (next < deck.length) {
-        setCurrentIndex(next);
-      } else {
-        setCompleted(true);
-      }
+        if (nextIndex < deck.length) {
+          setCurrentIndex(nextIndex);
+        } else {
+          setCompleted(true);
+        }
 
-      position.setValue({ x: 0, y: 0 });
-      setShowFeedback(null);
-    }, 800);
+        setShowFeedback(null);
+      }, 350);
+    });
   };
 
-  // ✅ NEW GESTURE API (заміна PanGestureHandler)
   const panGesture = Gesture.Pan()
     .onUpdate((e) => {
       if (showFeedback || completed) return;
@@ -163,14 +203,18 @@ export function SwipeGameScreen({ navigation, route }: Props) {
 
     return (
       <Animated.View
+        key={item.id}
         className="w-full h-full rounded-3xl bg-white shadow-lg overflow-hidden"
         style={{
           transform: [{ translateX: position.x }, { rotate }],
         }}
       >
         <Image
-          source={{ uri: item.image }}
-          className="w-full h-4/5 object-cover"
+          key={item.imageUrl}
+          // source={{ uri: item.imageUrl }}
+          source={{ uri: `${item.imageUrl}?t=${Date.now()}` }}
+          className="w-full h-4/5"
+          resizeMode="cover"
         />
         <View className="p-4 items-center justify-center flex-1">
           <Text className="text-3xl font-bold text-gray-800">{item.word}</Text>
@@ -179,11 +223,26 @@ export function SwipeGameScreen({ navigation, route }: Props) {
     );
   };
 
-  const progress = completed
+  const currentProgress = completed
     ? deck.length
     : Math.min(currentIndex + 1, deck.length);
 
-  const progressPercent = deck.length > 0 ? (progress / deck.length) * 100 : 0;
+  if (isLoading) {
+    return (
+      <GestureHandlerRootView className="flex-1">
+        <Screen>
+          <BackHeader
+            subtitle={`Звук ${sound}`}
+            title="Гортай картинки"
+            onBackPress={() => navigation.goBack()}
+          />
+          <View className="flex-1 justify-center items-center">
+            <ActivityIndicator size="large" color="#6C63FF" />
+          </View>
+        </Screen>
+      </GestureHandlerRootView>
+    );
+  }
 
   return (
     <GestureHandlerRootView className="flex-1">
@@ -195,10 +254,7 @@ export function SwipeGameScreen({ navigation, route }: Props) {
         />
 
         {showInstruction && (
-          <VoiceInstruction
-            text={instructionText}
-            onClose={() => setShowInstruction(false)}
-          />
+          <VoiceInstruction text={instructionText} onClose={closeInstruction} />
         )}
 
         {completed ? (
@@ -210,41 +266,120 @@ export function SwipeGameScreen({ navigation, route }: Props) {
               size={80}
               color={wrongItems.length === 0 ? "#4CAF50" : "#F59E0B"}
             />
-
-            <Text className="text-2xl font-bold mt-5 text-center">
+            <Text className="text-2xl font-bold text-gray-800 mt-5 text-center">
               {wrongItems.length === 0
                 ? "Вправу завершено!"
                 : "Раунд завершено!"}
             </Text>
+            <Text className="text-base text-gray-600 mt-3 text-center">
+              Правильно: {correctCount}
+            </Text>
+            <Text className="text-base text-gray-600 mt-1 text-center">
+              Неправильно: {incorrectCount}
+            </Text>
+
+            {wrongItems.length > 0 && (
+              <TouchableOpacity
+                className="bg-orange-500 px-8 py-4 rounded-xl mt-8"
+                onPress={retryWrongAnswers}
+              >
+                <Text className="text-white text-lg font-bold">
+                  Пройти помилки ще раз
+                </Text>
+              </TouchableOpacity>
+            )}
+
+            <TouchableOpacity
+              className="bg-green-500 px-8 py-4 rounded-xl mt-4"
+              onPress={initGame}
+            >
+              <Text className="text-white text-lg font-bold">Почати знову</Text>
+            </TouchableOpacity>
           </View>
         ) : (
-          <View className="flex-1 px-5 pt-5 pb-28 items-center justify-center">
+          <View className="flex-1 px-5 pt-5 pb-24 items-center justify-center">
             <GestureDetector gesture={panGesture}>
               <Animated.View
-                style={{ width: width - 40, height: 420 }}
                 className="items-center justify-center"
+                style={{ width: width - 40, height: 420 }}
               >
                 {renderCard()}
               </Animated.View>
             </GestureDetector>
 
-            {/* buttons */}
-            <View className="flex-row justify-center gap-6 mt-6">
+            <View className="flex-row justify-center gap-10 mt-8">
               <TouchableOpacity
-                className="w-16 h-16 rounded-full bg-red-400 justify-center items-center"
+                className="w-20 h-20 rounded-full bg-red-400 justify-center items-center shadow-lg"
                 onPress={() => handleAnswer(false, "left")}
+                disabled={!!showFeedback}
               >
-                <Ionicons name="sad" size={30} color="#fff" />
+                <Ionicons name="sad" size={34} color="#fff" />
               </TouchableOpacity>
 
               <TouchableOpacity
-                className="w-16 h-16 rounded-full bg-green-500 justify-center items-center"
+                className="w-20 h-20 rounded-full bg-green-500 justify-center items-center shadow-lg"
                 onPress={() => handleAnswer(true, "right")}
+                disabled={!!showFeedback}
               >
-                <Ionicons name="happy" size={30} color="#fff" />
+                <Ionicons name="happy" size={34} color="#fff" />
               </TouchableOpacity>
             </View>
+
+            {showFeedback && (
+              <View className="absolute inset-0 items-center justify-center px-8">
+                <View
+                  className={`w-full rounded-[28px] px-6 py-7 items-center shadow-lg ${
+                    showFeedback === "correct" ? "bg-green-50" : "bg-red-50"
+                  }`}
+                >
+                  <View
+                    className={`w-20 h-20 rounded-full items-center justify-center ${
+                      showFeedback === "correct" ? "bg-green-100" : "bg-red-100"
+                    }`}
+                  >
+                    <Ionicons
+                      name={
+                        showFeedback === "correct"
+                          ? "checkmark-circle"
+                          : "close-circle"
+                      }
+                      size={52}
+                      color={showFeedback === "correct" ? "#16A34A" : "#DC2626"}
+                    />
+                  </View>
+
+                  <Text
+                    className={`text-2xl font-extrabold mt-4 ${
+                      showFeedback === "correct"
+                        ? "text-green-700"
+                        : "text-red-700"
+                    }`}
+                  >
+                    {showFeedback === "correct"
+                      ? "Правильно, молодець!"
+                      : "Неправильно!"}
+                  </Text>
+                </View>
+              </View>
+            )}
+
+            <GameProgressBar
+              current={currentProgress}
+              total={deck.length}
+              correct={correctCount}
+              incorrect={incorrectCount}
+              onRestart={initGame}
+              label={retryMode ? "Повтор помилок" : "Прогрес"}
+            />
           </View>
+        )}
+
+        {!showInstruction && !completed && (
+          <InstructionButton onPress={openInstruction} />
+        )}
+
+        {!showInstruction && completed && (
+          <InstructionButton onPress={openInstruction} bottom={24} />
         )}
       </Screen>
     </GestureHandlerRootView>

@@ -1,11 +1,20 @@
 import React, { useState, useEffect } from "react";
-import { Text, View, TouchableOpacity, Image, Dimensions } from "react-native";
+import {
+  Text,
+  View,
+  TouchableOpacity,
+  Image,
+  useWindowDimensions,
+} from "react-native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { Screen } from "../../../../shared/ui/Screen";
-import { GamesStackParamList } from "../../../../navigation/games/GamesStack";
+import type { GamesStackParamList } from "../../../../navigation/games/GamesStack";
 import { Ionicons } from "@expo/vector-icons";
 import { BackHeader } from "../../../../shared/ui/BackHeader";
 import { VoiceInstruction } from "../../../../shared/ui/VoiceInstruction";
+import { GameProgressBar } from "../../../../shared/ui/GameProgressBar";
+import { InstructionButton } from "../../../../shared/ui/InstructionButton";
+import { useSessionInstruction } from "../../../../hooks/useSessionInstruction";
 
 type Props = NativeStackScreenProps<GamesStackParamList, "ClassificationGame">;
 
@@ -26,19 +35,25 @@ type Category = {
 
 type FeedbackType = "correct" | "incorrect" | null;
 
-const { width } = Dimensions.get("window");
-
 export function ClassificationGameScreen({ navigation, route }: Props) {
   const { sound } = route.params;
+  const { width, height } = useWindowDimensions();
+
+  const categoryCardWidth = (width - 60) / 2;
+  const itemCardHeight = Math.min(height * 0.32, 260);
+  const categoryCardHeight = Math.min(height * 0.22, 165);
+  const imageSize = Math.min(width * 0.34, 130);
 
   const [items, setItems] = useState<Item[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [currentItem, setCurrentItem] = useState<Item | null>(null);
   const [completed, setCompleted] = useState(false);
-  const [showInstruction, setShowInstruction] = useState(true);
   const [score, setScore] = useState(0);
   const [mistakes, setMistakes] = useState(0);
   const [showFeedback, setShowFeedback] = useState<FeedbackType>(null);
+
+  const { showInstruction, openInstruction, closeInstruction } =
+    useSessionInstruction("ClassificationGame");
 
   const mockItems: Item[] = [
     {
@@ -86,10 +101,6 @@ export function ClassificationGameScreen({ navigation, route }: Props) {
 
   const instructionText =
     "Подивіться на картинку, скажіть слово і натисніть на правильну групу.";
-
-  const total = mockItems.length;
-  const remaining = Math.max(total - score, 0);
-  const progressPercent = total > 0 ? (score / total) * 100 : 0;
 
   useEffect(() => {
     initGame();
@@ -153,27 +164,29 @@ export function ClassificationGameScreen({ navigation, route }: Props) {
       />
 
       {showInstruction && (
-        <VoiceInstruction
-          text={instructionText}
-          onClose={() => setShowInstruction(false)}
-        />
+        <VoiceInstruction text={instructionText} onClose={closeInstruction} />
       )}
 
       {completed ? (
         <View className="flex-1 justify-center items-center p-8">
           <Ionicons name="trophy" size={80} color="#FFD700" />
+
           <Text className="text-3xl font-bold text-gray-800 mt-5">
             Вітаємо!
           </Text>
+
           <Text className="text-base text-gray-600 text-center mt-2">
             Ви правильно розподілили всі картинки!
           </Text>
+
           <Text className="text-lg text-green-500 font-bold mt-4">
             Правильно: {score}/{mockItems.length}
           </Text>
+
           <Text className="text-base text-red-500 mt-1">
             Помилок: {mistakes}
           </Text>
+
           <TouchableOpacity
             className="bg-green-500 px-8 py-4 rounded-xl mt-8"
             onPress={initGame}
@@ -182,51 +195,68 @@ export function ClassificationGameScreen({ navigation, route }: Props) {
           </TouchableOpacity>
         </View>
       ) : (
-        <View className="flex-1 px-5 pt-5 pb-24">
-          <View className="items-center bg-white p-5 rounded-2xl mb-5 shadow-sm">
-            <Text className="text-lg text-gray-800 mb-5 font-semibold">
+        <View className="flex-1 px-5 pt-4 pb-5">
+          <View
+            className="bg-white rounded-[28px] shadow-sm px-5 py-5 mb-4 items-center"
+            style={{ height: itemCardHeight }}
+          >
+            <Text className="text-xl text-gray-800 font-bold mb-3">
               Оберіть групу
             </Text>
 
             {currentItem && (
-              <View className="items-center">
+              <View className="flex-1 w-full items-center justify-center">
                 <Image
                   source={{ uri: currentItem.image }}
-                  className="w-32 h-32 object-contain mb-3"
+                  style={{
+                    width: imageSize,
+                    height: imageSize,
+                    marginBottom: 10,
+                  }}
+                  resizeMode="contain"
                 />
-                <Text className="text-xl font-bold text-gray-800">
+
+                <Text
+                  className="text-3xl font-bold text-gray-800 text-center"
+                  numberOfLines={2}
+                  adjustsFontSizeToFit
+                >
                   {currentItem.word}
                 </Text>
               </View>
             )}
           </View>
 
-          <View className="flex-row justify-between mb-8">
+          <View className="flex-row justify-between mb-4">
             {categories.map((category) => (
               <TouchableOpacity
                 key={category.id}
-                className="rounded-2xl justify-center items-center shadow-lg relative"
+                className="rounded-[28px] justify-center items-center shadow-lg relative"
                 style={{
-                  width: (width - 60) / 2,
-                  height: 120,
+                  width: categoryCardWidth,
+                  height: categoryCardHeight,
                   backgroundColor: category.color,
                   opacity: showFeedback ? 0.7 : 1,
                 }}
                 onPress={() => handleCategorySelect(category.id)}
                 disabled={!!showFeedback}
               >
-                <Ionicons name={category.icon as any} size={40} color="#fff" />
-                <Text className="text-white text-base font-bold mt-2">
+                <Ionicons name={category.icon as any} size={52} color="#fff" />
+
+                <Text className="text-white text-xl font-bold mt-3">
                   {category.name}
                 </Text>
-                <View className="absolute top-2 right-2 bg-white/30 rounded-xl px-2 py-1">
-                  <Text className="text-white text-sm font-bold">
+
+                <View className="absolute top-3 right-3 bg-white/30 rounded-full px-3 py-1">
+                  <Text className="text-white text-base font-bold">
                     {category.items.length}
                   </Text>
                 </View>
               </TouchableOpacity>
             ))}
           </View>
+
+          <View className="flex-1" />
 
           {showFeedback && (
             <View className="absolute inset-0 items-center justify-center px-8">
@@ -276,58 +306,22 @@ export function ClassificationGameScreen({ navigation, route }: Props) {
             </View>
           )}
 
-          <View className="absolute left-4 right-4 bottom-4 bg-white rounded-2xl px-4 py-3 shadow-sm">
-            <View className="flex-row items-center justify-between mb-2">
-              <View>
-                <Text className="text-sm font-extrabold text-gray-900">
-                  Прогрес: {score} з {total}
-                </Text>
-                <Text className="text-xs text-gray-500 mt-1">
-                  Залишилось: {remaining}
-                </Text>
-              </View>
-
-              <View className="flex-row items-center">
-                <View className="flex-row items-center mr-4">
-                  <Ionicons name="checkmark" size={18} color="#6FCF97" />
-                  <Text className="text-sm font-extrabold text-gray-900 ml-1">
-                    {score}
-                  </Text>
-                </View>
-
-                <View className="flex-row items-center mr-4">
-                  <Ionicons name="close" size={18} color="#EB5757" />
-                  <Text className="text-sm font-extrabold text-gray-900 ml-1">
-                    {mistakes}
-                  </Text>
-                </View>
-
-                <TouchableOpacity
-                  onPress={initGame}
-                  className="w-10 h-10 rounded-full bg-red-50 items-center justify-center"
-                >
-                  <Ionicons name="refresh" size={20} color="#EB5757" />
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            <View className="h-2 bg-gray-200 rounded-full overflow-hidden">
-              <View
-                className="h-full bg-green-500 rounded-full"
-                style={{ width: `${progressPercent}%` }}
-              />
-            </View>
-          </View>
+          <GameProgressBar
+            current={score}
+            total={mockItems.length}
+            correct={score}
+            incorrect={mistakes}
+            onRestart={initGame}
+          />
         </View>
       )}
 
-      {!showInstruction && (
-        <TouchableOpacity
-          className="absolute right-5 bottom-28 w-14 h-14 rounded-full bg-blue-500 items-center justify-center shadow-lg"
-          onPress={() => setShowInstruction(true)}
-        >
-          <Ionicons name="help" size={28} color="#fff" />
-        </TouchableOpacity>
+      {!showInstruction && !completed && (
+        <InstructionButton onPress={openInstruction} bottom={110} />
+      )}
+
+      {!showInstruction && completed && (
+        <InstructionButton onPress={openInstruction} bottom={24} />
       )}
     </Screen>
   );

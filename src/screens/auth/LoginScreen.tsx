@@ -1,4 +1,3 @@
-//src\screens\auth\LoginScreen.tsx
 import { useState } from "react";
 import { View, Text, Alert, Image, Platform } from "react-native";
 import { Asset } from "expo-asset";
@@ -11,6 +10,12 @@ import { Input } from "../../shared/ui/Input";
 import { authApi } from "../../api/authApi";
 import { useAuthStore } from "../../store/authStore";
 import { AuthStackParamList } from "../../navigation/AuthStack";
+import {
+  validateLoginForm,
+  hasErrors,
+  ValidationErrors,
+  LoginFields,
+} from "../../shared/utils/validation";
 
 const logoModule = require("../../../assets/logo.png");
 const logoSource =
@@ -25,20 +30,25 @@ export function LoginScreen() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [errors, setErrors] = useState<ValidationErrors<LoginFields>>({});
   const [loading, setLoading] = useState(false);
 
   const onLogin = async () => {
-    if (!email || !password) {
-      Alert.alert("Помилка", "Будь ласка, заповніть всі поля");
+    const validationErrors = validateLoginForm({ email, password });
+    if (hasErrors(validationErrors)) {
+      setErrors(validationErrors);
       return;
     }
+    setErrors({});
 
     try {
       setLoading(true);
       const res = await authApi.login({ email, password });
       await setAuth(res.token, res.role, email);
-    } catch (e) {
-      Alert.alert("Помилка входу", "Невірні дані або проблема з мережею");
+    } catch (e: any) {
+      const message =
+        e?.response?.data?.message ?? "Невірні дані або проблема з мережею";
+      Alert.alert("Помилка входу", message);
     } finally {
       setLoading(false);
     }
@@ -67,7 +77,12 @@ export function LoginScreen() {
           autoCapitalize="none"
           keyboardType="email-address"
           value={email}
-          onChangeText={setEmail}
+          onChangeText={(v) => {
+            setEmail(v);
+            if (errors.email)
+              setErrors((prev) => ({ ...prev, email: undefined }));
+          }}
+          error={errors.email}
         />
 
         <Input
@@ -75,7 +90,12 @@ export function LoginScreen() {
           placeholder="••••••••"
           secureTextEntry
           value={password}
-          onChangeText={setPassword}
+          onChangeText={(v) => {
+            setPassword(v);
+            if (errors.password)
+              setErrors((prev) => ({ ...prev, password: undefined }));
+          }}
+          error={errors.password}
         />
 
         <View className="h-2" />

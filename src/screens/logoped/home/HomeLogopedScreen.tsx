@@ -106,7 +106,6 @@ export function HomeLogopedScreen() {
 
   return (
     <Screen>
-      {/* Header */}
       <ScreenHeader title="Головна" center />
 
       <FlatList

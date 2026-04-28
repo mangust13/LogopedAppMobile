@@ -33,7 +33,6 @@ export function CategoryCard({
     purple: "#8b5cf6",
   };
 
-  // Типізація для ключів об'єктів
   const bgColorClass =
     bgColors[color as keyof typeof bgColors] || bgColors.blue;
   const iconColor =
@@ -43,7 +42,6 @@ export function CategoryCard({
     <TouchableOpacity onPress={onPress} activeOpacity={0.9} className="mb-4">
       <Card className={cn("p-4 border-2", bgColorClass)}>
         <View className="flex-row items-start">
-          {/* Іконка категорії */}
           <View className="w-12 h-12 rounded-xl bg-white items-center justify-center mr-4 shadow-sm">
             <Ionicons name={icon} size={28} color={iconColor} />
           </View>

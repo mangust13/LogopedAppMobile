@@ -1,4 +1,3 @@
-//src/screens/auth/RegisterScreen.tsx
 import { useState } from "react";
 import { View, Text, Alert, TouchableOpacity } from "react-native";
 import { useNavigation } from "@react-navigation/native";
@@ -11,6 +10,12 @@ import { authApi } from "../../api/authApi";
 import { useAuthStore } from "../../store/authStore";
 import { AuthStackParamList } from "../../navigation/AuthStack";
 import { cn } from "../../shared/utils/cn";
+import {
+  validateRegisterForm,
+  hasErrors,
+  ValidationErrors,
+  RegisterFields,
+} from "../../shared/utils/validation";
 
 type Role = "User" | "Logoped";
 
@@ -22,33 +27,30 @@ export function RegisterScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState<Role>("User");
+  const [errors, setErrors] = useState<ValidationErrors<RegisterFields>>({});
   const [loading, setLoading] = useState(false);
 
   const onRegister = async () => {
-    if (!email || !password) {
-      Alert.alert("Помилка", "Будь ласка, заповніть всі поля");
+    const validationErrors = validateRegisterForm({ email, password });
+    if (hasErrors(validationErrors)) {
+      setErrors(validationErrors);
       return;
     }
+    setErrors({});
 
     try {
       setLoading(true);
-      const res = await authApi.register({
-        email,
-        password,
-        role,
-      });
-
+      const res = await authApi.register({ email, password, role });
       await setAuth(res.token, res.role, email);
     } catch (e: any) {
       let message = "Щось пішло не так. Спробуйте пізніше.";
-
-      if (e.response) {
-        message =
-          e.response.data?.message ?? `Помилка сервера (${e.response.status})`;
-      } else if (e.request) {
+      if (e?.response?.data?.message) {
+        message = e.response.data.message;
+      } else if (e?.response?.status) {
+        message = `Помилка сервера (${e.response.status})`;
+      } else if (e?.request) {
         message = "Немає зʼєднання з сервером";
       }
-
       Alert.alert("Помилка реєстрації", message);
     } finally {
       setLoading(false);
@@ -109,7 +111,12 @@ export function RegisterScreen() {
           autoCapitalize="none"
           keyboardType="email-address"
           value={email}
-          onChangeText={setEmail}
+          onChangeText={(v) => {
+            setEmail(v);
+            if (errors.email)
+              setErrors((prev) => ({ ...prev, email: undefined }));
+          }}
+          error={errors.email}
         />
 
         <Input
@@ -117,7 +124,12 @@ export function RegisterScreen() {
           placeholder="••••••••"
           secureTextEntry
           value={password}
-          onChangeText={setPassword}
+          onChangeText={(v) => {
+            setPassword(v);
+            if (errors.password)
+              setErrors((prev) => ({ ...prev, password: undefined }));
+          }}
+          error={errors.password}
         />
 
         <View>

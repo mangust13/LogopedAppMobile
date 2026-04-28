@@ -2,7 +2,7 @@ import React from "react";
 import { ScrollView, Text, View, TouchableOpacity } from "react-native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { Screen } from "../../../shared/ui/Screen";
-import { GamesStackParamList } from "../../../navigation/games/GamesStack";
+import type { GamesStackParamList } from "../../../navigation/games/GamesStack";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { BackHeader } from "../../../shared/ui/BackHeader";
 
@@ -44,14 +44,12 @@ export function AutomationGamesScreen({ navigation, route }: Props) {
         showsVerticalScrollIndicator={false}
         contentContainerClassName="px-6 pt-4 pb-24"
       >
-        {/* Top box */}
         <View className="mb-5 bg-blue-50 border border-blue-200 rounded-2xl py-3 px-4">
           <Text className="text-lg font-bold text-gray-800 text-center">
             Оберіть гру
           </Text>
         </View>
 
-        {/* Grid */}
         <View className="flex-row flex-wrap justify-between">
           {games.map((game) => (
             <TouchableOpacity
@@ -61,7 +59,6 @@ export function AutomationGamesScreen({ navigation, route }: Props) {
               className="w-[48%] bg-white rounded-2xl px-3 py-6 mb-4 items-center justify-center min-h-[190px]
                          shadow-md"
             >
-              {/* Icon */}
               <View
                 className="w-[90px] h-[90px] rounded-full items-center justify-center mb-4"
                 style={{ backgroundColor: game.color }}
@@ -73,7 +70,6 @@ export function AutomationGamesScreen({ navigation, route }: Props) {
                 />
               </View>
 
-              {/* Title */}
               <Text className="text-[18px] font-extrabold text-gray-800 text-center leading-6">
                 {game.title}
               </Text>

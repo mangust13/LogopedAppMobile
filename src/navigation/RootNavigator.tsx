@@ -14,12 +14,14 @@ import { LogopedStudentStatsScreen } from "../screens/logoped/stats/LogopedStude
 import { useAuthStore } from "../store/authStore";
 import { NavigatorScreenParams } from "@react-navigation/native";
 import { AppTabsParamList } from "./AppTabs";
+import { SoundAnalysisScreen } from "../screens/analysis/SoundAnalysisScreen";
 
 export type RootStackParamList = {
   Splash: undefined;
   App: NavigatorScreenParams<AppTabsParamList>;
   Auth: undefined;
   ChildProgress: { childId: number; childName: string };
+  SoundAnalysis: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -52,7 +54,6 @@ export function RootNavigator() {
     initializeAuth();
   }, [hydrate, token, logout]);
 
-  // Визначаємо, чи валідний токен
   const isTokenValid = () => {
     if (!token) return false;
 
@@ -86,6 +87,10 @@ export function RootNavigator() {
                   ? LogopedStudentStatsScreen
                   : ChildStatsScreen
               }
+            />
+            <Stack.Screen
+              name="SoundAnalysis"
+              component={SoundAnalysisScreen}
             />
           </>
         )}

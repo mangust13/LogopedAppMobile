@@ -21,7 +21,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Screen } from "../../../shared/ui/Screen";
 import { Button } from "../../../shared/ui/Button";
 import { BackHeader } from "../../../shared/ui/BackHeader";
-import { GamesStackParamList } from "../../../navigation/games/GamesStack";
+import type { GamesStackParamList } from "../../../navigation/games/GamesStack";
 import { useAuthStore } from "../../../store/authStore";
 import { exercisesApi } from "../../../api/exercisesApi";
 import { ExerciseDto, ExerciseTagDto } from "../../../api/types/exercise";

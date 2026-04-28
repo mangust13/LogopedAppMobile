@@ -2,7 +2,7 @@
 import { ScrollView, Text, View } from "react-native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { Screen } from "../../../shared/ui/Screen";
-import { GamesStackParamList } from "../../../navigation/games/GamesStack";
+import type { GamesStackParamList } from "../../../navigation/games/GamesStack";
 import { CategoryCard } from "./components/CategoryCard";
 import ScreenHeader from "../../../shared/ui/ScreenHeader";
 

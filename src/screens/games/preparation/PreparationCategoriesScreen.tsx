@@ -11,7 +11,7 @@ import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
 import { Screen } from "../../../shared/ui/Screen";
-import { GamesStackParamList } from "../../../navigation/games/GamesStack";
+import type { GamesStackParamList } from "../../../navigation/games/GamesStack";
 import { Card } from "../../../shared/ui/Card";
 import { exercisesApi } from "../../../api/exercisesApi";
 import { BackHeader } from "../../../shared/ui/BackHeader";
@@ -221,11 +221,8 @@ export function PreparationCategoriesScreen() {
                 </View>
               </View>
 
-              {/* Кнопки для логопеда */}
               {role === "Logoped" && (
                 <View className="flex-row items-center">
-                  {/* Кнопка для призначення
- комплексу дітям - тільки для НЕ "all" комплексів */}
                   {item.name !== "all" && (
                     <TouchableOpacity
                       onPress={() => handleAssignComplex(item)}
@@ -239,7 +236,6 @@ export function PreparationCategoriesScreen() {
                     </TouchableOpacity>
                   )}
 
-                  {/* Кнопки редагування та видалення для власних комплексів */}
                   {!item.isDefault && (
                     <>
                       <TouchableOpacity

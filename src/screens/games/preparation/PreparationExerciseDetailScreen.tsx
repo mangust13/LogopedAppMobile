@@ -14,7 +14,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { VideoView, useVideoPlayer } from "expo-video";
 
 import { Screen } from "../../../shared/ui/Screen";
-import { GamesStackParamList } from "../../../navigation/games/GamesStack";
+import type { GamesStackParamList } from "../../../navigation/games/GamesStack";
 import { Button } from "../../../shared/ui/Button";
 import { ENV } from "../../../config/env";
 import { BackHeader } from "../../../shared/ui/BackHeader";

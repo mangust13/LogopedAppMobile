@@ -40,7 +40,6 @@ export function LogopedStudentStatsScreen() {
   return (
     <Screen>
       <View className="flex-row items-center bg-white border-b border-gray-100 px-4 py-3">
-        {/* Кнопка назад */}
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           className="w-10 h-10 items-center justify-center rounded-full bg-gray-50"

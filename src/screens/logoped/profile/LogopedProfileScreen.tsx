@@ -66,7 +66,6 @@ export function LogopedProfileScreen() {
 
   return (
     <Screen>
-      {/* Header */}
       <ScreenHeader subtitle="Налаштування" title={"Профіль 💼"} center />
 
       <ScrollView

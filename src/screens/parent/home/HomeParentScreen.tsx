@@ -154,6 +154,12 @@ export function HomeParentScreen() {
             </View>
 
             <Button
+              title="🎙 Аналіз вимови"
+              variant="outline"
+              onPress={() => navigation.navigate("SoundAnalysis")}
+              className="h-12 mt-2"
+            />
+            <Button
               title="Почати заняття"
               onPress={() => navigation.navigate("Games")}
               className="h-12"

@@ -3,7 +3,7 @@ import React from "react";
 import { Text, View, TouchableOpacity } from "react-native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { Screen } from "../../../shared/ui/Screen";
-import { GamesStackParamList } from "../../../navigation/games/GamesStack";
+import type { GamesStackParamList } from "../../../navigation/games/GamesStack";
 import { Ionicons } from "@expo/vector-icons";
 
 type Props = NativeStackScreenProps<GamesStackParamList, "DifferentiationList">;
