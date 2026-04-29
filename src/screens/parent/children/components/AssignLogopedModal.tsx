@@ -1,4 +1,3 @@
-//src/screens/parent/children/components/AssignLogopedModal.tsx
 import { useEffect, useState } from "react";
 import {
   Modal,
@@ -7,12 +6,12 @@ import {
   ActivityIndicator,
   Alert,
   TouchableOpacity,
+  ScrollView,
 } from "react-native";
-import { Picker } from "@react-native-picker/picker";
+import { Ionicons } from "@expo/vector-icons";
 import { logopedApi, LogopedDto } from "../../../../api/logopedApi";
 import { childrenApi } from "../../../../api/childrenApi";
 import { Button } from "../../../../shared/ui/Button";
-import { Screen } from "../../../../shared/ui/Screen";
 
 type Props = {
   childId: number;
@@ -22,7 +21,8 @@ type Props = {
   currentLogopedEmail?: string | null;
 };
 
-const EMPTY = "__empty__";
+const normalizeEmail = (email?: string | null) =>
+  email?.trim().toLowerCase() ?? "";
 
 export function AssignLogopedModal({
   childId,
@@ -32,35 +32,41 @@ export function AssignLogopedModal({
   currentLogopedEmail,
 }: Props) {
   const [logopeds, setLogopeds] = useState<LogopedDto[]>([]);
-  const [selected, setSelected] = useState<LogopedDto | null>(null);
+  const [selectedEmail, setSelectedEmail] = useState("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!visible) return;
 
     setLoading(true);
+
     logopedApi
       .getAll()
       .then((data) => {
         setLogopeds(data);
-        const found = data.find((l) => l.email === currentLogopedEmail);
-        setSelected(found ?? null);
+
+        const currentEmail = normalizeEmail(currentLogopedEmail);
+        const found = data.find(
+          (logoped) => normalizeEmail(logoped.email) === currentEmail,
+        );
+
+        setSelectedEmail(found?.email ?? "");
       })
-      .catch((e) => {
-        Alert.alert("Error", "Failed to load logopeds");
+      .catch(() => {
+        Alert.alert("Помилка", "Не вдалося завантажити логопедів");
       })
       .finally(() => setLoading(false));
   }, [visible, currentLogopedEmail]);
 
   const onAssign = async () => {
-    if (!selected) return;
+    if (!selectedEmail) return;
+
     try {
-      await childrenApi.assignLogoped(childId, selected.email);
+      await childrenApi.assignLogoped(childId, selectedEmail);
       onAssigned();
       onClose();
-      setSelected(null);
-    } catch (e: any) {
-      Alert.alert("Error", "Assign failed");
+    } catch {
+      Alert.alert("Помилка", "Не вдалося призначити логопеда");
     }
   };
 
@@ -76,42 +82,63 @@ export function AssignLogopedModal({
         </Text>
 
         {loading ? (
-          <ActivityIndicator size="large" className="text-primary" />
-        ) : (
-          <View className="border border-gray-200 rounded-2xl bg-surface overflow-hidden mb-6">
-            <Picker
-              selectedValue={selected?.email ?? EMPTY}
-              onValueChange={(value) => {
-                if (value === EMPTY) {
-                  setSelected(null);
-                  return;
-                }
-                const found = logopeds.find((l) => l.email === value);
-                setSelected(found ?? null);
-              }}
-            >
-              <Picker.Item
-                label="— Оберіть зі списку —"
-                value={EMPTY}
-                color="#9CA3AF"
-              />
-              {logopeds.map((l) => (
-                <Picker.Item
-                  key={l.id}
-                  label={`${l.name ?? "Логопед"} (${l.email})`}
-                  value={l.email}
-                  color="#2D3748"
-                />
-              ))}
-            </Picker>
+          <View className="flex-1 justify-center items-center">
+            <ActivityIndicator size="large" color="#6C63FF" />
           </View>
+        ) : (
+          <ScrollView
+            className="flex-1"
+            contentContainerStyle={{ paddingBottom: 24 }}
+            showsVerticalScrollIndicator={false}
+          >
+            {logopeds.map((logoped) => {
+              const isSelected =
+                normalizeEmail(logoped.email) === normalizeEmail(selectedEmail);
+
+              return (
+                <TouchableOpacity
+                  key={`${logoped.id}-${logoped.email}`}
+                  activeOpacity={0.75}
+                  onPress={() => setSelectedEmail(logoped.email)}
+                  className={`flex-row items-center p-4 rounded-2xl border mb-3 ${
+                    isSelected
+                      ? "bg-blue-50 border-blue-400"
+                      : "bg-white border-gray-200"
+                  }`}
+                >
+                  <View className="w-11 h-11 rounded-full bg-blue-100 items-center justify-center mr-3">
+                    <Text className="text-blue-700 font-bold text-lg">
+                      {(logoped.name || logoped.email || "Л")
+                        .charAt(0)
+                        .toUpperCase()}
+                    </Text>
+                  </View>
+
+                  <View className="flex-1">
+                    <Text className="text-base font-semibold text-text-main">
+                      {logoped.name || "Логопед"}
+                    </Text>
+                    <Text className="text-sm text-text-muted mt-0.5">
+                      {logoped.email}
+                    </Text>
+                  </View>
+
+                  <Ionicons
+                    name={isSelected ? "checkmark-circle" : "ellipse-outline"}
+                    size={24}
+                    color={isSelected ? "#3B82F6" : "#CBD5E1"}
+                  />
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
         )}
 
-        <View className="mt-auto space-y-3 mb-6">
+        <View className="mt-auto mb-6 gap-3">
           <Button
             title="Призначити"
             onPress={onAssign}
-            disabled={!selected || loading}
+            disabled={!selectedEmail || loading}
           />
           <Button title="Скасувати" variant="ghost" onPress={onClose} />
         </View>

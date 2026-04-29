@@ -1,4 +1,3 @@
-// api/exercisesApi.ts
 import { http } from "./http";
 
 export type ExerciseDto = {
@@ -30,7 +29,7 @@ export interface ComplexDto {
   name: string;
   displayName: string;
   description: string;
-  logopedId?: number;
+  logopedId?: number | null;
   isDefault: boolean;
   createdAt: string;
   isActive: boolean;
@@ -42,16 +41,6 @@ export interface CreateComplexRequest {
   name: string;
   description: string;
   exerciseIds: number[];
-}
-
-export interface ComplexAssignmentDto {
-  id: number;
-  complexId: number;
-  complexName: string;
-  childId: number;
-  assignedAt: string;
-  completedAt?: string;
-  isActive: boolean;
 }
 
 export const exercisesApi = {
@@ -91,10 +80,13 @@ export const exercisesApi = {
       ч: "ch",
       ш: "sh",
     };
+
     const tagCode = SOUND_TO_TAG[sound.toLowerCase()];
+
     const res = await http.get<ExerciseDto[]>("/exercises/all", {
       params: tagCode ? { sound: tagCode } : undefined,
     });
+
     return res.data;
   },
 
@@ -114,32 +106,24 @@ export const exercisesApi = {
   },
 
   getComplexes: async (): Promise<ComplexDto[]> => {
-    const response = await http.get("/exercises/complexes");
+    const response = await http.get<ComplexDto[]>("/exercises/complexes");
     return response.data;
   },
 
   getAssignedComplexes: async (): Promise<ComplexDto[]> => {
-    const response = await http.get("/exercises/complexes/assigned");
-    return response.data;
-  },
-
-  getPublicComplexes: async (): Promise<ComplexDto[]> => {
-    const response = await http.get("/exercises/complexes/public");
+    const response = await http.get<ComplexDto[]>(
+      "/exercises/complexes/assigned",
+    );
     return response.data;
   },
 
   getComplexById: async (id: number): Promise<ComplexDto> => {
-    const response = await http.get(`/exercises/complexes/${id}`);
-    return response.data;
-  },
-
-  getPublicComplexById: async (id: number): Promise<ComplexDto> => {
-    const response = await http.get(`/exercises/complexes/public/${id}`);
+    const response = await http.get<ComplexDto>(`/exercises/complexes/${id}`);
     return response.data;
   },
 
   createComplex: async (data: CreateComplexRequest): Promise<ComplexDto> => {
-    const response = await http.post("/exercises/complexes", data);
+    const response = await http.post<ComplexDto>("/exercises/complexes", data);
     return response.data;
   },
 
@@ -147,7 +131,10 @@ export const exercisesApi = {
     id: number,
     data: CreateComplexRequest,
   ): Promise<ComplexDto> => {
-    const response = await http.put(`/exercises/complexes/${id}`, data);
+    const response = await http.put<ComplexDto>(
+      `/exercises/complexes/${id}`,
+      data,
+    );
     return response.data;
   },
 
@@ -155,19 +142,19 @@ export const exercisesApi = {
     complexId: number,
     childIds: number[],
   ): Promise<void> => {
-    await http.post(`/exercises/complexes/${complexId}/assign`, { childIds });
+    await http.post(`/exercises/complexes/${complexId}/assign`, {
+      childIds,
+    });
+  },
+
+  getAssignedChildIds: async (complexId: number): Promise<number[]> => {
+    const response = await http.get<number[]>(
+      `/exercises/complexes/${complexId}/assigned-children`,
+    );
+    return response.data;
   },
 
   deleteComplex: async (id: number): Promise<void> => {
     await http.delete(`/exercises/complexes/${id}`);
-  },
-
-  getChildAssignments: async (
-    childId: number,
-  ): Promise<ComplexAssignmentDto[]> => {
-    const response = await http.get(
-      `/exercises/complexes/assignments/child/${childId}`,
-    );
-    return response.data;
   },
 };

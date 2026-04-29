@@ -21,6 +21,12 @@ import {
   parseProblemSounds,
 } from "../../../../shared/constants/sounds";
 import { ProblemSoundsPicker } from "../../../../shared/ui/ProblemSoundsPicker";
+import {
+  getChildBirthDateRange,
+  isChildAgeAllowed,
+  MAX_CHILD_AGE,
+  MIN_CHILD_AGE,
+} from "../../../../shared/utils/age";
 
 type Props = {
   child: ChildDto & { problemSounds?: string | null };
@@ -30,6 +36,7 @@ type Props = {
 };
 
 export function EditChildModal({ child, visible, onClose, onUpdated }: Props) {
+  const { minDate, maxDate } = getChildBirthDateRange();
   const [name, setName] = useState(child.name);
   const [birthDate, setBirthDate] = useState(new Date(child.birthDate));
   const [problemSounds, setProblemSounds] = useState<string[]>(
@@ -41,6 +48,13 @@ export function EditChildModal({ child, visible, onClose, onUpdated }: Props) {
   const onSubmit = async () => {
     if (!name.trim()) {
       Alert.alert("Помилка", "Введіть ім'я");
+      return;
+    }
+    if (!isChildAgeAllowed(birthDate)) {
+      Alert.alert(
+        "Помилка",
+        `Вік дитини має бути від ${MIN_CHILD_AGE} до ${MAX_CHILD_AGE} років`,
+      );
       return;
     }
 
@@ -93,10 +107,11 @@ export function EditChildModal({ child, visible, onClose, onUpdated }: Props) {
 
           {showDatePicker && (
             <DateTimePicker
-              value={birthDate || new Date()}
+              value={isChildAgeAllowed(birthDate) ? birthDate : maxDate}
               mode="date"
               display={Platform.OS === "ios" ? "spinner" : "default"}
-              maximumDate={new Date()}
+              minimumDate={minDate}
+              maximumDate={maxDate}
               onChange={(event, selectedDate) => {
                 setShowDatePicker(Platform.OS === "ios");
                 if (selectedDate) setBirthDate(selectedDate);

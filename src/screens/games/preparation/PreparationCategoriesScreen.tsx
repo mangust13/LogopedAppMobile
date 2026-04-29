@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useCallback, useState } from "react";
 import {
   View,
   Text,
@@ -31,40 +31,41 @@ export function PreparationCategoriesScreen() {
   const [complexes, setComplexes] = useState<ComplexDto[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useFocusEffect(
-    useCallback(() => {
-      loadData();
-    }, [role, token]),
-  );
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
 
-      let data: ComplexDto[] = [];
-
-      if (role === "Logoped" && token) {
-        data = await exercisesApi.getComplexes();
-      } else if (role === "User" && token) {
-        data = await exercisesApi.getAssignedComplexes();
-      } else {
-        data = await exercisesApi.getPublicComplexes();
+      if (!token) {
+        setComplexes([]);
+        return;
       }
 
-      setComplexes(data);
-    } catch (e) {
-      console.error(e);
-
-      try {
-        const fallback = await exercisesApi.getPublicComplexes();
-        setComplexes(fallback);
-      } catch (fallbackError) {
-        console.error("Fallback error:", fallbackError);
+      if (role === "Logoped") {
+        const data = await exercisesApi.getComplexes();
+        setComplexes(data);
+        return;
       }
+
+      if (role === "User") {
+        const data = await exercisesApi.getAssignedComplexes();
+        setComplexes(data);
+        return;
+      }
+
+      setComplexes([]);
+    } catch (error) {
+      console.error(error);
+      setComplexes([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, [role, token]);
+
+  useFocusEffect(
+    useCallback(() => {
+      void loadData();
+    }, [loadData]),
+  );
 
   const getIconForCategory = (name: string): keyof typeof Ionicons.glyphMap => {
     const iconMap: Record<string, keyof typeof Ionicons.glyphMap> = {
@@ -75,6 +76,7 @@ export function PreparationCategoriesScreen() {
       "sound-r": "chatbubbles-outline",
       "tongue-tip": "hardware-chip-outline",
     };
+
     return iconMap[name] || "grid-outline";
   };
 
@@ -97,9 +99,9 @@ export function PreparationCategoriesScreen() {
           onPress: async () => {
             try {
               await exercisesApi.deleteComplex(complex.id);
-              loadData();
+              await loadData();
             } catch (error) {
-              console.error("Помилка при видаленні комплексу:", error);
+              console.error(error);
               Alert.alert(
                 "Помилка",
                 "Не вдалося видалити комплекс. Спробуйте ще раз.",
@@ -112,6 +114,8 @@ export function PreparationCategoriesScreen() {
   };
 
   const handleAssignComplex = (complex: ComplexDto) => {
+    if (complex.name === "all") return;
+
     navigation.navigate("LogopedAssignComplex", {
       complexId: complex.id,
       complexTitle: complex.displayName,
@@ -121,6 +125,7 @@ export function PreparationCategoriesScreen() {
   const handleCreateComplex = () => {
     navigation.navigate("LogopedCreateComplex", {
       complexId: 0,
+      isEditing: false,
       onComplexCreated: loadData,
     });
   };
@@ -143,14 +148,14 @@ export function PreparationCategoriesScreen() {
 
           <Text className="text-lg font-semibold text-text-main mt-4 text-center">
             {role === "User"
-              ? "Поки що немає вправ"
+              ? "Поки що немає призначених вправ"
               : "У вас ще немає комплексів"}
           </Text>
 
           <Text className="text-sm text-text-muted mt-2 text-center">
             {role === "User"
-              ? "Логопед ще не призначив вам вправи."
-              : "Створіть перший комплекс для роботи з дітьми."}
+              ? "Логопед ще не призначив вам комплекс вправ."
+              : "Створіть перший власний комплекс або використайте дефолтні."}
           </Text>
 
           {role === "Logoped" && (
@@ -168,10 +173,23 @@ export function PreparationCategoriesScreen() {
     );
   }
 
-  // 🔹 Normal state
   return (
     <Screen>
       <BackHeader title="Бібліотека" />
+
+      {role === "Logoped" && (
+        <View className="px-4 pt-4">
+          <TouchableOpacity
+            onPress={handleCreateComplex}
+            className="bg-blue-500 px-4 py-3 rounded-lg flex-row items-center justify-center"
+          >
+            <Ionicons name="add-outline" size={20} color="#FFFFFF" />
+            <Text className="text-white font-semibold ml-2">
+              Створити комплекс
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       <FlatList
         data={complexes}
@@ -197,9 +215,19 @@ export function PreparationCategoriesScreen() {
               </View>
 
               <View className="flex-1">
-                <Text className="text-base font-semibold text-text-main">
-                  {item.displayName}
-                </Text>
+                <View className="flex-row items-center">
+                  <Text className="text-base font-semibold text-text-main flex-1">
+                    {item.displayName}
+                  </Text>
+
+                  {role === "Logoped" && item.isDefault && (
+                    <View className="px-2 py-0.5 rounded-full bg-blue-100 ml-2">
+                      <Text className="text-[10px] text-blue-700 font-semibold">
+                        Дефолтний
+                      </Text>
+                    </View>
+                  )}
+                </View>
 
                 {item.description && (
                   <Text className="text-sm text-text-muted mt-0.5">
@@ -211,12 +239,6 @@ export function PreparationCategoriesScreen() {
                   <Text className="text-xs text-blue-600">
                     {getExercisesText(item.exerciseCount)}
                   </Text>
-
-                  {!item.isDefault && (
-                    <Text className="text-xs text-gray-500 ml-2">
-                      • Власний
-                    </Text>
-                  )}
                 </View>
               </View>
 
@@ -247,6 +269,7 @@ export function PreparationCategoriesScreen() {
                           color="#6B7280"
                         />
                       </TouchableOpacity>
+
                       <TouchableOpacity
                         onPress={() => handleDeleteComplex(item)}
                         className="p-2"

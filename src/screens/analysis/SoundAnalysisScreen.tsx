@@ -18,10 +18,6 @@ import { speechApi, SoundWordDto, AnalyzeResponse } from "../../api/speechApi";
 import { childrenApi } from "../../api/childrenApi";
 import { useChildStore } from "../../store/childStore";
 import { cn } from "../../shared/utils/cn";
-import {
-  formatProblemSounds,
-  parseProblemSounds,
-} from "../../shared/constants/sounds";
 
 type SoundResult = {
   sound: string;
@@ -152,14 +148,34 @@ export function SoundAnalysisScreen() {
 
       console.log("Azure response:", JSON.stringify(response, null, 2));
 
-      setLastResponse(response);
+      const targetWord = response.words.find(
+        (w) => w.word.toLowerCase() === current.word.toLowerCase(),
+      );
+
+      const soundAccuracy =
+        targetWord && targetWord.phonemes.length > 0
+          ? targetWord.phonemes.reduce((acc, p) => acc + p.accuracy_score, 0) /
+            targetWord.phonemes.length
+          : 0;
+
+      const isCorrect =
+        response.pronunciation_score >= 60 &&
+        (targetWord?.error_type === "None" ||
+          targetWord?.error_type === undefined);
+
+      const adjustedResponse: AnalyzeResponse = {
+        ...response,
+        is_correct: isCorrect,
+      };
+
+      setLastResponse(adjustedResponse);
       setStepState("result");
 
       setResults((prev) => {
         const existing = prev.find((r) => r.sound === current.sound);
         const attempt = {
           word: current.word,
-          is_correct: response.is_correct,
+          is_correct: isCorrect,
           score: response.pronunciation_score,
         };
         if (existing) {
@@ -201,12 +217,11 @@ export function SoundAnalysisScreen() {
         return correctCount / r.attempts.length < 0.5;
       })
       .map((r) => r.sound);
-    const allowedProblematic = parseProblemSounds(problematic.join(","));
 
-    saveResults(allowedProblematic);
+    saveResults(problematic);
 
     navigation.navigate("AnalysisResult", {
-      problemSounds: allowedProblematic,
+      problemSounds: problematic,
       groupLabel: selectedGroup?.label ?? "",
     });
   };
@@ -214,7 +229,16 @@ export function SoundAnalysisScreen() {
   const saveResults = async (problematic: string[]) => {
     if (!selectedChild) return;
     try {
-      const problemSoundsStr = formatProblemSounds(problematic);
+      const existing = selectedChild.problemSounds
+        ? selectedChild.problemSounds
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean)
+        : [];
+
+      const merged = Array.from(new Set([...existing, ...problematic]));
+      const problemSoundsStr = merged.join(", ");
+
       await childrenApi.updateChild(selectedChild.id, {
         name: selectedChild.name,
         birthDate: selectedChild.birthDate,
@@ -227,6 +251,7 @@ export function SoundAnalysisScreen() {
   };
 
   const progress = soundWords.length > 0 ? currentIndex / soundWords.length : 0;
+  const current = soundWords[currentIndex];
 
   if (isLoading) {
     return (
@@ -287,8 +312,6 @@ export function SoundAnalysisScreen() {
       </Screen>
     );
   }
-
-  const current = soundWords[currentIndex];
 
   return (
     <Screen className="px-0 pb-0">
@@ -368,7 +391,9 @@ export function SoundAnalysisScreen() {
                   lastResponse.is_correct ? "text-green-600" : "text-red-600",
                 )}
               >
-                Розпізнано: "{lastResponse.recognized_text}"
+                {lastResponse.is_correct
+                  ? `Розпізнано: "${lastResponse.recognized_text}"`
+                  : `Помилка у вимові звуку ${current?.sound.toUpperCase()}`}
               </Text>
               <Text
                 className={cn(

@@ -1,4 +1,3 @@
-// screens/games/preparation/PreparationExerciseGalleryScreen.tsx
 import { useEffect, useState } from "react";
 import {
   View,
@@ -11,10 +10,7 @@ import {
   Modal,
   ScrollView,
 } from "react-native";
-import {
-  SafeAreaView,
-  useSafeAreaInsets,
-} from "react-native-safe-area-context";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
@@ -27,6 +23,7 @@ import {
   exercisesApi,
   ExerciseDto,
   ExerciseTagDto,
+  ComplexDto,
 } from "../../../api/exercisesApi";
 import { ENV } from "../../../config/env";
 import { cn } from "../../../shared/utils/cn";
@@ -35,6 +32,7 @@ type NavProp = NativeStackNavigationProp<
   GamesStackParamList,
   "PreparationExerciseGallery"
 >;
+
 type RouteProps = RouteProp<GamesStackParamList, "PreparationExerciseGallery">;
 
 const { width } = Dimensions.get("window");
@@ -58,8 +56,8 @@ export function PreparationExerciseGalleryScreen() {
   const [isAllCategory, setIsAllCategory] = useState(false);
 
   useEffect(() => {
-    loadExercises();
-  }, []);
+    void loadExercises();
+  }, [complexId]);
 
   useEffect(() => {
     applyFilters();
@@ -68,28 +66,25 @@ export function PreparationExerciseGalleryScreen() {
   const loadExercises = async () => {
     try {
       setLoading(true);
-      const role = useAuthStore.getState().role;
-      const token = useAuthStore.getState().token;
 
-      let complex;
-      if (role && token) {
-        complex = await exercisesApi.getComplexById(complexId);
-      } else {
-        complex = await exercisesApi.getPublicComplexById(complexId);
-      }
+      const complex: ComplexDto = await exercisesApi.getComplexById(complexId);
 
       setAllExercises(complex.exercises);
       setIsAllCategory(complex.name === "all");
 
       const uniqueTags = new Map<string, ExerciseTagDto>();
-      complex.exercises.forEach((exercise) => {
-        exercise.tags.forEach((tag) => {
+
+      complex.exercises.forEach((exercise: ExerciseDto) => {
+        exercise.tags.forEach((tag: ExerciseTagDto) => {
           uniqueTags.set(tag.name, tag);
         });
       });
+
       setAvailableTags(Array.from(uniqueTags.values()));
-    } catch (e) {
-      console.error(e);
+    } catch (error) {
+      console.error(error);
+      setAllExercises([]);
+      setAvailableTags([]);
     } finally {
       setLoading(false);
     }
@@ -101,18 +96,19 @@ export function PreparationExerciseGalleryScreen() {
       return;
     }
 
-    const filtered = allExercises.filter((exercise) =>
+    const filtered = allExercises.filter((exercise: ExerciseDto) =>
       selectedTags.every((selectedTag) =>
-        exercise.tags.some((tag) => tag.name === selectedTag),
+        exercise.tags.some((tag: ExerciseTagDto) => tag.name === selectedTag),
       ),
     );
+
     setFilteredExercises(filtered);
   };
 
   const toggleTag = (tagName: string) => {
     setSelectedTags((prev) =>
       prev.includes(tagName)
-        ? prev.filter((t) => t !== tagName)
+        ? prev.filter((tag) => tag !== tagName)
         : [...prev, tagName],
     );
   };
@@ -121,15 +117,16 @@ export function PreparationExerciseGalleryScreen() {
     setSelectedTags([]);
   };
 
-  const groupedTags = availableTags.reduce(
+  const groupedTags = availableTags.reduce<Record<string, ExerciseTagDto[]>>(
     (acc, tag) => {
       if (!acc[tag.category]) {
         acc[tag.category] = [];
       }
+
       acc[tag.category].push(tag);
       return acc;
     },
-    {} as Record<string, ExerciseTagDto[]>,
+    {},
   );
 
   const getCategoryDisplayName = (category: string) => {
@@ -138,6 +135,7 @@ export function PreparationExerciseGalleryScreen() {
       organ: "Органи",
       sound: "Звуки",
     };
+
     return categoryNames[category] || category;
   };
 
@@ -158,13 +156,14 @@ export function PreparationExerciseGalleryScreen() {
           <Text className="text-sm text-text-muted">
             {filteredExercises.length} з {allExercises.length} вправ
           </Text>
+
           <TouchableOpacity
             onPress={() => setShowFilters(true)}
-            className="flex
--row items-center"
+            className="flex-row items-center"
           >
             <Ionicons name="filter" size={16} color="#6B7280" />
             <Text className="text-sm text-text-muted ml-1">Фільтри</Text>
+
             {selectedTags.length > 0 && (
               <View className="w-2 h-2 bg-blue-500 rounded-full ml-1" />
             )}
@@ -178,48 +177,73 @@ export function PreparationExerciseGalleryScreen() {
         numColumns={COLUMNS}
         contentContainerStyle={{ padding: SPACING, paddingBottom: 100 }}
         columnWrapperStyle={{ gap: SPACING }}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={{ width: ITEM_WIDTH }}
-            className="mb-3"
-            activeOpacity={0.8}
-            onPress={() =>
-              navigation.navigate("PreparationExerciseDetail", {
-                exerciseId: item.id,
-                title: item.title,
-                videoPath: item.videoPath,
-                description: item.description,
-                iconName: item.iconName,
-              })
-            }
-          >
-            <View
-              style={{
-                width: ITEM_WIDTH,
-                aspectRatio: 1,
-                borderRadius: 16,
-                overflow: "hidden",
-                marginBottom: 4,
-                backgroundColor: "#E5E7EB",
-                justifyContent: "center",
-                alignItems: "center",
-              }}
+        renderItem={({ item }) => {
+          const iconName = item.iconName?.trim();
+          const videoPath = item.videoPath?.trim();
+          const hasCustomIcon =
+            iconName &&
+            iconName !== "exercise" &&
+            iconName !== "happy" &&
+            /\.(png|jpe?g|webp|gif)$/i.test(iconName);
+
+          return (
+            <TouchableOpacity
+              style={{ width: ITEM_WIDTH }}
+              className="mb-3"
+              activeOpacity={0.8}
+              onPress={() =>
+                navigation.navigate("PreparationExerciseDetail", {
+                  exerciseId: item.id,
+                  title: item.title,
+                  videoPath: item.videoPath,
+                  description: item.description,
+                  iconName: item.iconName,
+                })
+              }
             >
-              <Image
-                source={{
-                  uri: `${ENV.API_BASE_URL}/exercises/${item.iconName}`,
+              <View
+                style={{
+                  width: ITEM_WIDTH,
+                  aspectRatio: 1,
+                  borderRadius: 16,
+                  overflow: "hidden",
+                  marginBottom: 4,
+                  backgroundColor: "#E5E7EB",
+                  justifyContent: "center",
+                  alignItems: "center",
                 }}
-                style={{ width: "100%", height: "100%", resizeMode: "cover" }}
-              />
-            </View>
-            <Text
-              className="text-center text-xs font-bold text-text-main"
-              numberOfLines={1}
-            >
-              {item.title}
-            </Text>
-          </TouchableOpacity>
-        )}
+              >
+                {hasCustomIcon ? (
+                  <Image
+                    source={{
+                      uri: `${ENV.API_BASE_URL}/exercises/${iconName}`,
+                    }}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      resizeMode: "cover",
+                    }}
+                  />
+                ) : videoPath ? (
+                  <View className="w-full h-full items-center justify-center bg-gray-200">
+                    <View className="w-9 h-9 rounded-full bg-black/45 items-center justify-center">
+                      <Ionicons name="play" size={20} color="#FFFFFF" />
+                    </View>
+                  </View>
+                ) : (
+                  <Ionicons name="videocam-off" size={28} color="#9CA3AF" />
+                )}
+              </View>
+
+              <Text
+                className="text-center text-xs font-bold text-text-main"
+                numberOfLines={1}
+              >
+                {item.title}
+              </Text>
+            </TouchableOpacity>
+          );
+        }}
       />
 
       {role === "Logoped" && (
@@ -232,7 +256,8 @@ export function PreparationExerciseGalleryScreen() {
               title="+ Створити комплекс"
               onPress={() =>
                 navigation.navigate("LogopedCreateComplex", {
-                  complexId: complexId,
+                  complexId,
+                  isEditing: false,
                 })
               }
               className="shadow-lg shadow-primary/30"
@@ -242,8 +267,8 @@ export function PreparationExerciseGalleryScreen() {
               title="Призначити дітям"
               onPress={() =>
                 navigation.navigate("LogopedAssignComplex", {
-                  complexId: complexId,
-                  complexTitle: complexTitle,
+                  complexId,
+                  complexTitle,
                 })
               }
               className="shadow-lg shadow-blue-500/30"
@@ -275,6 +300,7 @@ export function PreparationExerciseGalleryScreen() {
 
             <View className="flex-row items-center justify-between mb-4 px-6">
               <Text className="text-xl font-bold text-text-main">Фільтри</Text>
+
               {selectedTags.length > 0 && (
                 <TouchableOpacity onPress={clearFilters}>
                   <Text className="text-blue-500 font-medium">Очистити</Text>
@@ -293,6 +319,7 @@ export function PreparationExerciseGalleryScreen() {
                     <Text className="text-sm font-bold text-text-muted uppercase mb-2">
                       {getCategoryDisplayName(category)}
                     </Text>
+
                     <View className="flex-row flex-wrap gap-2">
                       {tags.map((tag) => (
                         <TouchableOpacity

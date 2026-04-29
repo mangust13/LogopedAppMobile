@@ -31,15 +31,6 @@ export function EditProblemSoundsModal({
     if (!visible) return;
 
     const parsedSounds = parseProblemSounds(child.problemSounds);
-
-    console.log("EditProblemSoundsModal opened");
-    console.log("Child:", child);
-    console.log("Child id:", child.id);
-    console.log("Child name:", child.name);
-    console.log("Child birthDate:", child.birthDate);
-    console.log("Child problemSounds raw:", child.problemSounds);
-    console.log("Child problemSounds parsed:", parsedSounds);
-
     setProblemSounds(parsedSounds);
   }, [visible, child]);
 

@@ -1,5 +1,4 @@
-// screens/games/preparation/LogopedAssignComplexScreen.tsx
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -25,6 +24,7 @@ type NavProp = NativeStackNavigationProp<
   GamesStackParamList,
   "LogopedAssignComplex"
 >;
+
 type RouteProps = RouteProp<GamesStackParamList, "LogopedAssignComplex">;
 
 export function LogopedAssignComplexScreen() {
@@ -37,22 +37,28 @@ export function LogopedAssignComplexScreen() {
   const [loading, setLoading] = useState(true);
   const [assigning, setAssigning] = useState(false);
 
-  useEffect(() => {
-    loadChildren();
-  }, []);
-
-  const loadChildren = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await logopedApi.getLogopedChildren();
-      setChildren(data);
+
+      const [childrenData, assignedChildIds] = await Promise.all([
+        logopedApi.getLogopedChildren(),
+        exercisesApi.getAssignedChildIds(complexId),
+      ]);
+
+      setChildren(childrenData);
+      setSelectedChildren(assignedChildIds);
     } catch (error) {
-      console.error("Помилка завантаження списку дітей:", error);
+      console.error("Помилка завантаження даних призначення:", error);
       Alert.alert("Помилка", "Не вдалося завантажити список дітей");
     } finally {
       setLoading(false);
     }
-  };
+  }, [complexId]);
+
+  useEffect(() => {
+    void loadData();
+  }, [loadData]);
 
   const toggleChild = (childId: number) => {
     setSelectedChildren((prev) =>
@@ -63,16 +69,12 @@ export function LogopedAssignComplexScreen() {
   };
 
   const assignComplex = async () => {
-    if (selectedChildren.length === 0) {
-      Alert.alert("Помилка", "Оберіть хоча б одну дитину");
-      return;
-    }
-
     try {
       setAssigning(true);
+
       await exercisesApi.assignComplexToChildren(complexId, selectedChildren);
 
-      Alert.alert("Успіх", "Комплекс успішно призначено", [
+      Alert.alert("Успіх", "Призначення комплексу оновлено", [
         {
           text: "OK",
           onPress: () => navigation.goBack(),
@@ -80,7 +82,7 @@ export function LogopedAssignComplexScreen() {
       ]);
     } catch (error) {
       console.error("Помилка при призначенні комплексу:", error);
-      Alert.alert("Помилка", "Не вдалося призначити комплекс");
+      Alert.alert("Помилка", "Не вдалося оновити призначення комплексу");
     } finally {
       setAssigning(false);
     }
@@ -91,6 +93,7 @@ export function LogopedAssignComplexScreen() {
 
     const birth = new Date(birthDate);
     const now = new Date();
+
     let age = now.getFullYear() - birth.getFullYear();
 
     if (
@@ -115,11 +118,14 @@ export function LogopedAssignComplexScreen() {
     return (
       <Screen>
         <BackHeader title="Призначити комплекс" />
+
         <View className="flex-1 justify-center items-center px-6">
           <Ionicons name="people-outline" size={64} color="#9CA3AF" />
+
           <Text className="text-lg font-semibold text-text-main mt-4 text-center">
             У вас немає дітей
           </Text>
+
           <Text className="text-sm text-text-muted mt-2 text-center">
             Спочатку додайте дітей у свій профіль
           </Text>
@@ -136,9 +142,11 @@ export function LogopedAssignComplexScreen() {
         <Text className="text-lg font-semibold text-text-main">
           {complexTitle}
         </Text>
+
         <Text className="text-sm text-gray-600 mt-1">
           Оберіть дітей, яким потрібно призначити цей комплекс
         </Text>
+
         <Text className="text-sm text-blue-600 mt-2">
           Обрано: {selectedChildren.length} з {children.length}
         </Text>
@@ -148,62 +156,69 @@ export function LogopedAssignComplexScreen() {
         data={children}
         keyExtractor={(item) => item.id.toString()}
         contentContainerStyle={{ padding: 16 }}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            onPress={() => toggleChild(item.id)}
-            className={`flex-row items-center p-3 mb-2 rounded-lg border ${
-              selectedChildren.includes(item.id)
-                ? "border-blue-500 bg-blue-50"
-                : "border-gray-200 bg-white"
-            }`}
-          >
-            <View
-              className={`w-6 h-6 rounded-full border-2 mr-3 items-center justify-center ${
-                selectedChildren.includes(item.id)
-                  ? "border-blue-500 bg-blue-500"
-                  : "border-gray-300"
+        renderItem={({ item }) => {
+          const isSelected = selectedChildren.includes(item.id);
+
+          return (
+            <TouchableOpacity
+              onPress={() => toggleChild(item.id)}
+              activeOpacity={0.75}
+              className={`flex-row items-center p-3 mb-2 rounded-lg border ${
+                isSelected
+                  ? "border-blue-500 bg-blue-50"
+                  : "border-gray-200 bg-white"
               }`}
             >
-              {selectedChildren.includes(item.id) && (
-                <Ionicons name="checkmark" size={16} color="white" />
-              )}
-            </View>
+              <View
+                className={`w-6 h-6 rounded-full border-2 mr-3 items-center justify-center ${
+                  isSelected ? "border-blue-500 bg-blue-500" : "border-gray-300"
+                }`}
+              >
+                {isSelected && (
+                  <Ionicons name="checkmark" size={16} color="white" />
+                )}
+              </View>
 
-            <View className="w-10 h-10 rounded-full bg-gray-200 mr-3 overflow-hidden">
-              {item.avatarUrl ? (
-                <Image
-                  source={{ uri: `${ENV.API_BASE_URL}${item.avatarUrl}` }}
-                  style={{ width: "100%", height: "100%" }}
-                />
-              ) : (
-                <View className="w-full h-full items-center justify-center">
-                  <Ionicons name="person" size={20} color="#9CA3AF" />
-                </View>
-              )}
-            </View>
+              <View className="w-10 h-10 rounded-full bg-gray-200 mr-3 overflow-hidden">
+                {item.avatarUrl ? (
+                  <Image
+                    source={{ uri: `${ENV.API_BASE_URL}${item.avatarUrl}` }}
+                    style={{ width: "100%", height: "100%" }}
+                  />
+                ) : (
+                  <View className="w-full h-full items-center justify-center">
+                    <Ionicons name="person" size={20} color="#9CA3AF" />
+                  </View>
+                )}
+              </View>
 
-            <View className="flex-1">
-              <Text className="font-medium text-gray-900">{item.name}</Text>
-              {item.birthDate && (
-                <Text className="text-sm text-gray-600">
-                  {getChildAge(item.birthDate)} років
+              <View className="flex-1">
+                <Text className="font-medium text-gray-900">
+                  {item.name || "Без імені"}
                 </Text>
-              )}
-              {item.problemSounds && (
-                <Text className="text-xs text-gray-500 mt-1">
-                  Проблемні звуки: {item.problemSounds}
-                </Text>
-              )}
-            </View>
-          </TouchableOpacity>
-        )}
+
+                {item.birthDate && (
+                  <Text className="text-sm text-gray-600">
+                    {getChildAge(item.birthDate)} років
+                  </Text>
+                )}
+
+                {item.problemSounds && (
+                  <Text className="text-xs text-gray-500 mt-1">
+                    Проблемні звуки: {item.problemSounds}
+                  </Text>
+                )}
+              </View>
+            </TouchableOpacity>
+          );
+        }}
       />
 
       <View className="p-4 border-t border-gray-200">
         <Button
-          title={assigning ? "Призначення..." : "Призначити комплекс"}
+          title={assigning ? "Збереження..." : "Зберегти зміни"}
           onPress={assignComplex}
-          disabled={assigning || selectedChildren.length === 0}
+          disabled={assigning}
         />
       </View>
     </Screen>

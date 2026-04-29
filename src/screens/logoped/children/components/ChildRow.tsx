@@ -1,5 +1,3 @@
-// src/screens/logoped/children/components/ChildRow.tsx
-
 import { View, Text, TouchableOpacity } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -22,7 +20,10 @@ type Props = {
 
 export function ChildRow({ child, onEditProblemSounds }: Props) {
   const navigation = useNavigation<NavigationProp>();
-  const problemSounds = parseProblemSounds(child.problemSounds);
+
+  const childName = child.name || "Без імені";
+  const birthDate = child.birthDate || "";
+  const problemSounds = parseProblemSounds(child.problemSounds || "");
 
   return (
     <TouchableOpacity
@@ -30,25 +31,25 @@ export function ChildRow({ child, onEditProblemSounds }: Props) {
       onPress={() =>
         navigation.navigate("ChildProgress", {
           childId: Number(child.id),
-          childName: child.name,
+          childName,
         })
       }
     >
       <Card className="p-4 border border-gray-100 flex-row items-center">
         <View className="w-12 h-12 bg-blue-50 rounded-full items-center justify-center mr-4 border border-blue-100">
           <Text className="text-xl font-bold text-blue-600">
-            {child.name.charAt(0).toUpperCase()}
+            {childName.charAt(0).toUpperCase()}
           </Text>
         </View>
 
         <View className="flex-1">
           <Text className="text-lg font-bold text-text-main mb-1">
-            {child.name}
+            {childName}
           </Text>
 
           <View className="flex-row items-center mb-1">
             <Text className="text-sm text-text-muted mr-3">
-              Вік: {calcAge(child.birthDate)}
+              Вік: {birthDate ? calcAge(birthDate) : "не вказано"}
             </Text>
           </View>
 
@@ -60,7 +61,7 @@ export function ChildRow({ child, onEditProblemSounds }: Props) {
 
               {problemSounds.map((sound, i) => (
                 <View
-                  key={i}
+                  key={`${sound}-${i}`}
                   className="bg-red-50 px-1.5 py-0.5 rounded border border-red-100"
                 >
                   <Text className="text-[10px] font-bold text-red-600">

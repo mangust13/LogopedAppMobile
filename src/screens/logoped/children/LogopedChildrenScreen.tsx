@@ -1,5 +1,3 @@
-// src/screens/logoped/children/LogopedChildrenScreen.tsx
-
 import { useEffect, useState } from "react";
 import { FlatList, View, ActivityIndicator, Alert, Text } from "react-native";
 import { Screen } from "../../../shared/ui/Screen";
@@ -18,18 +16,29 @@ export function LogopedChildrenScreen() {
   const loadChildren = async () => {
     try {
       setLoading(true);
+
       const data = await logopedApi.getLogopedChildren();
-      setChildren(data);
+
+      const normalizedChildren = data.map((child) => ({
+        ...child,
+        name: child.name || "Без імені",
+        birthDate: child.birthDate || "",
+        problemSounds: child.problemSounds || "",
+        logopedEmail: child.logopedEmail || null,
+        avatarUrl: child.avatarUrl || null,
+      }));
+
+      setChildren(normalizedChildren);
     } catch (e) {
       console.error("LOAD LOGOPED CHILDREN ERROR", e);
-      Alert.alert("Error", "Failed to load children");
+      Alert.alert("Помилка", "Не вдалося завантажити дітей");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadChildren();
+    void loadChildren();
   }, []);
 
   if (loading) {
@@ -42,7 +51,7 @@ export function LogopedChildrenScreen() {
 
   return (
     <Screen>
-      <ScreenHeader subtitle="Кабінет" title={"Мої учні 🎓"} center />
+      <ScreenHeader subtitle="Кабінет" title="Мої учні 🎓" center />
 
       <FlatList
         data={children}

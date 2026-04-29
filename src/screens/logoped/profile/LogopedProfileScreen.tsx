@@ -106,19 +106,6 @@ export function LogopedProfileScreen() {
 
         <Card className="p-0 px-4">
           <Text className="text-sm font-bold text-text-muted mt-4 mb-2 uppercase">
-            Робочі налаштування (Демо)
-          </Text>
-          <ProfileItem
-            icon="document-text"
-            label="Шаблон рекомендацій"
-            value="Базовий (15 хв)"
-          />
-          <ProfileItem icon="create" label="Автонотатки" value="Увімкнено" />
-          <ProfileItem icon="heart" label="Тон фідбеку" value="Підтримуючий" />
-        </Card>
-
-        <Card className="p-0 px-4">
-          <Text className="text-sm font-bold text-text-muted mt-4 mb-2 uppercase">
             Швидкий доступ
           </Text>
           <ProfileItem
