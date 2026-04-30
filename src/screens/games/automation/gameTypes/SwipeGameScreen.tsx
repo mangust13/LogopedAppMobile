@@ -20,7 +20,6 @@ import {
 import { BackHeader } from "../../../../shared/ui/BackHeader";
 import { VoiceInstruction } from "../../../../shared/ui/VoiceInstruction";
 import { GameProgressBar } from "../../../../shared/ui/GameProgressBar";
-import { InstructionButton } from "../../../../shared/ui/InstructionButton";
 import { useSessionInstruction } from "../../../../hooks/useSessionInstruction";
 import { soundCardsApi } from "../../../../api/soundCardsApi";
 
@@ -61,7 +60,8 @@ export function SwipeGameScreen({ navigation, route }: Props) {
     extrapolate: "clamp",
   });
 
-  const instructionText = `Подивіться на картинку. Оберіть веселий зелений смайлик або проведіть вправо, щоб відповісти правильно. Оберіть сумний червоний смайлик або проведіть вліво, щоб відповісти неправильно.`;
+  const instructionText =
+    "Подивіться на картинку. Оберіть веселий зелений смайлик або проведіть вправо, щоб відповісти правильно. Оберіть сумний червоний смайлик або проведіть вліво, щоб відповісти неправильно.";
 
   useEffect(() => {
     loadCards();
@@ -86,13 +86,16 @@ export function SwipeGameScreen({ navigation, route }: Props) {
   const loadCards = async () => {
     try {
       setIsLoading(true);
+
       const cards = await soundCardsApi.getBySound(sound);
+
       const items: SwipeItem[] = cards.map((c) => ({
         id: c.id,
         word: c.word,
         imageUrl: c.imageUrl,
         positionCode: c.position.code,
       }));
+
       const orderedItems = orderCards(items);
       preloadImages(orderedItems);
       setDeck(orderedItems);
@@ -211,11 +214,11 @@ export function SwipeGameScreen({ navigation, route }: Props) {
       >
         <Image
           key={item.imageUrl}
-          // source={{ uri: item.imageUrl }}
-          source={{ uri: `${item.imageUrl}?t=${Date.now()}` }}
+          source={{ uri: item.imageUrl }}
           className="w-full h-4/5"
           resizeMode="cover"
         />
+
         <View className="p-4 items-center justify-center flex-1">
           <Text className="text-3xl font-bold text-gray-800">{item.word}</Text>
         </View>
@@ -236,6 +239,7 @@ export function SwipeGameScreen({ navigation, route }: Props) {
             title="Гортай картинки"
             onBackPress={() => navigation.goBack()}
           />
+
           <View className="flex-1 justify-center items-center">
             <ActivityIndicator size="large" color="#6C63FF" />
           </View>
@@ -258,107 +262,88 @@ export function SwipeGameScreen({ navigation, route }: Props) {
         )}
 
         {completed ? (
-          <View className="flex-1 justify-center items-center p-8">
-            <Ionicons
-              name={
-                wrongItems.length === 0 ? "checkmark-circle" : "refresh-circle"
-              }
-              size={80}
-              color={wrongItems.length === 0 ? "#4CAF50" : "#F59E0B"}
-            />
-            <Text className="text-2xl font-bold text-gray-800 mt-5 text-center">
-              {wrongItems.length === 0
-                ? "Вправу завершено!"
-                : "Раунд завершено!"}
-            </Text>
-            <Text className="text-base text-gray-600 mt-3 text-center">
-              Правильно: {correctCount}
-            </Text>
-            <Text className="text-base text-gray-600 mt-1 text-center">
-              Неправильно: {incorrectCount}
+          <View className="flex-1 justify-center items-center px-8">
+            <Ionicons name="trophy" size={80} color="#FFD700" />
+
+            <Text className="text-3xl font-bold text-gray-800 mt-5 text-center">
+              Гру завершено! 🎉
             </Text>
 
-            {wrongItems.length > 0 && (
+            <Text className="text-base text-gray-600 text-center mt-2">
+              Правильно: {correctCount}/{deck.length}
+            </Text>
+
+            <Text className="text-base text-red-500 text-center mt-1">
+              Помилок: {incorrectCount}
+            </Text>
+
+            {wrongItems.length > 0 && !retryMode && (
               <TouchableOpacity
-                className="bg-orange-500 px-8 py-4 rounded-xl mt-8"
+                className="bg-primary w-64 py-4 rounded-xl mt-8"
                 onPress={retryWrongAnswers}
+                activeOpacity={0.85}
               >
-                <Text className="text-white text-lg font-bold">
-                  Пройти помилки ще раз
+                <Text className="text-white text-lg font-bold text-center">
+                  Повторити помилки
                 </Text>
               </TouchableOpacity>
             )}
 
             <TouchableOpacity
-              className="bg-green-500 px-8 py-4 rounded-xl mt-4"
+              className="bg-red-500 w-64 py-4 rounded-xl mt-4"
               onPress={initGame}
+              activeOpacity={0.85}
             >
-              <Text className="text-white text-lg font-bold">Почати знову</Text>
+              <View className="flex-row items-center justify-center">
+                <Ionicons name="refresh" size={20} color="#FFFFFF" />
+                <Text className="text-white text-lg font-bold ml-2">
+                  Почати заново
+                </Text>
+              </View>
             </TouchableOpacity>
           </View>
         ) : (
-          <View className="flex-1 px-5 pt-5 pb-24 items-center justify-center">
-            <GestureDetector gesture={panGesture}>
-              <Animated.View
-                className="items-center justify-center"
-                style={{ width: width - 40, height: 420 }}
-              >
-                {renderCard()}
-              </Animated.View>
-            </GestureDetector>
+          <View className="flex-1 px-4 pt-3 pb-24">
+            <View className="flex-1 justify-center items-center">
+              <View className="w-full h-[82%]">
+                <GestureDetector gesture={panGesture}>
+                  {renderCard() as React.ReactElement}
+                </GestureDetector>
+              </View>
 
-            <View className="flex-row justify-center gap-10 mt-8">
-              <TouchableOpacity
-                className="w-20 h-20 rounded-full bg-red-400 justify-center items-center shadow-lg"
-                onPress={() => handleAnswer(false, "left")}
-                disabled={!!showFeedback}
-              >
-                <Ionicons name="sad" size={34} color="#fff" />
-              </TouchableOpacity>
+              <View className="flex-row items-center justify-center mt-5">
+                <TouchableOpacity
+                  onPress={() => handleAnswer(false, "left")}
+                  disabled={!!showFeedback}
+                  className="w-20 h-20 rounded-full bg-red-500 items-center justify-center mx-5 shadow-lg"
+                  activeOpacity={0.85}
+                >
+                  <Ionicons name="sad" size={42} color="#FFFFFF" />
+                </TouchableOpacity>
 
-              <TouchableOpacity
-                className="w-20 h-20 rounded-full bg-green-500 justify-center items-center shadow-lg"
-                onPress={() => handleAnswer(true, "right")}
-                disabled={!!showFeedback}
-              >
-                <Ionicons name="happy" size={34} color="#fff" />
-              </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => handleAnswer(true, "right")}
+                  disabled={!!showFeedback}
+                  className="w-20 h-20 rounded-full bg-green-500 items-center justify-center mx-5 shadow-lg"
+                  activeOpacity={0.85}
+                >
+                  <Ionicons name="happy" size={42} color="#FFFFFF" />
+                </TouchableOpacity>
+              </View>
             </View>
 
             {showFeedback && (
-              <View className="absolute inset-0 items-center justify-center px-8">
+              <View className="absolute inset-0 items-center justify-center pointer-events-none">
                 <View
-                  className={`w-full rounded-[28px] px-6 py-7 items-center shadow-lg ${
-                    showFeedback === "correct" ? "bg-green-50" : "bg-red-50"
+                  className={`w-24 h-24 rounded-full items-center justify-center ${
+                    showFeedback === "correct" ? "bg-green-500" : "bg-red-500"
                   }`}
                 >
-                  <View
-                    className={`w-20 h-20 rounded-full items-center justify-center ${
-                      showFeedback === "correct" ? "bg-green-100" : "bg-red-100"
-                    }`}
-                  >
-                    <Ionicons
-                      name={
-                        showFeedback === "correct"
-                          ? "checkmark-circle"
-                          : "close-circle"
-                      }
-                      size={52}
-                      color={showFeedback === "correct" ? "#16A34A" : "#DC2626"}
-                    />
-                  </View>
-
-                  <Text
-                    className={`text-2xl font-extrabold mt-4 ${
-                      showFeedback === "correct"
-                        ? "text-green-700"
-                        : "text-red-700"
-                    }`}
-                  >
-                    {showFeedback === "correct"
-                      ? "Правильно, молодець!"
-                      : "Неправильно!"}
-                  </Text>
+                  <Ionicons
+                    name={showFeedback === "correct" ? "checkmark" : "close"}
+                    size={60}
+                    color="#FFFFFF"
+                  />
                 </View>
               </View>
             )}
@@ -369,17 +354,9 @@ export function SwipeGameScreen({ navigation, route }: Props) {
               correct={correctCount}
               incorrect={incorrectCount}
               onRestart={initGame}
-              label={retryMode ? "Повтор помилок" : "Прогрес"}
+              onInstructionPress={openInstruction}
             />
           </View>
-        )}
-
-        {!showInstruction && !completed && (
-          <InstructionButton onPress={openInstruction} />
-        )}
-
-        {!showInstruction && completed && (
-          <InstructionButton onPress={openInstruction} bottom={24} />
         )}
       </Screen>
     </GestureHandlerRootView>

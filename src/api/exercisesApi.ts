@@ -5,7 +5,7 @@ export type ExerciseDto = {
   title: string;
   description: string;
   videoPath: string;
-  iconName: string;
+  imagePath: string;
   tags: ExerciseTagDto[];
 };
 

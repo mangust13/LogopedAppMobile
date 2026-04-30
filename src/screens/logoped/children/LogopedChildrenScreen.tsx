@@ -30,7 +30,6 @@ export function LogopedChildrenScreen() {
 
       setChildren(normalizedChildren);
     } catch (e) {
-      console.error("LOAD LOGOPED CHILDREN ERROR", e);
       Alert.alert("Помилка", "Не вдалося завантажити дітей");
     } finally {
       setLoading(false);

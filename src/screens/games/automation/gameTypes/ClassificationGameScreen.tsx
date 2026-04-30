@@ -5,6 +5,7 @@ import {
   TouchableOpacity,
   Image,
   useWindowDimensions,
+  ActivityIndicator,
 } from "react-native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { Screen } from "../../../../shared/ui/Screen";
@@ -13,139 +14,122 @@ import { Ionicons } from "@expo/vector-icons";
 import { BackHeader } from "../../../../shared/ui/BackHeader";
 import { VoiceInstruction } from "../../../../shared/ui/VoiceInstruction";
 import { GameProgressBar } from "../../../../shared/ui/GameProgressBar";
-import { InstructionButton } from "../../../../shared/ui/InstructionButton";
 import { useSessionInstruction } from "../../../../hooks/useSessionInstruction";
+import { soundCardsApi } from "../../../../api/soundCardsApi";
 
 type Props = NativeStackScreenProps<GamesStackParamList, "ClassificationGame">;
 
-type Item = {
+type GameItem = {
   id: number;
   word: string;
-  image: string;
-  category: string;
+  imageUrl: string;
+  isAlive: boolean;
 };
 
 type Category = {
-  id: string;
+  isAlive: boolean;
   name: string;
   color: string;
-  icon: string;
-  items: Item[];
+  emoji: string;
+  count: number;
 };
 
 type FeedbackType = "correct" | "incorrect" | null;
+
+const CATEGORIES: Category[] = [
+  { isAlive: false, name: "Неживе", color: "#FF9800", emoji: "🪨", count: 0 },
+  { isAlive: true, name: "Живе", color: "#4CAF50", emoji: "🐾", count: 0 },
+];
+
+const MATCHING_COUNT = 15;
 
 export function ClassificationGameScreen({ navigation, route }: Props) {
   const { sound } = route.params;
   const { width, height } = useWindowDimensions();
 
-  const categoryCardWidth = (width - 60) / 2;
-  const itemCardHeight = Math.min(height * 0.32, 260);
-  const categoryCardHeight = Math.min(height * 0.22, 165);
-  const imageSize = Math.min(width * 0.34, 130);
+  const categoryCardWidth = (width - 44) / 2;
+  const itemCardHeight = Math.min(height * 0.52, 420);
+  const categoryCardHeight = Math.min(height * 0.13, 105);
+  const imageSize = Math.min(width * 0.72, itemCardHeight * 0.68, 270);
 
-  const [items, setItems] = useState<Item[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [currentItem, setCurrentItem] = useState<Item | null>(null);
+  const [items, setItems] = useState<GameItem[]>([]);
+  const [categories, setCategories] = useState<Category[]>(CATEGORIES);
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [completed, setCompleted] = useState(false);
   const [score, setScore] = useState(0);
   const [mistakes, setMistakes] = useState(0);
   const [showFeedback, setShowFeedback] = useState<FeedbackType>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [totalItems, setTotalItems] = useState(0);
 
   const { showInstruction, openInstruction, closeInstruction } =
     useSessionInstruction("ClassificationGame");
 
-  const mockItems: Item[] = [
-    {
-      id: 1,
-      word: "Абрикос",
-      image: "https://via.placeholder.com/150",
-      category: "Фрукти",
-    },
-    {
-      id: 2,
-      word: "Ананас",
-      image: "https://via.placeholder.com/150",
-      category: "Фрукти",
-    },
-    {
-      id: 3,
-      word: "Автобус",
-      image: "https://via.placeholder.com/150",
-      category: "Транспорт",
-    },
-    {
-      id: 4,
-      word: "Автомобіль",
-      image: "https://via.placeholder.com/150",
-      category: "Транспорт",
-    },
-  ];
-
-  const mockCategories: Category[] = [
-    {
-      id: "fruits",
-      name: "Фрукти",
-      color: "#FF6B6B",
-      icon: "nutrition",
-      items: [],
-    },
-    {
-      id: "transport",
-      name: "Транспорт",
-      color: "#4ECDC4",
-      icon: "car",
-      items: [],
-    },
-  ];
-
   const instructionText =
-    "Подивіться на картинку, скажіть слово і натисніть на правильну групу.";
+    "Подивіться на картинку, скажіть слово і натисніть – живе це чи неживе.";
 
   useEffect(() => {
-    initGame();
+    loadCards();
   }, []);
 
-  const initGame = () => {
-    const shuffledItems = [...mockItems].sort(() => Math.random() - 0.5);
-    setItems(shuffledItems);
-    setCategories(mockCategories.map((cat) => ({ ...cat, items: [] })));
-    setCurrentItem(shuffledItems.length > 0 ? shuffledItems[0] : null);
-    setCompleted(false);
-    setScore(0);
-    setMistakes(0);
-    setShowFeedback(null);
+  const loadCards = async () => {
+    try {
+      setIsLoading(true);
+      const data = await soundCardsApi.getBySound(sound);
+
+      const classificationCards = data.slice(MATCHING_COUNT);
+
+      const gameItems: GameItem[] = classificationCards.map((c) => ({
+        id: c.id,
+        word: c.word,
+        imageUrl: c.imageUrl,
+        isAlive: c.isAlive,
+      }));
+
+      const shuffled = [...gameItems].sort(() => Math.random() - 0.5);
+
+      setItems(shuffled);
+      setTotalItems(shuffled.length);
+      setCategories(CATEGORIES.map((c) => ({ ...c, count: 0 })));
+      setCurrentIndex(0);
+      setCompleted(false);
+      setScore(0);
+      setMistakes(0);
+      setShowFeedback(null);
+    } catch (e) {
+      console.log("Error loading cards:", e);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleCategorySelect = (categoryId: string) => {
-    if (!currentItem || showFeedback) return;
+  const initGame = () => {
+    loadCards();
+  };
 
-    const targetCategory = mockCategories.find((cat) => cat.id === categoryId);
-    if (!targetCategory) return;
+  const handleCategorySelect = (isAlive: boolean) => {
+    if (showFeedback) return;
 
-    const isCorrect = currentItem.category === targetCategory.name;
+    const currentItem = items[currentIndex];
+    if (!currentItem) return;
 
+    const isCorrect = currentItem.isAlive === isAlive;
     setShowFeedback(isCorrect ? "correct" : "incorrect");
 
     setTimeout(() => {
       if (isCorrect) {
         setScore((prev) => prev + 1);
-
-        const newCategories = categories.map((cat) =>
-          cat.id === categoryId
-            ? { ...cat, items: [...cat.items, currentItem] }
-            : cat,
+        setCategories((prev) =>
+          prev.map((c) =>
+            c.isAlive === isAlive ? { ...c, count: c.count + 1 } : c,
+          ),
         );
-        setCategories(newCategories);
 
-        const newItems = items.filter((item) => item.id !== currentItem.id);
-        setItems(newItems);
-
-        if (newItems.length > 0) {
-          setCurrentItem(newItems[0]);
-        } else {
-          setCurrentItem(null);
+        const nextIndex = currentIndex + 1;
+        if (nextIndex >= items.length) {
           setCompleted(true);
+        } else {
+          setCurrentIndex(nextIndex);
         }
       } else {
         setMistakes((prev) => prev + 1);
@@ -154,6 +138,93 @@ export function ClassificationGameScreen({ navigation, route }: Props) {
       setShowFeedback(null);
     }, 900);
   };
+
+  const currentItem = items[currentIndex];
+
+  if (isLoading) {
+    return (
+      <Screen>
+        <BackHeader
+          subtitle={`Звук ${sound}`}
+          title="Розклади по групах"
+          onBackPress={() => navigation.goBack()}
+        />
+
+        <View className="flex-1 justify-center items-center">
+          <ActivityIndicator size="large" color="#6C63FF" />
+        </View>
+      </Screen>
+    );
+  }
+
+  if (completed) {
+    return (
+      <Screen>
+        <BackHeader
+          subtitle={`Звук ${sound}`}
+          title="Розклади по групах"
+          onBackPress={() => navigation.goBack()}
+        />
+
+        <View className="flex-1 justify-center items-center p-8">
+          <Ionicons name="trophy" size={80} color="#FFD700" />
+
+          <Text className="text-3xl font-bold text-gray-800 mt-5">
+            Вітаємо! 🎉
+          </Text>
+
+          <Text className="text-base text-gray-600 text-center mt-2">
+            Ви розподілили всі картинки!
+          </Text>
+
+          <Text className="text-lg text-green-500 font-bold mt-4">
+            Правильно: {score}/{totalItems}
+          </Text>
+
+          <Text className="text-base text-red-500 mt-1">
+            Помилок: {mistakes}
+          </Text>
+
+          <View className="mt-6 w-full gap-2">
+            {CATEGORIES.map((cat) => {
+              const final = categories.find((c) => c.isAlive === cat.isAlive);
+
+              return (
+                <View
+                  key={cat.name}
+                  className="flex-row items-center justify-between bg-gray-50 rounded-xl px-4 py-3"
+                >
+                  <View className="flex-row items-center gap-2">
+                    <Text className="text-xl">{cat.emoji}</Text>
+                    <Text className="text-gray-700 font-medium">
+                      {cat.name}
+                    </Text>
+                  </View>
+
+                  <Text className="text-gray-800 font-bold">
+                    {final?.count ?? 0}
+                  </Text>
+                </View>
+              );
+            })}
+          </View>
+
+          <TouchableOpacity
+            className="bg-green-500 w-64 py-4 rounded-xl mt-8"
+            onPress={initGame}
+            activeOpacity={0.85}
+          >
+            <View className="flex-row items-center justify-center">
+              <Ionicons name="refresh" size={20} color="#FFFFFF" />
+              <Text className="text-white text-lg font-bold ml-2">
+                Грати знову
+              </Text>
+            </View>
+          </TouchableOpacity>
+        </View>
+      </Screen>
+    );
+  }
 
   return (
     <Screen>
@@ -167,162 +238,118 @@ export function ClassificationGameScreen({ navigation, route }: Props) {
         <VoiceInstruction text={instructionText} onClose={closeInstruction} />
       )}
 
-      {completed ? (
-        <View className="flex-1 justify-center items-center p-8">
-          <Ionicons name="trophy" size={80} color="#FFD700" />
-
-          <Text className="text-3xl font-bold text-gray-800 mt-5">
-            Вітаємо!
+      <View className="flex-1 px-4 pt-2 pb-24">
+        <View
+          className="bg-white rounded-[32px] shadow-sm px-4 py-4 mb-3 items-center"
+          style={{ height: itemCardHeight }}
+        >
+          <Text className="text-xl text-gray-800 font-extrabold mb-2">
+            Живе чи неживе?
           </Text>
 
-          <Text className="text-base text-gray-600 text-center mt-2">
-            Ви правильно розподілили всі картинки!
-          </Text>
-
-          <Text className="text-lg text-green-500 font-bold mt-4">
-            Правильно: {score}/{mockItems.length}
-          </Text>
-
-          <Text className="text-base text-red-500 mt-1">
-            Помилок: {mistakes}
-          </Text>
-
-          <TouchableOpacity
-            className="bg-green-500 px-8 py-4 rounded-xl mt-8"
-            onPress={initGame}
-          >
-            <Text className="text-white text-lg font-bold">Грати знову</Text>
-          </TouchableOpacity>
-        </View>
-      ) : (
-        <View className="flex-1 px-5 pt-4 pb-5">
-          <View
-            className="bg-white rounded-[28px] shadow-sm px-5 py-5 mb-4 items-center"
-            style={{ height: itemCardHeight }}
-          >
-            <Text className="text-xl text-gray-800 font-bold mb-3">
-              Оберіть групу
-            </Text>
-
-            {currentItem && (
-              <View className="flex-1 w-full items-center justify-center">
-                <Image
-                  source={{ uri: currentItem.image }}
-                  style={{
-                    width: imageSize,
-                    height: imageSize,
-                    marginBottom: 10,
-                  }}
-                  resizeMode="contain"
-                />
-
-                <Text
-                  className="text-3xl font-bold text-gray-800 text-center"
-                  numberOfLines={2}
-                  adjustsFontSizeToFit
-                >
-                  {currentItem.word}
-                </Text>
-              </View>
-            )}
-          </View>
-
-          <View className="flex-row justify-between mb-4">
-            {categories.map((category) => (
-              <TouchableOpacity
-                key={category.id}
-                className="rounded-[28px] justify-center items-center shadow-lg relative"
+          {currentItem && (
+            <View className="flex-1 w-full items-center justify-center">
+              <Image
+                source={{ uri: currentItem.imageUrl }}
                 style={{
-                  width: categoryCardWidth,
-                  height: categoryCardHeight,
-                  backgroundColor: category.color,
-                  opacity: showFeedback ? 0.7 : 1,
+                  width: imageSize,
+                  height: imageSize,
+                  marginBottom: 12,
                 }}
-                onPress={() => handleCategorySelect(category.id)}
-                disabled={!!showFeedback}
+                resizeMode="contain"
+              />
+
+              <Text
+                className="text-3xl font-extrabold text-gray-800 text-center"
+                numberOfLines={2}
+                adjustsFontSizeToFit
               >
-                <Ionicons name={category.icon as any} size={52} color="#fff" />
-
-                <Text className="text-white text-xl font-bold mt-3">
-                  {category.name}
-                </Text>
-
-                <View className="absolute top-3 right-3 bg-white/30 rounded-full px-3 py-1">
-                  <Text className="text-white text-base font-bold">
-                    {category.items.length}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          <View className="flex-1" />
-
-          {showFeedback && (
-            <View className="absolute inset-0 items-center justify-center px-8">
-              <View
-                className={`w-full rounded-[28px] px-6 py-7 items-center shadow-lg ${
-                  showFeedback === "correct" ? "bg-green-50" : "bg-red-50"
-                }`}
-              >
-                <View
-                  className={`w-20 h-20 rounded-full items-center justify-center ${
-                    showFeedback === "correct" ? "bg-green-100" : "bg-red-100"
-                  }`}
-                >
-                  <Ionicons
-                    name={
-                      showFeedback === "correct"
-                        ? "checkmark-circle"
-                        : "close-circle"
-                    }
-                    size={52}
-                    color={showFeedback === "correct" ? "#16A34A" : "#DC2626"}
-                  />
-                </View>
-
-                <Text
-                  className={`text-2xl font-extrabold mt-4 ${
-                    showFeedback === "correct"
-                      ? "text-green-700"
-                      : "text-red-700"
-                  }`}
-                >
-                  {showFeedback === "correct" ? "Правильно!" : "Спробуй ще раз"}
-                </Text>
-
-                <Text
-                  className={`text-base text-center mt-2 ${
-                    showFeedback === "correct"
-                      ? "text-green-700"
-                      : "text-red-700"
-                  }`}
-                >
-                  {showFeedback === "correct"
-                    ? "Ти обрав правильну групу"
-                    : "Це не та група для цієї картинки"}
-                </Text>
-              </View>
+                {currentItem.word}
+              </Text>
             </View>
           )}
-
-          <GameProgressBar
-            current={score}
-            total={mockItems.length}
-            correct={score}
-            incorrect={mistakes}
-            onRestart={initGame}
-          />
         </View>
-      )}
 
-      {!showInstruction && !completed && (
-        <InstructionButton onPress={openInstruction} bottom={110} />
-      )}
+        <View className="flex-row justify-between gap-3 mb-28">
+          {categories.map((category) => (
+            <TouchableOpacity
+              key={category.name}
+              className="rounded-[24px] justify-center items-center shadow-lg relative"
+              style={{
+                width: categoryCardWidth,
+                height: categoryCardHeight,
+                backgroundColor: category.color,
+                opacity: showFeedback ? 0.7 : 1,
+              }}
+              onPress={() => handleCategorySelect(category.isAlive)}
+              disabled={!!showFeedback}
+              activeOpacity={0.85}
+            >
+              <Text style={{ fontSize: 34 }}>{category.emoji}</Text>
 
-      {!showInstruction && completed && (
-        <InstructionButton onPress={openInstruction} bottom={24} />
-      )}
+              <Text className="text-white text-lg font-bold mt-1">
+                {category.name}
+              </Text>
+
+              <View className="absolute top-2 right-2 bg-white/30 rounded-full px-2.5 py-0.5">
+                <Text className="text-white text-sm font-bold">
+                  {category.count}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {showFeedback && (
+          <View className="absolute inset-0 items-center justify-center px-8">
+            <View
+              className={`w-full rounded-[28px] px-6 py-7 items-center shadow-lg ${
+                showFeedback === "correct" ? "bg-green-50" : "bg-red-50"
+              }`}
+            >
+              <View
+                className={`w-20 h-20 rounded-full items-center justify-center ${
+                  showFeedback === "correct" ? "bg-green-100" : "bg-red-100"
+                }`}
+              >
+                <Ionicons
+                  name={
+                    showFeedback === "correct"
+                      ? "checkmark-circle"
+                      : "close-circle"
+                  }
+                  size={52}
+                  color={showFeedback === "correct" ? "#16A34A" : "#DC2626"}
+                />
+              </View>
+
+              <Text
+                className={`text-2xl font-extrabold mt-4 ${
+                  showFeedback === "correct" ? "text-green-700" : "text-red-700"
+                }`}
+              >
+                {showFeedback === "correct" ? "Правильно!" : "Спробуй ще раз"}
+              </Text>
+
+              {showFeedback === "incorrect" && currentItem && (
+                <Text className="text-red-600 text-base text-center mt-2">
+                  "{currentItem.word}" –{" "}
+                  {currentItem.isAlive ? "живе 🐾" : "неживе 🪨"}
+                </Text>
+              )}
+            </View>
+          </View>
+        )}
+
+        <GameProgressBar
+          current={score}
+          total={totalItems}
+          correct={score}
+          incorrect={mistakes}
+          onRestart={initGame}
+          onInstructionPress={openInstruction}
+        />
+      </View>
     </Screen>
   );
 }

@@ -81,7 +81,6 @@ export function LogopedAssignComplexScreen() {
         },
       ]);
     } catch (error) {
-      console.error("Помилка при призначенні комплексу:", error);
       Alert.alert("Помилка", "Не вдалося оновити призначення комплексу");
     } finally {
       setAssigning(false);

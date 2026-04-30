@@ -6,6 +6,7 @@ export type SoundCardDto = {
   sound: string;
   word: string;
   imageFile: string;
+  isAlive: boolean;
   position: {
     code: number;
     displayName: string;

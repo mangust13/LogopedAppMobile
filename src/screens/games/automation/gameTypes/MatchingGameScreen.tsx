@@ -3,7 +3,10 @@ import {
   Text,
   View,
   TouchableOpacity,
+  Pressable,
+  Image,
   useWindowDimensions,
+  ActivityIndicator,
 } from "react-native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { Screen } from "../../../../shared/ui/Screen";
@@ -11,22 +14,27 @@ import type { GamesStackParamList } from "../../../../navigation/games/GamesStac
 import { Ionicons } from "@expo/vector-icons";
 import { BackHeader } from "../../../../shared/ui/BackHeader";
 import { VoiceInstruction } from "../../../../shared/ui/VoiceInstruction";
-import { InstructionButton } from "../../../../shared/ui/InstructionButton";
+import { GameProgressBar } from "../../../../shared/ui/GameProgressBar";
 import { useSessionInstruction } from "../../../../hooks/useSessionInstruction";
+import { soundCardsApi, SoundCardDto } from "../../../../api/soundCardsApi";
 
 type Props = NativeStackScreenProps<GamesStackParamList, "MatchingGame">;
 
 const GRID_COLS = 2;
 const GRID_ROWS = 3;
-const CARD_MARGIN = 10;
-const HORIZONTAL_PADDING = 40;
-const TOP_CONTENT_HEIGHT = 80;
-const BOTTOM_CONTENT_HEIGHT = 230;
-const CARD_SCALE = 0.88;
+const CARD_MARGIN = 8;
+const HORIZONTAL_PADDING = 20;
+const TOP_CONTENT_HEIGHT = 70;
+const BOTTOM_CONTENT_HEIGHT = 150;
+const CARD_SCALE = 1;
+const PAIRS_PER_LEVEL = 3;
+const TOTAL_LEVELS = 5;
 
 type Card = {
-  id: number;
+  uid: string;
+  cardId: number;
   word: string;
+  imageUrl: string;
   flipped: boolean;
   matched: boolean;
 };
@@ -37,160 +45,249 @@ export function MatchingGameScreen({ navigation, route }: Props) {
 
   const maxCardWidth =
     (width - HORIZONTAL_PADDING - CARD_MARGIN * GRID_COLS * 2) / GRID_COLS;
-
   const maxCardHeight =
     (height -
       TOP_CONTENT_HEIGHT -
       BOTTOM_CONTENT_HEIGHT -
       CARD_MARGIN * GRID_ROWS * 2) /
     GRID_ROWS;
-
   const cardSize = Math.floor(
     Math.min(maxCardWidth, maxCardHeight) * CARD_SCALE,
   );
-
   const gridWidth = (cardSize + CARD_MARGIN * 2) * GRID_COLS;
 
+  const [allCards, setAllCards] = useState<SoundCardDto[]>([]);
   const [cards, setCards] = useState<Card[]>([]);
-  const [flippedCards, setFlippedCards] = useState<number[]>([]);
+  const [flippedUids, setFlippedUids] = useState<string[]>([]);
   const [moves, setMoves] = useState(0);
-  const [completed, setCompleted] = useState(false);
+  const [level, setLevel] = useState(1);
+  const [levelCompleted, setLevelCompleted] = useState(false);
+  const [gameCompleted, setGameCompleted] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isChecking, setIsChecking] = useState(false);
+  const [correctCount, setCorrectCount] = useState(0);
+  const [incorrectCount, setIncorrectCount] = useState(0);
 
   const { showInstruction, openInstruction, closeInstruction } =
     useSessionInstruction("MatchingGame");
 
-  const mockWords = [
-    { id: 1, word: "Абрикос" },
-    { id: 2, word: "Ананас" },
-    { id: 3, word: "Автобус" },
-  ];
-
   const instructionText =
-    "Натискайте на картки, відкривайте їх і знайдіть дві однакові.";
+    "Натискайте на картки, відкривайте їх і знайдіть дві однакові картинки.";
 
   useEffect(() => {
-    initGame();
+    loadCards();
   }, []);
 
-  const initGame = () => {
-    const selectedWords = mockWords.slice(0, 3);
-    let gameCards: Card[] = [];
+  const loadCards = async () => {
+    try {
+      setIsLoading(true);
+      const data = await soundCardsApi.getBySound(sound);
+      setAllCards(data);
+      buildLevel(data, 1);
+    } catch (e) {
+      console.log("Error loading cards:", e);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    selectedWords.forEach((word) => {
+  const buildLevel = (data: SoundCardDto[], lvl: number) => {
+    const startIndex = (lvl - 1) * PAIRS_PER_LEVEL;
+    const levelCards = data.slice(startIndex, startIndex + PAIRS_PER_LEVEL);
+
+    const gameCards: Card[] = [];
+    levelCards.forEach((c) => {
       gameCards.push(
         {
-          id: word.id * 2 - 1,
-          word: word.word,
+          uid: `${c.id}-a`,
+          cardId: c.id,
+          word: c.word,
+          imageUrl: c.imageUrl,
           flipped: false,
           matched: false,
         },
         {
-          id: word.id * 2,
-          word: word.word,
+          uid: `${c.id}-b`,
+          cardId: c.id,
+          word: c.word,
+          imageUrl: c.imageUrl,
           flipped: false,
           matched: false,
         },
       );
     });
 
-    gameCards = shuffleArray(gameCards);
-    setCards(gameCards);
-    setFlippedCards([]);
+    setCards(shuffleArray(gameCards));
+    setFlippedUids([]);
     setMoves(0);
-    setCompleted(false);
+    setCorrectCount(0);
+    setIncorrectCount(0);
+    setLevelCompleted(false);
   };
 
-  const shuffleArray = (array: Card[]) => {
+  const shuffleArray = <T,>(array: T[]): T[] => {
     const newArray = [...array];
-
     for (let i = newArray.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
     }
-
     return newArray;
   };
 
-  const handleCardPress = (id: number) => {
-    if (flippedCards.length === 2) return;
+  const handleCardPress = (uid: string) => {
+    if (isChecking) return;
 
-    const newCards = [...cards];
-    const cardIndex = newCards.findIndex((card) => card.id === id);
+    const card = cards.find((c) => c.uid === uid);
+    if (!card || card.flipped || card.matched) return;
+    if (flippedUids.length >= 2) return;
 
-    if (cardIndex === -1) return;
-    if (newCards[cardIndex].flipped || newCards[cardIndex].matched) return;
-
-    newCards[cardIndex].flipped = true;
+    const newCards = cards.map((c) =>
+      c.uid === uid ? { ...c, flipped: true } : c,
+    );
     setCards(newCards);
 
-    const newFlippedCards = [...flippedCards, cardIndex];
-    setFlippedCards(newFlippedCards);
+    const newFlipped = [...flippedUids, uid];
+    setFlippedUids(newFlipped);
 
-    if (newFlippedCards.length === 2) {
+    if (newFlipped.length === 2) {
+      setIsChecking(true);
       setMoves((prev) => prev + 1);
 
-      const [first, second] = newFlippedCards;
+      const [firstUid, secondUid] = newFlipped;
+      const first = newCards.find((c) => c.uid === firstUid)!;
+      const second = newCards.find((c) => c.uid === secondUid)!;
 
-      if (newCards[first].word === newCards[second].word) {
-        newCards[first].matched = true;
-        newCards[second].matched = true;
-        setCards([...newCards]);
-        setFlippedCards([]);
+      if (first.cardId === second.cardId) {
+        const matched = newCards.map((c) =>
+          c.uid === firstUid || c.uid === secondUid
+            ? { ...c, matched: true }
+            : c,
+        );
 
-        if (newCards.every((card) => card.matched)) {
-          setCompleted(true);
+        setCorrectCount((prev) => prev + 1);
+        setCards(matched);
+        setFlippedUids([]);
+        setIsChecking(false);
+
+        if (matched.every((c) => c.matched)) {
+          setLevelCompleted(true);
+          if (level >= TOTAL_LEVELS) {
+            setGameCompleted(true);
+          }
         }
       } else {
+        setIncorrectCount((prev) => prev + 1);
+
         setTimeout(() => {
-          const resetCards = [...newCards];
-          resetCards[first].flipped = false;
-          resetCards[second].flipped = false;
-          setCards(resetCards);
-          setFlippedCards([]);
+          setCards((prev) =>
+            prev.map((c) =>
+              c.uid === firstUid || c.uid === secondUid
+                ? { ...c, flipped: false }
+                : c,
+            ),
+          );
+          setFlippedUids([]);
+          setIsChecking(false);
         }, 1000);
       }
     }
   };
 
-  const renderCard = (card: Card) => (
-    <TouchableOpacity
-      key={card.id}
-      onPress={() => handleCardPress(card.id)}
-      disabled={card.flipped || card.matched}
-      style={{
-        width: cardSize,
-        height: cardSize,
-        margin: CARD_MARGIN,
-      }}
-      className={`rounded-2xl justify-center items-center shadow-sm ${
-        card.matched
-          ? "bg-green-200"
-          : card.flipped
-            ? "bg-white border-2 border-gray-200"
-            : "bg-primary"
-      }`}
-    >
-      {card.flipped || card.matched ? (
-        <Text
-          className="font-bold text-gray-800 text-center px-2"
-          style={{ fontSize: cardSize * 0.18 }}
-          numberOfLines={2}
-          adjustsFontSizeToFit
-        >
-          {card.word}
-        </Text>
-      ) : (
-        <Text
-          className="font-bold text-white"
-          style={{ fontSize: cardSize * 0.4 }}
-        >
-          {sound.toUpperCase()}
-        </Text>
-      )}
-    </TouchableOpacity>
-  );
+  const goToNextLevel = () => {
+    const nextLevel = level + 1;
+    setLevel(nextLevel);
+    buildLevel(allCards, nextLevel);
+  };
 
-  if (completed) {
+  const restartGame = () => {
+    setLevel(1);
+    setGameCompleted(false);
+    buildLevel(allCards, 1);
+  };
+
+  const renderCard = (card: Card) => {
+    const isOpen = card.flipped || card.matched;
+    const backgroundColor = isOpen
+      ? card.matched
+        ? "#DCFCE7"
+        : "#FFFFFF"
+      : "#6C63FF";
+    const borderColor = isOpen
+      ? card.matched
+        ? "#86EFAC"
+        : "#E5E7EB"
+      : "#6C63FF";
+
+    return (
+      <View
+        key={card.uid}
+        style={{
+          width: cardSize,
+          height: cardSize,
+          margin: CARD_MARGIN,
+          borderRadius: 24,
+          backgroundColor,
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.14,
+          shadowRadius: 4,
+          elevation: 3,
+        }}
+      >
+        <Pressable
+          onPress={() => handleCardPress(card.uid)}
+          disabled={isOpen || isChecking}
+          style={{
+            width: "100%",
+            height: "100%",
+            borderRadius: 24,
+            overflow: "hidden",
+            backgroundColor,
+            borderWidth: isOpen ? 2 : 0,
+            borderColor,
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          {isOpen ? (
+            <Image
+              source={{ uri: card.imageUrl }}
+              style={{
+                width: "100%",
+                height: "100%",
+                borderRadius: 22,
+              }}
+              resizeMode="cover"
+            />
+          ) : (
+            <Text
+              className="font-bold text-white"
+              style={{ fontSize: cardSize * 0.42 }}
+            >
+              {sound.toUpperCase()}
+            </Text>
+          )}
+        </Pressable>
+      </View>
+    );
+  };
+
+  if (isLoading) {
+    return (
+      <Screen>
+        <BackHeader
+          subtitle={`Звук ${sound}`}
+          title="Знайди однакові"
+          onBackPress={() => navigation.goBack()}
+        />
+        <View className="flex-1 justify-center items-center">
+          <ActivityIndicator size="large" color="#6C63FF" />
+        </View>
+      </Screen>
+    );
+  }
+
+  if (gameCompleted) {
     return (
       <Screen>
         <BackHeader
@@ -199,32 +296,81 @@ export function MatchingGameScreen({ navigation, route }: Props) {
           onBackPress={() => navigation.goBack()}
         />
 
-        {showInstruction && (
-          <VoiceInstruction text={instructionText} onClose={closeInstruction} />
-        )}
+        <View className="flex-1 justify-center items-center p-8">
+          <Ionicons name="trophy" size={80} color="#FFD700" />
+
+          <Text className="text-2xl font-bold text-gray-800 mt-5 text-center">
+            Всі рівні пройдено! 🎉
+          </Text>
+
+          <Text className="text-base text-gray-600 mt-2 text-center">
+            Ти знайшов всі пари у {TOTAL_LEVELS} рівнях
+          </Text>
+
+          <Text className="text-base text-gray-600 mt-1 text-center">
+            Останній рівень: {moves} ходів
+          </Text>
+
+          <TouchableOpacity
+            className="bg-green-500 w-64 py-4 rounded-xl mt-8"
+            onPress={restartGame}
+            activeOpacity={0.85}
+          >
+            <View className="flex-row items-center justify-center">
+              <Ionicons name="refresh" size={20} color="#FFFFFF" />
+              <Text className="text-white text-lg font-bold ml-2">
+                Грати знову
+              </Text>
+            </View>
+          </TouchableOpacity>
+        </View>
+      </Screen>
+    );
+  }
+
+  if (levelCompleted) {
+    return (
+      <Screen>
+        <BackHeader
+          subtitle={`Звук ${sound}`}
+          title="Знайди однакові"
+          onBackPress={() => navigation.goBack()}
+        />
 
         <View className="flex-1 justify-center items-center p-8">
           <Ionicons name="checkmark-circle" size={80} color="#4CAF50" />
 
           <Text className="text-2xl font-bold text-gray-800 mt-5 text-center">
-            Вітаємо!
+            Рівень {level} пройдено! ✅
           </Text>
 
           <Text className="text-lg text-gray-600 mt-2 text-center">
-            Ви знайшли всі пари за {moves} ходів
+            Ходів: {moves}
           </Text>
 
           <TouchableOpacity
-            className="bg-green-500 px-8 py-4 rounded-xl mt-8"
-            onPress={initGame}
+            className="bg-primary w-64 py-4 rounded-xl mt-8"
+            onPress={goToNextLevel}
+            activeOpacity={0.85}
           >
-            <Text className="text-white text-lg font-bold">Грати знову</Text>
+            <Text className="text-white text-lg font-bold text-center">
+              Наступний рівень →
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            className="bg-red-500 w-64 py-4 rounded-xl mt-4"
+            onPress={restartGame}
+            activeOpacity={0.85}
+          >
+            <View className="flex-row items-center justify-center">
+              <Ionicons name="refresh" size={20} color="#FFFFFF" />
+              <Text className="text-white text-lg font-bold ml-2">
+                Почати заново
+              </Text>
+            </View>
           </TouchableOpacity>
         </View>
-
-        {!showInstruction && (
-          <InstructionButton onPress={openInstruction} bottom={24} />
-        )}
       </Screen>
     );
   }
@@ -241,12 +387,8 @@ export function MatchingGameScreen({ navigation, route }: Props) {
         <VoiceInstruction text={instructionText} onClose={closeInstruction} />
       )}
 
-      <View className="flex-1 px-5 pb-6">
-        <Text className="text-center text-xl text-gray-600 mt-3 mb-2">
-          Ходів: {moves}
-        </Text>
-
-        <View className="flex-1 justify-center items-center">
+      <View className="flex-1 px-2 pb-24">
+        <View className="flex-1 items-center" style={{ paddingTop: 10 }}>
           <View
             className="flex-row flex-wrap justify-center items-center"
             style={{ width: gridWidth }}
@@ -255,19 +397,17 @@ export function MatchingGameScreen({ navigation, route }: Props) {
           </View>
         </View>
 
-        <View className="h-28" />
-
-        <TouchableOpacity
-          className="bg-red-400 py-4 rounded-2xl items-center"
-          onPress={initGame}
-        >
-          <Text className="text-white font-bold text-base">Почати заново</Text>
-        </TouchableOpacity>
+        <GameProgressBar
+          current={level}
+          total={TOTAL_LEVELS}
+          correct={correctCount}
+          incorrect={incorrectCount}
+          moves={moves}
+          onRestart={restartGame}
+          onInstructionPress={openInstruction}
+          label="Рівень"
+        />
       </View>
-
-      {!showInstruction && (
-        <InstructionButton onPress={openInstruction} bottom={104} />
-      )}
     </Screen>
   );
 }

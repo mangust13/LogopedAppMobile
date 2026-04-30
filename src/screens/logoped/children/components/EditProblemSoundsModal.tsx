@@ -46,23 +46,13 @@ export function EditProblemSoundsModal({
       problemSounds: formattedProblemSounds,
     };
 
-    console.log("Updating problem sounds started");
-    console.log("Selected problemSounds:", problemSounds);
-    console.log("Formatted problemSounds:", formattedProblemSounds);
-    console.log("Update child id:", child.id);
-    console.log("Update dto:", dto);
-
     try {
       await logopedApi.updateLogopedChild(child.id, dto);
-
-      console.log("Update problem sounds success");
-
       onUpdated();
       onClose();
     } catch (error: any) {
       Alert.alert("Помилка", "Не вдалося оновити проблемні звуки");
     } finally {
-      console.log("Updating problem sounds finished");
       setLoading(false);
     }
   };
@@ -83,7 +73,6 @@ export function EditProblemSoundsModal({
         <ProblemSoundsPicker
           value={problemSounds}
           onChange={(value) => {
-            console.log("Problem sounds changed:", value);
             setProblemSounds(value);
           }}
         />

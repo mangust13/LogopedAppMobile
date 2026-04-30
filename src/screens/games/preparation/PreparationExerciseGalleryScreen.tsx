@@ -178,13 +178,8 @@ export function PreparationExerciseGalleryScreen() {
         contentContainerStyle={{ padding: SPACING, paddingBottom: 100 }}
         columnWrapperStyle={{ gap: SPACING }}
         renderItem={({ item }) => {
-          const iconName = item.iconName?.trim();
+          const imagePath = item.imagePath?.trim();
           const videoPath = item.videoPath?.trim();
-          const hasCustomIcon =
-            iconName &&
-            iconName !== "exercise" &&
-            iconName !== "happy" &&
-            /\.(png|jpe?g|webp|gif)$/i.test(iconName);
 
           return (
             <TouchableOpacity
@@ -197,7 +192,6 @@ export function PreparationExerciseGalleryScreen() {
                   title: item.title,
                   videoPath: item.videoPath,
                   description: item.description,
-                  iconName: item.iconName,
                 })
               }
             >
@@ -213,10 +207,10 @@ export function PreparationExerciseGalleryScreen() {
                   alignItems: "center",
                 }}
               >
-                {hasCustomIcon ? (
+                {imagePath ? (
                   <Image
                     source={{
-                      uri: `${ENV.API_BASE_URL}/exercises/${iconName}`,
+                      uri: `${ENV.API_BASE_URL}/exercises${imagePath}`,
                     }}
                     style={{
                       width: "100%",

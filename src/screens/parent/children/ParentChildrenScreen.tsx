@@ -33,7 +33,6 @@ export function ParentChildrenScreen() {
       setLoading(true);
 
       const data = await childrenApi.getMyChildren();
-      console.log("PARENT CHILDREN RESPONSE", JSON.stringify(data, null, 2));
       setChildren(data);
 
       if (data.length > 0 && !selectedChild) {
