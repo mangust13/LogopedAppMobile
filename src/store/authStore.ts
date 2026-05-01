@@ -1,6 +1,8 @@
 import { create } from "zustand";
 import { tokenStorage } from "../storage/tokenStorage";
 import { jwtDecode } from "jwt-decode";
+import { authApi } from "../api/authApi";
+import { setHttpToken, setUnauthorizedHandler } from "../api/http";
 
 type UserRole = "User" | "Logoped";
 
@@ -15,30 +17,20 @@ type AuthState = {
     email?: string | null,
   ) => Promise<void>;
   logout: () => Promise<void>;
+  deleteAccount: () => Promise<void>;
   hydrate: () => Promise<void>;
   isTokenValid: () => boolean;
 };
 
 const decodeEmailFromToken = (token: string): string | null => {
   try {
-    const base64Payload = token.split(".")[1];
-    if (!base64Payload) {
-      return null;
-    }
-
-    const normalized = base64Payload.replace(/-/g, "+").replace(/_/g, "/");
-    const padded = normalized + "=".repeat((4 - (normalized.length % 4)) % 4);
-    if (typeof atob !== "function") {
-      return null;
-    }
-    const payloadString = atob(padded);
-    const payload = JSON.parse(payloadString) as {
+    const decoded = jwtDecode<{
       email?: string;
-      sub?: string;
       unique_name?: string;
-    };
+      sub?: string;
+    }>(token);
 
-    return payload.email ?? payload.unique_name ?? payload.sub ?? null;
+    return decoded.email ?? decoded.unique_name ?? decoded.sub ?? null;
   } catch {
     return null;
   }
@@ -52,36 +44,55 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   setAuth: async (token, role, email) => {
     await tokenStorage.save(token, role);
+    setHttpToken(token);
     set({ token, role, email: email ?? decodeEmailFromToken(token) });
   },
 
   logout: async () => {
     await tokenStorage.clear();
+    setHttpToken(null);
+    set({ token: null, role: null, email: null });
+  },
+
+  deleteAccount: async () => {
+    await authApi.deleteAccount();
+    await tokenStorage.clear();
+    setHttpToken(null);
     set({ token: null, role: null, email: null });
   },
 
   hydrate: async () => {
     const data = await tokenStorage.load();
+
     if (data) {
+      setHttpToken(data.token);
+
       set({
         token: data.token,
         role: data.role,
         email: decodeEmailFromToken(data.token),
       });
+    } else {
+      setHttpToken(null);
     }
+
     set({ isHydrated: true });
   },
 
   isTokenValid: () => {
     const { token } = get();
+
     if (!token) return false;
 
     try {
       const decoded = jwtDecode<{ exp: number }>(token);
-      const currentTime = Date.now() / 1000;
-      return decoded.exp > currentTime;
+      return decoded.exp > Date.now() / 1000;
     } catch {
       return false;
     }
   },
 }));
+
+setUnauthorizedHandler(async () => {
+  await useAuthStore.getState().logout();
+});

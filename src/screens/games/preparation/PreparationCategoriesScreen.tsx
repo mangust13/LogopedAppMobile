@@ -122,14 +122,6 @@ export function PreparationCategoriesScreen() {
     });
   };
 
-  const handleCreateComplex = () => {
-    navigation.navigate("LogopedCreateComplex", {
-      complexId: 0,
-      isEditing: false,
-      onComplexCreated: loadData,
-    });
-  };
-
   if (loading) {
     return (
       <Screen className="justify-center items-center">
@@ -157,17 +149,6 @@ export function PreparationCategoriesScreen() {
               ? "Логопед ще не призначив вам комплекс вправ."
               : "Створіть перший власний комплекс або використайте дефолтні."}
           </Text>
-
-          {role === "Logoped" && (
-            <TouchableOpacity
-              onPress={handleCreateComplex}
-              className="mt-6 bg-blue-500 px-4 py-3 rounded-lg"
-            >
-              <Text className="text-white font-semibold">
-                Створити комплекс
-              </Text>
-            </TouchableOpacity>
-          )}
         </View>
       </Screen>
     );
@@ -176,20 +157,6 @@ export function PreparationCategoriesScreen() {
   return (
     <Screen>
       <BackHeader title="Бібліотека" />
-
-      {role === "Logoped" && (
-        <View className="px-4 pt-4">
-          <TouchableOpacity
-            onPress={handleCreateComplex}
-            className="bg-blue-500 px-4 py-3 rounded-lg flex-row items-center justify-center"
-          >
-            <Ionicons name="add-outline" size={20} color="#FFFFFF" />
-            <Text className="text-white font-semibold ml-2">
-              Створити комплекс
-            </Text>
-          </TouchableOpacity>
-        </View>
-      )}
 
       <FlatList
         data={complexes}

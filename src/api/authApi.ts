@@ -26,4 +26,8 @@ export const authApi = {
     const res = await http.post<AuthResponse>("/users/register", data);
     return res.data;
   },
+
+  deleteAccount: async (): Promise<void> => {
+    await http.delete("/users/me");
+  },
 };

@@ -1,39 +1,58 @@
-# dependencies
+############################
+# Dependencies
+############################
 node_modules/
 
+############################
 # Expo
+############################
 .expo/
 dist/
 web-build/
-expo-env.d.ts
 
-# Native
-.kotlin/
-*.orig.*
+############################
+# Build / cache
+############################
+*.tsbuildinfo
+.metro-health-check*
+
+############################
+# Logs
+############################
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+############################
+# Env
+############################
+.env
+.env.*
+
+############################
+# Native / secrets
+############################
 *.jks
 *.p8
 *.p12
 *.key
 *.mobileprovision
-
-# Metro
-.metro-health-check*
-
-# debug
-npm-debug.*
-yarn-debug.*
-yarn-error.*
-
-# macOS
-.DS_Store
 *.pem
 
-# local env files
-.env*.local
+############################
+# macOS / Windows
+############################
+.DS_Store
+Thumbs.db
 
-# typescript
-*.tsbuildinfo
+############################
+# IDE
+############################
+.vscode/
+.idea/
 
-# generated native folders
-/ios
-/android
+############################
+# Kotlin / misc
+############################
+.kotlin/
+*.orig.*

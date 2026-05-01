@@ -1,6 +1,17 @@
 import axios from "axios";
 import { ENV } from "../config/env";
-import { useAuthStore } from "../store/authStore";
+
+let accessToken: string | null = null;
+let unauthorizedHandler: (() => Promise<void>) | null = null;
+let isHandlingUnauthorized = false;
+
+export const setHttpToken = (token: string | null) => {
+  accessToken = token;
+};
+
+export const setUnauthorizedHandler = (handler: () => Promise<void>) => {
+  unauthorizedHandler = handler;
+};
 
 export const http = axios.create({
   baseURL: ENV.API_BASE_URL,
@@ -8,10 +19,8 @@ export const http = axios.create({
 });
 
 http.interceptors.request.use((config) => {
-  const token = useAuthStore.getState().token;
-
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+  if (accessToken) {
+    config.headers.Authorization = `Bearer ${accessToken}`;
   }
 
   return config;
@@ -20,8 +29,18 @@ http.interceptors.request.use((config) => {
 http.interceptors.response.use(
   (response) => response,
   async (error) => {
-    if (error.response?.status === 401) {
-      await useAuthStore.getState().logout();
+    if (
+      error.response?.status === 401 &&
+      unauthorizedHandler &&
+      !isHandlingUnauthorized
+    ) {
+      isHandlingUnauthorized = true;
+
+      try {
+        await unauthorizedHandler();
+      } finally {
+        isHandlingUnauthorized = false;
+      }
     }
 
     return Promise.reject(error);
