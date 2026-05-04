@@ -1,26 +1,16 @@
 // src/screens/parent/stats/ChildStatsScreen.tsx
-
-import { View, Text, FlatList, ActivityIndicator } from "react-native";
+import { View, Text } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useChildStore } from "../../../store/childStore";
-import { useProgress } from "../../../hooks/useProgress";
 import { Screen } from "../../../shared/ui/Screen";
 import { Button } from "../../../shared/ui/Button";
 import ScreenHeader from "../../../shared/ui/ScreenHeader";
-
-import { AttemptItem } from "./components/AttemptItem";
-import { StatsOverview } from "./components/StatsOverview";
-import { WeeklyChart } from "./components/WeeklyChart";
+import { SessionHistory } from "./components/SessionHistory";
 
 export function ChildStatsScreen() {
   const navigation = useNavigation<any>();
-
   const selectedChildId = useChildStore((s) => s.selectedChildId);
   const selectedChild = useChildStore((s) => s.selectedChild);
-
-  const { summary, last, trend, loading, refresh } = useProgress(
-    selectedChildId ?? undefined,
-  );
 
   if (!selectedChildId || !selectedChild) {
     return (
@@ -40,48 +30,17 @@ export function ChildStatsScreen() {
     );
   }
 
-  if (loading && !summary) {
-    return (
-      <Screen className="justify-center items-center">
-        <ActivityIndicator size="large" color="#6C63FF" />
-      </Screen>
-    );
-  }
-
   return (
     <Screen>
       <ScreenHeader subtitle="Статистика" title={selectedChild.name} center />
 
-      <FlatList
-        contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 100 }}
-        showsVerticalScrollIndicator={false}
-        refreshing={loading}
-        onRefresh={refresh}
-        ListHeaderComponent={
-          <View>
-            {summary && (
-              <StatsOverview
-                avgAccuracy={summary.avgAccuracy}
-                totalAttempts={summary.totalAttempts}
-              />
-            )}
+      <View className="flex-1 px-6 pt-4">
+        <Text className="text-lg font-bold text-text-main mb-3">
+          Заняття з логопедом 📋
+        </Text>
 
-            {trend && trend.length > 0 && <WeeklyChart data={trend} />}
-
-            <Text className="text-lg font-bold text-text-main mb-3 mt-2">
-              Історія занять 📜
-            </Text>
-          </View>
-        }
-        data={last}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => <AttemptItem item={item} />}
-        ListEmptyComponent={
-          <View className="py-10 items-center">
-            <Text className="text-gray-400">Поки що немає записів</Text>
-          </View>
-        }
-      />
+        <SessionHistory childId={selectedChildId} />
+      </View>
     </Screen>
   );
 }

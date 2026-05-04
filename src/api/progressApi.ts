@@ -1,67 +1,62 @@
-// src/api/progressApi.ts
 import { http } from "./http";
 
-export type ProgressSummaryDto = {
+export type CompleteGameDto = {
   childId: number;
-  totalAttempts: number;
-  avgAccuracy: number;
-  lastActivityAt?: string | null;
+  sound: string;
+  positionCode: number;
+  gameType: string;
 };
 
-export type ProgressAttemptDto = {
-  id: number;
-  exerciseId: number;
-  exerciseName: string;
-  accuracy?: number | null;
-  createdAt: string;
+export type GameStatusDto = {
+  gameType: string;
+  displayName: string;
+  isCompleted: boolean;
 };
 
-export type TrendPointDto = {
-  date: string;
-  value: number;
+export type PositionStatusDto = {
+  positionCode: number;
+  displayName: string;
+  isUnlocked: boolean;
+  games: GameStatusDto[];
+};
+
+export type SoundRoadmapDto = {
+  sound: string;
+  completedSteps: number;
+  totalSteps: number;
+  progressPercent: number;
+  positions: PositionStatusDto[];
+};
+
+export type SoundProgressSummaryDto = {
+  sound: string;
+  progressPercent: number;
 };
 
 export const progressApi = {
-  async getSummary(childId: number) {
-    const res = await http.get<ProgressSummaryDto>(
-      `/progress/child/${childId}/summary`,
+  completeGame: async (dto: CompleteGameDto): Promise<void> => {
+    await http.post("/progress/game-progress/complete", dto);
+  },
+
+  getRoadmap: async (
+    childId: number,
+    sound: string,
+  ): Promise<SoundRoadmapDto> => {
+    const res = await http.get<SoundRoadmapDto>(
+      "/progress/game-progress/roadmap",
+      { params: { childId, sound } },
     );
     return res.data;
   },
 
-  async getLastAttempts(childId: number, limit = 10) {
-    const res = await http.get<ProgressAttemptDto[]>(
-      `/progress/child/${childId}/last`,
-      { params: { limit } },
+  getSoundsSummary: async (
+    childId: number,
+    sounds: string[],
+  ): Promise<SoundProgressSummaryDto[]> => {
+    const res = await http.get<SoundProgressSummaryDto[]>(
+      "/progress/game-progress/summary",
+      { params: { childId, sounds: sounds.join(",") } },
     );
     return res.data;
-  },
-
-  async getTrend(childId: number, days = 14): Promise<TrendPointDto[]> {
-    try {
-      const res = await http.get<TrendPointDto[]>(
-        `/progress/child/${childId}/trend`,
-        { params: { days } },
-      );
-      return res.data;
-    } catch {
-      return mockTrend(days);
-    }
   },
 };
-
-// ---------- MOCKS ----------
-
-function mockTrend(days: number): TrendPointDto[] {
-  const today = new Date();
-
-  return Array.from({ length: days }).map((_, i) => {
-    const d = new Date(today);
-    d.setDate(d.getDate() - (days - i));
-
-    return {
-      date: d.toISOString().slice(0, 10),
-      value: 60 + Math.round(Math.random() * 30),
-    };
-  });
-}

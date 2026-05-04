@@ -1,4 +1,3 @@
-//src/screens/parent/home/components/ChildSelector.tsx
 import { View, Text, TouchableOpacity, ScrollView } from "react-native";
 import { ChildDto } from "../../../../api/childrenApi";
 import { cn } from "../../../../shared/utils/cn";

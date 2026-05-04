@@ -1,4 +1,3 @@
-// src/screens/parent/children/ParentChildrenScreen.tsx
 import { useCallback, useState } from "react";
 import { FlatList, View, Alert, ActivityIndicator } from "react-native";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";

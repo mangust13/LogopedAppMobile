@@ -1,4 +1,3 @@
-// src\screens\games\catalog\components\CategoryCard.tsx
 import { Text, View, TouchableOpacity, Image } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Card } from "../../../../shared/ui/Card";

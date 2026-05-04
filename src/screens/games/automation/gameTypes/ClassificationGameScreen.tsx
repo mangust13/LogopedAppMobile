@@ -16,6 +16,7 @@ import { VoiceInstruction } from "../../../../shared/ui/VoiceInstruction";
 import { GameProgressBar } from "../../../../shared/ui/GameProgressBar";
 import { useSessionInstruction } from "../../../../hooks/useSessionInstruction";
 import { soundCardsApi } from "../../../../api/soundCardsApi";
+import { progressApi } from "../../../../api/progressApi";
 
 type Props = NativeStackScreenProps<GamesStackParamList, "ClassificationGame">;
 
@@ -41,10 +42,10 @@ const CATEGORIES: Category[] = [
   { isAlive: true, name: "Живе", color: "#4CAF50", emoji: "🐾", count: 0 },
 ];
 
-const MATCHING_COUNT = 15;
+const MAX_MISTAKES = 5;
 
 export function ClassificationGameScreen({ navigation, route }: Props) {
-  const { sound } = route.params;
+  const { sound, positionCode, childId } = route.params;
   const { width, height } = useWindowDimensions();
 
   const categoryCardWidth = (width - 44) / 2;
@@ -56,11 +57,13 @@ export function ClassificationGameScreen({ navigation, route }: Props) {
   const [categories, setCategories] = useState<Category[]>(CATEGORIES);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [completed, setCompleted] = useState(false);
+  const [failed, setFailed] = useState(false);
   const [score, setScore] = useState(0);
   const [mistakes, setMistakes] = useState(0);
   const [showFeedback, setShowFeedback] = useState<FeedbackType>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [totalItems, setTotalItems] = useState(0);
+  const [alreadySaved, setAlreadySaved] = useState(false);
 
   const { showInstruction, openInstruction, closeInstruction } =
     useSessionInstruction("ClassificationGame");
@@ -76,10 +79,9 @@ export function ClassificationGameScreen({ navigation, route }: Props) {
     try {
       setIsLoading(true);
       const data = await soundCardsApi.getBySound(sound);
+      const filtered = data.filter((c) => c.position.code === positionCode);
 
-      const classificationCards = data.slice(MATCHING_COUNT);
-
-      const gameItems: GameItem[] = classificationCards.map((c) => ({
+      const gameItems: GameItem[] = filtered.map((c) => ({
         id: c.id,
         word: c.word,
         imageUrl: c.imageUrl,
@@ -87,38 +89,34 @@ export function ClassificationGameScreen({ navigation, route }: Props) {
       }));
 
       const shuffled = [...gameItems].sort(() => Math.random() - 0.5);
-
       setItems(shuffled);
       setTotalItems(shuffled.length);
       setCategories(CATEGORIES.map((c) => ({ ...c, count: 0 })));
       setCurrentIndex(0);
       setCompleted(false);
+      setFailed(false);
       setScore(0);
       setMistakes(0);
       setShowFeedback(null);
-    } catch (e) {
-      console.log("Error loading cards:", e);
+      setAlreadySaved(false);
+    } catch {
     } finally {
       setIsLoading(false);
     }
   };
 
-  const initGame = () => {
-    loadCards();
-  };
-
   const handleCategorySelect = (isAlive: boolean) => {
     if (showFeedback) return;
-
     const currentItem = items[currentIndex];
     if (!currentItem) return;
 
     const isCorrect = currentItem.isAlive === isAlive;
     setShowFeedback(isCorrect ? "correct" : "incorrect");
 
-    setTimeout(() => {
+    setTimeout(async () => {
       if (isCorrect) {
-        setScore((prev) => prev + 1);
+        const newScore = score + 1;
+        setScore(newScore);
         setCategories((prev) =>
           prev.map((c) =>
             c.isAlive === isAlive ? { ...c, count: c.count + 1 } : c,
@@ -128,11 +126,25 @@ export function ClassificationGameScreen({ navigation, route }: Props) {
         const nextIndex = currentIndex + 1;
         if (nextIndex >= items.length) {
           setCompleted(true);
+          if (!alreadySaved) {
+            setAlreadySaved(true);
+            await progressApi.completeGame({
+              childId,
+              sound,
+              positionCode,
+              gameType: "ClassificationGame",
+            });
+          }
         } else {
           setCurrentIndex(nextIndex);
         }
       } else {
-        setMistakes((prev) => prev + 1);
+        const newMistakes = mistakes + 1;
+        setMistakes(newMistakes);
+
+        if (newMistakes >= MAX_MISTAKES) {
+          setFailed(true);
+        }
       }
 
       setShowFeedback(null);
@@ -149,9 +161,58 @@ export function ClassificationGameScreen({ navigation, route }: Props) {
           title="Розклади по групах"
           onBackPress={() => navigation.goBack()}
         />
-
         <View className="flex-1 justify-center items-center">
           <ActivityIndicator size="large" color="#6C63FF" />
+        </View>
+      </Screen>
+    );
+  }
+
+  if (failed) {
+    return (
+      <Screen>
+        <BackHeader
+          subtitle={`Звук ${sound}`}
+          title="Розклади по групах"
+          onBackPress={() => navigation.goBack()}
+        />
+        <View className="flex-1 justify-center items-center p-8">
+          <Ionicons name="close-circle" size={80} color="#EF4444" />
+
+          <Text className="text-2xl font-bold text-gray-800 mt-5 text-center">
+            Забагато помилок 😔
+          </Text>
+
+          <Text className="text-base text-gray-600 text-center mt-2">
+            Ти зробив {MAX_MISTAKES} помилок. Спробуй ще раз!
+          </Text>
+
+          <Text className="text-sm text-gray-500 text-center mt-1">
+            Правильно до зупинки: {score}
+          </Text>
+
+          <TouchableOpacity
+            className="bg-primary w-64 py-4 rounded-xl mt-8"
+            onPress={loadCards}
+            activeOpacity={0.85}
+          >
+            <View className="flex-row items-center justify-center">
+              <Ionicons name="refresh" size={20} color="#FFFFFF" />
+              <Text className="text-white text-lg font-bold ml-2">
+                Спробувати знову
+              </Text>
+            </View>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            className="bg-gray-100 w-64 py-4 rounded-xl mt-3"
+            onPress={() => navigation.goBack()}
+            activeOpacity={0.85}
+          >
+            <Text className="text-gray-700 text-lg font-bold text-center">
+              До дорожньої карти
+            </Text>
+          </TouchableOpacity>
         </View>
       </Screen>
     );
@@ -165,7 +226,6 @@ export function ClassificationGameScreen({ navigation, route }: Props) {
           title="Розклади по групах"
           onBackPress={() => navigation.goBack()}
         />
-
         <View className="flex-1 justify-center items-center p-8">
           <Ionicons name="trophy" size={80} color="#FFD700" />
 
@@ -182,13 +242,16 @@ export function ClassificationGameScreen({ navigation, route }: Props) {
           </Text>
 
           <Text className="text-base text-red-500 mt-1">
-            Помилок: {mistakes}
+            Помилок: {mistakes}/{MAX_MISTAKES}
+          </Text>
+
+          <Text className="text-sm text-gray-500 text-center mt-1">
+            Гру зараховано ✓
           </Text>
 
           <View className="mt-6 w-full gap-2">
             {CATEGORIES.map((cat) => {
               const final = categories.find((c) => c.isAlive === cat.isAlive);
-
               return (
                 <View
                   key={cat.name}
@@ -200,7 +263,6 @@ export function ClassificationGameScreen({ navigation, route }: Props) {
                       {cat.name}
                     </Text>
                   </View>
-
                   <Text className="text-gray-800 font-bold">
                     {final?.count ?? 0}
                   </Text>
@@ -211,7 +273,7 @@ export function ClassificationGameScreen({ navigation, route }: Props) {
 
           <TouchableOpacity
             className="bg-green-500 w-64 py-4 rounded-xl mt-8"
-            onPress={initGame}
+            onPress={loadCards}
             activeOpacity={0.85}
           >
             <View className="flex-row items-center justify-center">
@@ -220,6 +282,16 @@ export function ClassificationGameScreen({ navigation, route }: Props) {
                 Грати знову
               </Text>
             </View>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            className="bg-gray-100 w-64 py-4 rounded-xl mt-3"
+            onPress={() => navigation.goBack()}
+            activeOpacity={0.85}
+          >
+            <Text className="text-gray-700 text-lg font-bold text-center">
+              До дорожньої карти
+            </Text>
           </TouchableOpacity>
         </View>
       </Screen>
@@ -258,7 +330,6 @@ export function ClassificationGameScreen({ navigation, route }: Props) {
                 }}
                 resizeMode="contain"
               />
-
               <Text
                 className="text-3xl font-extrabold text-gray-800 text-center"
                 numberOfLines={2}
@@ -286,11 +357,9 @@ export function ClassificationGameScreen({ navigation, route }: Props) {
               activeOpacity={0.85}
             >
               <Text style={{ fontSize: 34 }}>{category.emoji}</Text>
-
               <Text className="text-white text-lg font-bold mt-1">
                 {category.name}
               </Text>
-
               <View className="absolute top-2 right-2 bg-white/30 rounded-full px-2.5 py-0.5">
                 <Text className="text-white text-sm font-bold">
                   {category.count}
@@ -346,7 +415,7 @@ export function ClassificationGameScreen({ navigation, route }: Props) {
           total={totalItems}
           correct={score}
           incorrect={mistakes}
-          onRestart={initGame}
+          onRestart={loadCards}
           onInstructionPress={openInstruction}
         />
       </View>

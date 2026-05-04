@@ -1,5 +1,3 @@
-//src\shared\ui\Button.tsx
-
 import {
   Text,
   TouchableOpacity,

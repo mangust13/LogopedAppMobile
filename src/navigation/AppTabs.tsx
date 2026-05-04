@@ -1,4 +1,3 @@
-//src\navigation\AppTabs.tsx
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Platform } from "react-native";
 import { Ionicons } from "@expo/vector-icons";

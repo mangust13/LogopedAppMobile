@@ -1,10 +1,9 @@
-// src/screens/parent/home/components/SoundProgressBar.tsx
 import { View, Text } from "react-native";
 import { cn } from "../../../../shared/utils/cn";
 
 type Props = {
   sound: string;
-  progress: number; // 0..100
+  progress: number;
 };
 
 export function SoundProgressBar({ sound, progress }: Props) {
@@ -16,7 +15,6 @@ export function SoundProgressBar({ sound, progress }: Props) {
         </Text>
         <Text className="text-sm font-medium text-text-muted">{progress}%</Text>
       </View>
-
       <View className="h-3 bg-gray-100 rounded-full overflow-hidden">
         <View
           className={cn(

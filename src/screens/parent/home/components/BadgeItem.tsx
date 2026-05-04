@@ -1,4 +1,3 @@
-// src/screens/parent/home/components/BadgeItem.tsx
 import { View, Text } from "react-native";
 import { cn } from "../../../../shared/utils/cn";
 

@@ -1,4 +1,3 @@
-//src/screens/parent/children/components/AddChildModal.tsx
 import { useState } from "react";
 import {
   Modal,
@@ -53,8 +52,8 @@ export function AddChildModal({ visible, onClose, onCreated }: Props) {
         problemSounds: formatProblemSounds(problemSounds),
       });
 
-      onCreated(); // ✅ Оновлюємо список дітей
-      onClose(); // ✅ Закриваємо модалку
+      onCreated();
+      onClose();
 
       setName("");
       setBirthDate(null);

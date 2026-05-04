@@ -1,4 +1,3 @@
-//src/screens/parent/children/components/ChildCard.tsx
 import { Text, View, Alert, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { ChildDto } from "../../../../api/childrenApi";

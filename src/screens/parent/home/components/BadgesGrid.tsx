@@ -1,4 +1,3 @@
-// src/screens/parent/home/components/BadgesGrid.tsx
 import { View, Text } from "react-native";
 import { BadgeItem } from "./BadgeItem";
 

@@ -4,18 +4,18 @@ import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { useCallback, useState } from "react";
 
 import { childrenApi, ChildDto } from "../../../api/childrenApi";
+import { progressApi, SoundProgressSummaryDto } from "../../../api/progressApi";
 import { useChildStore } from "../../../store/childStore";
-import { useProgress } from "../../../hooks/useProgress";
+import { parseProblemSounds } from "../../../shared/constants/sounds";
 
 import { Screen } from "../../../shared/ui/Screen";
 import { Card } from "../../../shared/ui/Card";
 import { Button } from "../../../shared/ui/Button";
 
 import { ChildSelector } from "./components/ChildSelector";
-import { HabitTracker } from "./components/HabitTracker";
 import { SoundProgressBar } from "./components/SoundProgressBar";
 import { BadgesGrid } from "./components/BadgesGrid";
-import { buildHabit } from "../../../shared/utils/habit";
+import { StreakCard } from "./components/StreakCard";
 
 import ScreenHeader from "../../../shared/ui/ScreenHeader";
 import { AddChildModal } from "../children/components/AddChildModal";
@@ -33,12 +33,12 @@ export function HomeParentScreen() {
   const [children, setChildren] = useState<ChildDto[]>([]);
   const [showAddChild, setShowAddChild] = useState(false);
   const [loading, setLoading] = useState(true);
-
-  const { last: attempts } = useProgress(selectedChildId ?? undefined);
+  const [soundProgress, setSoundProgress] = useState<SoundProgressSummaryDto[]>(
+    [],
+  );
 
   const load = async () => {
     setLoading(true);
-
     try {
       const data = await childrenApi.getMyChildren();
       setChildren(data);
@@ -52,17 +52,36 @@ export function HomeParentScreen() {
       } else if (selectedChildId && !selectedChild) {
         setSelectedChildData(found);
       }
-    } catch (e) {
-      console.warn("Failed to load children", e);
+    } catch {
     } finally {
       setLoading(false);
     }
   };
 
+  const loadSoundProgress = useCallback(async () => {
+    if (!selectedChildId || !selectedChild) return;
+
+    const sounds = parseProblemSounds(selectedChild.problemSounds);
+    if (sounds.length === 0) return;
+
+    try {
+      const data = await progressApi.getSoundsSummary(selectedChildId, sounds);
+      setSoundProgress(data);
+    } catch {
+      setSoundProgress([]);
+    }
+  }, [selectedChildId, selectedChild]);
+
   useFocusEffect(
     useCallback(() => {
       load();
     }, [selectedChildId]),
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      loadSoundProgress();
+    }, [loadSoundProgress]),
   );
 
   const renderContent = () => {
@@ -87,7 +106,6 @@ export function HomeParentScreen() {
                 Щоб почати, додайте профіль вашої дитини
               </Text>
             </View>
-
             <Button
               title="Додати дитину"
               onPress={() => setShowAddChild(true)}
@@ -104,7 +122,6 @@ export function HomeParentScreen() {
           <Text className="text-2xl font-bold text-center mb-6">
             Хто сьогодні займається?
           </Text>
-
           <ChildSelector
             children={children}
             selectedChildId={selectedChildId}
@@ -114,8 +131,6 @@ export function HomeParentScreen() {
         </View>
       );
     }
-
-    const habit = buildHabit(attempts ?? []);
 
     return (
       <>
@@ -139,18 +154,16 @@ export function HomeParentScreen() {
             onAddChild={() => setShowAddChild(true)}
           />
 
-          <HabitTracker streak={habit.streak} days={habit.days} />
+          {selectedChildId && <StreakCard childId={selectedChildId} />}
 
           <Card className="border-l-4 border-l-primary">
             <Text className="text-lg font-bold mb-4">План на сьогодні 📝</Text>
-
             <Button
               title="🎙 Аналіз вимови"
               variant="outline"
               onPress={() => navigation.navigate("SoundAnalysis")}
               className="h-12"
             />
-
             <Button
               title="Почати заняття"
               onPress={() => navigation.navigate("Games")}
@@ -158,19 +171,24 @@ export function HomeParentScreen() {
             />
           </Card>
 
-          <Card>
-            <Text className="text-lg font-bold mb-4">Звуки в роботі</Text>
-            <SoundProgressBar sound="Р" progress={65} />
-            <SoundProgressBar sound="С" progress={80} />
-            <SoundProgressBar sound="Ш" progress={40} />
-
-            <Button
-              title="Детальна статистика"
-              variant="ghost"
-              className="mt-2"
-              onPress={() => navigation.navigate("Progress")}
-            />
-          </Card>
+          {soundProgress.length > 0 && (
+            <Card>
+              <Text className="text-lg font-bold mb-4">Звуки в роботі</Text>
+              {soundProgress.map((sp) => (
+                <SoundProgressBar
+                  key={sp.sound}
+                  sound={sp.sound.toUpperCase()}
+                  progress={sp.progressPercent}
+                />
+              ))}
+              <Button
+                title="Детальна статистика"
+                variant="ghost"
+                className="mt-2"
+                onPress={() => navigation.navigate("Progress")}
+              />
+            </Card>
+          )}
 
           <BadgesGrid />
         </ScrollView>
@@ -181,7 +199,6 @@ export function HomeParentScreen() {
   return (
     <Screen className="px-0 pb-0">
       {renderContent()}
-
       <AddChildModal
         visible={showAddChild}
         onClose={() => setShowAddChild(false)}

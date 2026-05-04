@@ -1,4 +1,3 @@
-// screens/games/preparation/PreparationExerciseDetailScreen.tsx
 import { useEffect, useState } from "react";
 import {
   View,
@@ -11,12 +10,13 @@ import {
 import { useRoute, RouteProp } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { VideoView, useVideoPlayer } from "expo-video";
-
 import { Screen } from "../../../shared/ui/Screen";
 import type { GamesStackParamList } from "../../../navigation/games/GamesStack";
 import { Button } from "../../../shared/ui/Button";
 import { ENV } from "../../../config/env";
 import { BackHeader } from "../../../shared/ui/BackHeader";
+import { activityApi } from "../../../api/activityApi";
+import { useChildStore } from "../../../store/childStore";
 
 type RouteProps = RouteProp<GamesStackParamList, "PreparationExerciseDetail">;
 
@@ -24,17 +24,10 @@ const { width } = Dimensions.get("window");
 
 export function PreparationExerciseDetailScreen() {
   const route = useRoute<RouteProps>();
-  const {
-    title: initialTitle,
-    videoPath: initialVideoPath,
-    description: initialDescription,
-  } = route.params;
+  const { title, videoPath, description } = route.params;
+  const selectedChildId = useChildStore((s) => s.selectedChildId);
 
   const [showDescription, setShowDescription] = useState(false);
-
-  const title = initialTitle;
-  const description = initialDescription;
-  const videoPath = initialVideoPath;
 
   const player = useVideoPlayer(
     videoPath
@@ -47,15 +40,15 @@ export function PreparationExerciseDetailScreen() {
       player.loop = true;
       player.pause();
     }
-  }, [videoPath, player]);
+
+    if (selectedChildId) {
+      activityApi.track(selectedChildId, "Exercise").catch(() => {});
+    }
+  }, []);
 
   const handleOpenDescription = () => {
     if (videoPath) player.pause();
     setShowDescription(true);
-  };
-
-  const handleCloseDescription = () => {
-    setShowDescription(false);
   };
 
   return (
@@ -96,13 +89,13 @@ export function PreparationExerciseDetailScreen() {
         visible={showDescription}
         animationType="slide"
         transparent
-        onRequestClose={handleCloseDescription}
+        onRequestClose={() => setShowDescription(false)}
       >
         <View className="flex-1 justify-end">
           <TouchableOpacity
             className="flex-1"
             activeOpacity={1}
-            onPress={handleCloseDescription}
+            onPress={() => setShowDescription(false)}
           />
 
           <View className="bg-white rounded-t-3xl h-[50%] shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] border-t border-gray-100">
@@ -128,7 +121,7 @@ export function PreparationExerciseDetailScreen() {
 
               <Button
                 title="Зрозуміло"
-                onPress={handleCloseDescription}
+                onPress={() => setShowDescription(false)}
                 variant="outline"
                 className="mt-4"
               />

@@ -22,6 +22,7 @@ import { VoiceInstruction } from "../../../../shared/ui/VoiceInstruction";
 import { GameProgressBar } from "../../../../shared/ui/GameProgressBar";
 import { useSessionInstruction } from "../../../../hooks/useSessionInstruction";
 import { soundCardsApi } from "../../../../api/soundCardsApi";
+import { progressApi } from "../../../../api/progressApi";
 
 type Props = NativeStackScreenProps<GamesStackParamList, "SwipeGame">;
 type FeedbackType = "correct" | "incorrect" | null;
@@ -37,7 +38,7 @@ const { width } = Dimensions.get("window");
 const SWIPE_THRESHOLD = width * 0.25;
 
 export function SwipeGameScreen({ navigation, route }: Props) {
-  const { sound } = route.params;
+  const { sound, positionCode, childId } = route.params;
 
   const [deck, setDeck] = useState<SwipeItem[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -48,6 +49,7 @@ export function SwipeGameScreen({ navigation, route }: Props) {
   const [wrongItems, setWrongItems] = useState<SwipeItem[]>([]);
   const [retryMode, setRetryMode] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [alreadySaved, setAlreadySaved] = useState(false);
 
   const { showInstruction, openInstruction, closeInstruction } =
     useSessionInstruction("SwipeGame");
@@ -71,36 +73,22 @@ export function SwipeGameScreen({ navigation, route }: Props) {
     position.setValue({ x: 0, y: 0 });
   }, [currentIndex]);
 
-  const orderCards = (array: SwipeItem[]) =>
-    [...array].sort(
-      (a, b) =>
-        a.positionCode - b.positionCode ||
-        a.id - b.id ||
-        a.word.localeCompare(b.word, "uk"),
-    );
-
-  const preloadImages = (items: SwipeItem[]) => {
-    items.forEach((item) => Image.prefetch(item.imageUrl));
-  };
-
   const loadCards = async () => {
     try {
       setIsLoading(true);
-
       const cards = await soundCardsApi.getBySound(sound);
 
-      const items: SwipeItem[] = cards.map((c) => ({
-        id: c.id,
-        word: c.word,
-        imageUrl: c.imageUrl,
-        positionCode: c.position.code,
-      }));
+      const filtered = cards
+        .filter((c) => c.position.code === positionCode)
+        .map((c) => ({
+          id: c.id,
+          word: c.word,
+          imageUrl: c.imageUrl,
+          positionCode: c.position.code,
+        }));
 
-      const orderedItems = orderCards(items);
-      preloadImages(orderedItems);
-      setDeck(orderedItems);
-    } catch (e) {
-      console.log("Error loading cards:", e);
+      setDeck(filtered);
+    } catch {
     } finally {
       setIsLoading(false);
     }
@@ -115,16 +103,13 @@ export function SwipeGameScreen({ navigation, route }: Props) {
     setIncorrectCount(0);
     setWrongItems([]);
     setRetryMode(false);
+    setAlreadySaved(false);
     position.setValue({ x: 0, y: 0 });
   };
 
   const retryWrongAnswers = () => {
     if (wrongItems.length === 0) return;
-
-    const orderedWrongItems = orderCards(wrongItems);
-    preloadImages(orderedWrongItems);
-
-    setDeck(orderedWrongItems);
+    setDeck([...wrongItems]);
     setCurrentIndex(0);
     setCompleted(false);
     setShowFeedback(null);
@@ -158,16 +143,17 @@ export function SwipeGameScreen({ navigation, route }: Props) {
     }).start(({ finished }) => {
       if (!finished) return;
 
-      setTimeout(() => {
+      setTimeout(async () => {
+        let newWrongItems = wrongItems;
+
         if (isCorrect) {
           setCorrectCount((prev) => prev + 1);
         } else {
           setIncorrectCount((prev) => prev + 1);
-          setWrongItems((prev) =>
-            prev.some((item) => item.id === currentItem.id)
-              ? prev
-              : [...prev, currentItem],
-          );
+          newWrongItems = wrongItems.some((item) => item.id === currentItem.id)
+            ? wrongItems
+            : [...wrongItems, currentItem];
+          setWrongItems(newWrongItems);
         }
 
         const nextIndex = currentIndex + 1;
@@ -176,6 +162,16 @@ export function SwipeGameScreen({ navigation, route }: Props) {
           setCurrentIndex(nextIndex);
         } else {
           setCompleted(true);
+          const allCorrect = newWrongItems.length === 0;
+          if (!retryMode && allCorrect && !alreadySaved) {
+            setAlreadySaved(true);
+            await progressApi.completeGame({
+              childId,
+              sound,
+              positionCode,
+              gameType: "SwipeGame",
+            });
+          }
         }
 
         setShowFeedback(null);
@@ -190,7 +186,6 @@ export function SwipeGameScreen({ navigation, route }: Props) {
     })
     .onEnd((e) => {
       if (showFeedback || completed) return;
-
       if (e.translationX > SWIPE_THRESHOLD) {
         handleAnswer(true, "right");
       } else if (e.translationX < -SWIPE_THRESHOLD) {
@@ -208,9 +203,7 @@ export function SwipeGameScreen({ navigation, route }: Props) {
       <Animated.View
         key={item.id}
         className="w-full h-full rounded-3xl bg-white shadow-lg overflow-hidden"
-        style={{
-          transform: [{ translateX: position.x }, { rotate }],
-        }}
+        style={{ transform: [{ translateX: position.x }, { rotate }] }}
       >
         <Image
           key={item.imageUrl}
@@ -218,7 +211,6 @@ export function SwipeGameScreen({ navigation, route }: Props) {
           className="w-full h-4/5"
           resizeMode="cover"
         />
-
         <View className="p-4 items-center justify-center flex-1">
           <Text className="text-3xl font-bold text-gray-800">{item.word}</Text>
         </View>
@@ -230,6 +222,8 @@ export function SwipeGameScreen({ navigation, route }: Props) {
     ? deck.length
     : Math.min(currentIndex + 1, deck.length);
 
+  const isPerfect = wrongItems.length === 0;
+
   if (isLoading) {
     return (
       <GestureHandlerRootView className="flex-1">
@@ -239,7 +233,6 @@ export function SwipeGameScreen({ navigation, route }: Props) {
             title="Гортай картинки"
             onBackPress={() => navigation.goBack()}
           />
-
           <View className="flex-1 justify-center items-center">
             <ActivityIndicator size="large" color="#6C63FF" />
           </View>
@@ -263,20 +256,40 @@ export function SwipeGameScreen({ navigation, route }: Props) {
 
         {completed ? (
           <View className="flex-1 justify-center items-center px-8">
-            <Ionicons name="trophy" size={80} color="#FFD700" />
+            {isPerfect ? (
+              <>
+                <Ionicons name="trophy" size={80} color="#FFD700" />
+                <Text className="text-3xl font-bold text-gray-800 mt-5 text-center">
+                  Ідеально! 🎉
+                </Text>
+                <Text className="text-base text-green-600 text-center mt-2 font-semibold">
+                  Всі {deck.length} карток правильно!
+                </Text>
+                <Text className="text-sm text-gray-500 text-center mt-1">
+                  Гру зараховано ✓
+                </Text>
+              </>
+            ) : (
+              <>
+                <Ionicons name="checkmark-circle" size={80} color="#4CAF50" />
+                <Text className="text-3xl font-bold text-gray-800 mt-5 text-center">
+                  Гру завершено!
+                </Text>
+                <Text className="text-base text-gray-600 text-center mt-2">
+                  Правильно: {correctCount}/{deck.length}
+                </Text>
+                <Text className="text-base text-red-500 text-center mt-1">
+                  Помилок: {incorrectCount}
+                </Text>
+                {!retryMode && (
+                  <Text className="text-sm text-orange-500 text-center mt-2">
+                    Є помилки — гру не зараховано
+                  </Text>
+                )}
+              </>
+            )}
 
-            <Text className="text-3xl font-bold text-gray-800 mt-5 text-center">
-              Гру завершено! 🎉
-            </Text>
-
-            <Text className="text-base text-gray-600 text-center mt-2">
-              Правильно: {correctCount}/{deck.length}
-            </Text>
-
-            <Text className="text-base text-red-500 text-center mt-1">
-              Помилок: {incorrectCount}
-            </Text>
-
+            {/* Кнопка повтору помилок — тільки якщо є помилки і не в режимі повтору */}
             {wrongItems.length > 0 && !retryMode && (
               <TouchableOpacity
                 className="bg-primary w-64 py-4 rounded-xl mt-8"
@@ -284,7 +297,7 @@ export function SwipeGameScreen({ navigation, route }: Props) {
                 activeOpacity={0.85}
               >
                 <Text className="text-white text-lg font-bold text-center">
-                  Повторити помилки
+                  Повторити помилки ({wrongItems.length})
                 </Text>
               </TouchableOpacity>
             )}
@@ -300,6 +313,16 @@ export function SwipeGameScreen({ navigation, route }: Props) {
                   Почати заново
                 </Text>
               </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              className="bg-gray-100 w-64 py-4 rounded-xl mt-3"
+              onPress={() => navigation.goBack()}
+              activeOpacity={0.85}
+            >
+              <Text className="text-gray-700 text-lg font-bold text-center">
+                До дорожньої карти
+              </Text>
             </TouchableOpacity>
           </View>
         ) : (

@@ -1,4 +1,3 @@
-// src/screens/tabs/ProgressEntry.tsx
 import { useAuthStore } from "../../store/authStore";
 import { ChildStatsScreen } from "../parent/stats/ChildStatsScreen";
 import { LogopedStatsScreen } from "../logoped/stats/LogopedStatsScreen";

@@ -1,4 +1,3 @@
-// src/shared/utils/wakeUpServices.ts
 export const wakeUpServices = async () => {
   const services = [
     "https://apigateway-9n9m.onrender.com",

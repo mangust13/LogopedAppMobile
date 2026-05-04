@@ -1,4 +1,3 @@
-// src\screens\games\catalog\GamesCatalogScreen.tsx
 import { ScrollView, Text, View } from "react-native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { Screen } from "../../../shared/ui/Screen";

@@ -17,6 +17,7 @@ import { VoiceInstruction } from "../../../../shared/ui/VoiceInstruction";
 import { GameProgressBar } from "../../../../shared/ui/GameProgressBar";
 import { useSessionInstruction } from "../../../../hooks/useSessionInstruction";
 import { soundCardsApi, SoundCardDto } from "../../../../api/soundCardsApi";
+import { progressApi } from "../../../../api/progressApi";
 
 type Props = NativeStackScreenProps<GamesStackParamList, "MatchingGame">;
 
@@ -28,7 +29,6 @@ const TOP_CONTENT_HEIGHT = 70;
 const BOTTOM_CONTENT_HEIGHT = 150;
 const CARD_SCALE = 1;
 const PAIRS_PER_LEVEL = 3;
-const TOTAL_LEVELS = 5;
 
 type Card = {
   uid: string;
@@ -40,7 +40,7 @@ type Card = {
 };
 
 export function MatchingGameScreen({ navigation, route }: Props) {
-  const { sound } = route.params;
+  const { sound, positionCode, childId } = route.params;
   const { width, height } = useWindowDimensions();
 
   const maxCardWidth =
@@ -56,7 +56,7 @@ export function MatchingGameScreen({ navigation, route }: Props) {
   );
   const gridWidth = (cardSize + CARD_MARGIN * 2) * GRID_COLS;
 
-  const [allCards, setAllCards] = useState<SoundCardDto[]>([]);
+  const [positionCards, setPositionCards] = useState<SoundCardDto[]>([]);
   const [cards, setCards] = useState<Card[]>([]);
   const [flippedUids, setFlippedUids] = useState<string[]>([]);
   const [moves, setMoves] = useState(0);
@@ -67,6 +67,8 @@ export function MatchingGameScreen({ navigation, route }: Props) {
   const [isChecking, setIsChecking] = useState(false);
   const [correctCount, setCorrectCount] = useState(0);
   const [incorrectCount, setIncorrectCount] = useState(0);
+
+  const totalLevels = Math.ceil(positionCards.length / PAIRS_PER_LEVEL) || 1;
 
   const { showInstruction, openInstruction, closeInstruction } =
     useSessionInstruction("MatchingGame");
@@ -82,10 +84,10 @@ export function MatchingGameScreen({ navigation, route }: Props) {
     try {
       setIsLoading(true);
       const data = await soundCardsApi.getBySound(sound);
-      setAllCards(data);
-      buildLevel(data, 1);
-    } catch (e) {
-      console.log("Error loading cards:", e);
+      const filtered = data.filter((c) => c.position.code === positionCode);
+      setPositionCards(filtered);
+      buildLevel(filtered, 1);
+    } catch {
     } finally {
       setIsLoading(false);
     }
@@ -136,7 +138,6 @@ export function MatchingGameScreen({ navigation, route }: Props) {
 
   const handleCardPress = (uid: string) => {
     if (isChecking) return;
-
     const card = cards.find((c) => c.uid === uid);
     if (!card || card.flipped || card.matched) return;
     if (flippedUids.length >= 2) return;
@@ -171,13 +172,18 @@ export function MatchingGameScreen({ navigation, route }: Props) {
 
         if (matched.every((c) => c.matched)) {
           setLevelCompleted(true);
-          if (level >= TOTAL_LEVELS) {
+          if (level >= totalLevels) {
             setGameCompleted(true);
+            progressApi.completeGame({
+              childId,
+              sound,
+              positionCode,
+              gameType: "MatchingGame",
+            });
           }
         }
       } else {
         setIncorrectCount((prev) => prev + 1);
-
         setTimeout(() => {
           setCards((prev) =>
             prev.map((c) =>
@@ -196,13 +202,13 @@ export function MatchingGameScreen({ navigation, route }: Props) {
   const goToNextLevel = () => {
     const nextLevel = level + 1;
     setLevel(nextLevel);
-    buildLevel(allCards, nextLevel);
+    buildLevel(positionCards, nextLevel);
   };
 
   const restartGame = () => {
     setLevel(1);
     setGameCompleted(false);
-    buildLevel(allCards, 1);
+    buildLevel(positionCards, 1);
   };
 
   const renderCard = (card: Card) => {
@@ -252,11 +258,7 @@ export function MatchingGameScreen({ navigation, route }: Props) {
           {isOpen ? (
             <Image
               source={{ uri: card.imageUrl }}
-              style={{
-                width: "100%",
-                height: "100%",
-                borderRadius: 22,
-              }}
+              style={{ width: "100%", height: "100%", borderRadius: 22 }}
               resizeMode="cover"
             />
           ) : (
@@ -295,22 +297,14 @@ export function MatchingGameScreen({ navigation, route }: Props) {
           title="Знайди однакові"
           onBackPress={() => navigation.goBack()}
         />
-
         <View className="flex-1 justify-center items-center p-8">
           <Ionicons name="trophy" size={80} color="#FFD700" />
-
           <Text className="text-2xl font-bold text-gray-800 mt-5 text-center">
             Всі рівні пройдено! 🎉
           </Text>
-
           <Text className="text-base text-gray-600 mt-2 text-center">
-            Ти знайшов всі пари у {TOTAL_LEVELS} рівнях
+            Ти знайшов всі пари у {totalLevels} рівнях
           </Text>
-
-          <Text className="text-base text-gray-600 mt-1 text-center">
-            Останній рівень: {moves} ходів
-          </Text>
-
           <TouchableOpacity
             className="bg-green-500 w-64 py-4 rounded-xl mt-8"
             onPress={restartGame}
@@ -322,6 +316,15 @@ export function MatchingGameScreen({ navigation, route }: Props) {
                 Грати знову
               </Text>
             </View>
+          </TouchableOpacity>
+          <TouchableOpacity
+            className="bg-gray-100 w-64 py-4 rounded-xl mt-3"
+            onPress={() => navigation.goBack()}
+            activeOpacity={0.85}
+          >
+            <Text className="text-gray-700 text-lg font-bold text-center">
+              До дорожньої карти
+            </Text>
           </TouchableOpacity>
         </View>
       </Screen>
@@ -336,18 +339,14 @@ export function MatchingGameScreen({ navigation, route }: Props) {
           title="Знайди однакові"
           onBackPress={() => navigation.goBack()}
         />
-
         <View className="flex-1 justify-center items-center p-8">
           <Ionicons name="checkmark-circle" size={80} color="#4CAF50" />
-
           <Text className="text-2xl font-bold text-gray-800 mt-5 text-center">
             Рівень {level} пройдено! ✅
           </Text>
-
           <Text className="text-lg text-gray-600 mt-2 text-center">
             Ходів: {moves}
           </Text>
-
           <TouchableOpacity
             className="bg-primary w-64 py-4 rounded-xl mt-8"
             onPress={goToNextLevel}
@@ -357,7 +356,6 @@ export function MatchingGameScreen({ navigation, route }: Props) {
               Наступний рівень →
             </Text>
           </TouchableOpacity>
-
           <TouchableOpacity
             className="bg-red-500 w-64 py-4 rounded-xl mt-4"
             onPress={restartGame}
@@ -382,11 +380,9 @@ export function MatchingGameScreen({ navigation, route }: Props) {
         title="Знайди однакові"
         onBackPress={() => navigation.goBack()}
       />
-
       {showInstruction && (
         <VoiceInstruction text={instructionText} onClose={closeInstruction} />
       )}
-
       <View className="flex-1 px-2 pb-24">
         <View className="flex-1 items-center" style={{ paddingTop: 10 }}>
           <View
@@ -396,10 +392,9 @@ export function MatchingGameScreen({ navigation, route }: Props) {
             {cards.map((card) => renderCard(card))}
           </View>
         </View>
-
         <GameProgressBar
           current={level}
-          total={TOTAL_LEVELS}
+          total={totalLevels}
           correct={correctCount}
           incorrect={incorrectCount}
           moves={moves}

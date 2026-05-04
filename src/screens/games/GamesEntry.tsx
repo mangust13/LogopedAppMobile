@@ -1,5 +1,3 @@
-// src\screens\games\GamesEntry.tsx
-
 import { GamesStack } from "../../navigation/games/GamesStack";
 import { useAuthStore } from "../../store/authStore";
 

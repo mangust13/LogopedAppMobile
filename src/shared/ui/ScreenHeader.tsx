@@ -1,5 +1,3 @@
-//src\shared\ui\ScreenHeader.tsx
-
 import { View, Text } from "react-native";
 
 type ScreenHeaderProps = {

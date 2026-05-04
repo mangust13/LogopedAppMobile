@@ -1,4 +1,3 @@
-//src/screens/parent/children/components/EditChildModal.tsx
 import { useState } from "react";
 import {
   Modal,
