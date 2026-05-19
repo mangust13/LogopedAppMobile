@@ -122,6 +122,13 @@ export function PreparationCategoriesScreen() {
     });
   };
 
+  const handleCreateComplex = () => {
+    navigation.navigate("LogopedCreateComplex", {
+      complexId: 0,
+      isEditing: false,
+    });
+  };
+
   if (loading) {
     return (
       <Screen className="justify-center items-center">
@@ -149,6 +156,19 @@ export function PreparationCategoriesScreen() {
               ? "Логопед ще не призначив вам комплекс вправ."
               : "Створіть перший власний комплекс або використайте дефолтні."}
           </Text>
+
+          {role === "Logoped" && (
+            <TouchableOpacity
+              onPress={handleCreateComplex}
+              activeOpacity={0.85}
+              className="mt-6 bg-blue-500 px-6 py-3 rounded-xl flex-row items-center"
+            >
+              <Ionicons name="add" size={20} color="#FFFFFF" />
+              <Text className="text-white font-semibold ml-2">
+                Створити комплекс
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
       </Screen>
     );
@@ -157,6 +177,21 @@ export function PreparationCategoriesScreen() {
   return (
     <Screen>
       <BackHeader title="Бібліотека" />
+
+      {role === "Logoped" && (
+        <View className="px-4 pt-3 pb-1">
+          <TouchableOpacity
+            onPress={handleCreateComplex}
+            activeOpacity={0.85}
+            className="bg-blue-500 py-3 rounded-xl flex-row items-center justify-center"
+          >
+            <Ionicons name="add" size={20} color="#FFFFFF" />
+            <Text className="text-white font-semibold ml-2">
+              Створити комплекс
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       <FlatList
         data={complexes}
@@ -190,7 +225,7 @@ export function PreparationCategoriesScreen() {
                   {role === "Logoped" && item.isDefault && (
                     <View className="px-2 py-0.5 rounded-full bg-blue-100 ml-2">
                       <Text className="text-[10px] text-blue-700 font-semibold">
-                        Дефолтний
+                        Стандартний
                       </Text>
                     </View>
                   )}

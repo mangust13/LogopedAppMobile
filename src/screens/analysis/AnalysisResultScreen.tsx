@@ -1,3 +1,4 @@
+// src/screens/analysis/AnalysisResultScreen.tsx
 import { useEffect, useState } from "react";
 import {
   View,
@@ -7,46 +8,16 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { MaterialCommunityIcons, Ionicons } from "@expo/vector-icons";
 
 import { Screen } from "../../shared/ui/Screen";
 import { Button } from "../../shared/ui/Button";
+import { Card } from "../../shared/ui/Card";
 import { BackHeader } from "../../shared/ui/BackHeader";
-import { exercisesApi, ExerciseDto } from "../../api/exercisesApi";
+import { exercisesApi, ExerciseDto, ComplexDto } from "../../api/exercisesApi";
 import { RootStackParamList } from "../../navigation/RootNavigator";
 
 type RouteProps = RouteProp<RootStackParamList, "AnalysisResult">;
-
-const SOUND_TO_TAG: Record<string, string> = {
-  а: "a",
-  б: "b",
-  в: "v",
-  г: "h",
-  ґ: "g",
-  д: "d",
-  дж: "dzh",
-  дз: "dz",
-  е: "e",
-  ж: "zh",
-  з: "z",
-  и: "y",
-  і: "i",
-  к: "k",
-  л: "l",
-  м: "m",
-  н: "n",
-  о: "o",
-  п: "p",
-  р: "r",
-  с: "s",
-  т: "t",
-  у: "u",
-  ф: "f",
-  х: "kh",
-  ц: "ts",
-  ч: "ch",
-  ш: "sh",
-};
 
 const games = [
   {
@@ -69,43 +40,89 @@ const games = [
   },
 ];
 
+const SOUND_TO_COMPLEX: Record<string, string> = {
+  р: "sound-r",
+  л: "sound-l",
+  ш: "hushing",
+  ж: "hushing",
+  ч: "hushing",
+  щ: "hushing",
+  с: "whistling",
+  з: "whistling",
+  ц: "whistling",
+};
+
 export function AnalysisResultScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute<RouteProps>();
   const { problemSounds, groupLabel } = route.params;
 
   const [exercises, setExercises] = useState<Record<string, ExerciseDto[]>>({});
+  const [complexes, setComplexes] = useState<Record<string, ComplexDto>>({});
   const [isLoading, setIsLoading] = useState(problemSounds.length > 0);
 
   useEffect(() => {
     if (problemSounds.length > 0) {
-      loadExercises();
+      loadData();
     }
   }, []);
 
-  const loadExercises = async () => {
+  const loadData = async () => {
     try {
-      const result: Record<string, ExerciseDto[]> = {};
-      await Promise.all(
-        problemSounds.map(async (sound) => {
-          const data = await exercisesApi.getBySound(sound);
-          result[sound] = data.slice(0, 3);
-        }),
-      );
-      setExercises(result);
+      const [allComplexes, ...exerciseResults] = await Promise.all([
+        exercisesApi.getComplexes(),
+        ...problemSounds.map((sound) => exercisesApi.getBySound(sound)),
+      ]);
+
+      const exerciseMap: Record<string, ExerciseDto[]> = {};
+      problemSounds.forEach((sound, i) => {
+        exerciseMap[sound] = exerciseResults[i].slice(0, 3);
+      });
+      setExercises(exerciseMap);
+
+      // Мапимо комплекси по звуку
+      const complexMap: Record<string, ComplexDto> = {};
+      problemSounds.forEach((sound) => {
+        const complexName = SOUND_TO_COMPLEX[sound.toLowerCase()];
+        if (complexName) {
+          const found = allComplexes.find((c) => c.name === complexName);
+          if (found) complexMap[sound] = found;
+        }
+      });
+      setComplexes(complexMap);
     } catch {
     } finally {
       setIsLoading(false);
     }
   };
 
-  const navigateToGame = (route: string, sound: string) => {
+  const navigateToGame = (gameRoute: string, sound: string) => {
     navigation.navigate("App", {
       screen: "Games",
       params: {
-        screen: route,
+        screen: gameRoute,
         params: { sound: sound.toUpperCase() },
       },
+    });
+  };
+
+  const navigateToComplex = (complex: ComplexDto) => {
+    navigation.navigate("App", {
+      screen: "Games",
+      params: {
+        screen: "PreparationExerciseGallery",
+        params: {
+          complexId: complex.id,
+          complexTitle: complex.displayName,
+        },
+      },
+    });
+  };
+
+  const navigateToLibrary = () => {
+    navigation.navigate("App", {
+      screen: "Games",
+      params: { screen: "PreparationCategories" },
     });
   };
 
@@ -153,61 +170,166 @@ export function AnalysisResultScreen() {
         {problemSounds.length > 0 && (
           <>
             <View>
-              <Text className="text-xl font-bold text-text-main mb-4">
-                Рекомендовані вправи 📋
-              </Text>
+              <View className="flex-row items-center justify-between mb-4">
+                <Text className="text-xl font-bold text-text-main">
+                  Рекомендовані вправи 📋
+                </Text>
+                <TouchableOpacity
+                  onPress={navigateToLibrary}
+                  activeOpacity={0.7}
+                  className="flex-row items-center gap-1"
+                >
+                  <Text className="text-primary text-sm font-semibold">
+                    Бібліотека
+                  </Text>
+                  <Ionicons name="chevron-forward" size={14} color="#6C63FF" />
+                </TouchableOpacity>
+              </View>
 
               {isLoading ? (
                 <ActivityIndicator size="large" color="#6C63FF" />
               ) : (
                 <View className="gap-6">
-                  {problemSounds.map((sound) => (
-                    <View key={sound}>
-                      <View className="flex-row items-center gap-2 mb-3">
-                        <View className="w-8 h-8 bg-primary rounded-full items-center justify-center">
-                          <Text className="text-white font-bold text-sm">
-                            {sound.toUpperCase()}
-                          </Text>
-                        </View>
-                        <Text className="text-lg font-bold text-text-main">
-                          Звук {sound.toUpperCase()}
-                        </Text>
-                      </View>
+                  {problemSounds.map((sound) => {
+                    const soundExercises = exercises[sound] ?? [];
+                    const relatedComplex = complexes[sound];
 
-                      {exercises[sound]?.length > 0 ? (
-                        <View className="gap-3">
-                          {exercises[sound].map((ex) => (
-                            <View
-                              key={ex.id}
-                              className="bg-white border border-gray-100 rounded-2xl p-4"
-                            >
-                              <Text className="font-bold text-text-main text-base mb-1">
-                                {ex.title}
-                              </Text>
-                              {ex.description ? (
-                                <Text
-                                  className="text-text-muted text-sm"
-                                  numberOfLines={2}
-                                >
-                                  {ex.description}
-                                </Text>
-                              ) : null}
-                            </View>
-                          ))}
-                        </View>
-                      ) : (
-                        <View className="bg-gray-50 rounded-2xl p-4">
-                          <Text className="text-text-muted text-sm">
-                            Вправ для цього звуку поки немає
+                    return (
+                      <View key={sound}>
+                        <View className="flex-row items-center gap-2 mb-3">
+                          <View className="w-8 h-8 bg-primary rounded-full items-center justify-center">
+                            <Text className="text-white font-bold text-sm">
+                              {sound.toUpperCase()}
+                            </Text>
+                          </View>
+                          <Text className="text-lg font-bold text-text-main">
+                            Звук {sound.toUpperCase()}
                           </Text>
                         </View>
-                      )}
-                    </View>
-                  ))}
+
+                        {relatedComplex && (
+                          <TouchableOpacity
+                            onPress={() => navigateToComplex(relatedComplex)}
+                            activeOpacity={0.8}
+                            className="mb-3"
+                          >
+                            <Card className="flex-row items-center gap-3 p-4 border border-primary/20 bg-primary/5">
+                              <View className="w-10 h-10 bg-primary/10 rounded-full items-center justify-center">
+                                <Ionicons
+                                  name="library"
+                                  size={20}
+                                  color="#6C63FF"
+                                />
+                              </View>
+                              <View className="flex-1">
+                                <Text className="font-bold text-primary text-sm">
+                                  Комплекс: {relatedComplex.displayName}
+                                </Text>
+                                <Text className="text-text-muted text-xs mt-0.5">
+                                  {relatedComplex.exerciseCount} вправ •
+                                  Натисніть щоб відкрити
+                                </Text>
+                              </View>
+                              <Ionicons
+                                name="chevron-forward"
+                                size={16}
+                                color="#6C63FF"
+                              />
+                            </Card>
+                          </TouchableOpacity>
+                        )}
+
+                        {/* Окремі вправи якщо є */}
+                        {soundExercises.length > 0 ? (
+                          <View className="gap-2">
+                            {soundExercises.map((ex) => (
+                              <TouchableOpacity
+                                key={ex.id}
+                                activeOpacity={0.8}
+                                onPress={() =>
+                                  navigation.navigate("App", {
+                                    screen: "Games",
+                                    params: {
+                                      screen: "PreparationExerciseDetail",
+                                      params: {
+                                        title: ex.title,
+                                        videoPath: ex.videoPath,
+                                        description: ex.description,
+                                      },
+                                    },
+                                  })
+                                }
+                              >
+                                <Card className="flex-row items-center gap-3 p-4 border border-gray-100">
+                                  <View className="w-10 h-10 bg-gray-100 rounded-full items-center justify-center">
+                                    <Ionicons
+                                      name="play-circle-outline"
+                                      size={22}
+                                      color="#6C63FF"
+                                    />
+                                  </View>
+                                  <View className="flex-1">
+                                    <Text className="font-bold text-text-main text-sm">
+                                      {ex.title}
+                                    </Text>
+                                    {ex.description ? (
+                                      <Text
+                                        className="text-text-muted text-xs mt-0.5"
+                                        numberOfLines={2}
+                                      >
+                                        {ex.description}
+                                      </Text>
+                                    ) : null}
+                                  </View>
+                                  <Ionicons
+                                    name="chevron-forward"
+                                    size={16}
+                                    color="#9CA3AF"
+                                  />
+                                </Card>
+                              </TouchableOpacity>
+                            ))}
+                          </View>
+                        ) : (
+                          // Немає ні вправ ні комплексу
+                          !relatedComplex && (
+                            <TouchableOpacity
+                              onPress={navigateToLibrary}
+                              activeOpacity={0.8}
+                            >
+                              <Card className="flex-row items-center gap-3 p-4 border border-gray-100">
+                                <View className="w-10 h-10 bg-gray-100 rounded-full items-center justify-center">
+                                  <Ionicons
+                                    name="library-outline"
+                                    size={20}
+                                    color="#9CA3AF"
+                                  />
+                                </View>
+                                <View className="flex-1">
+                                  <Text className="font-bold text-text-main text-sm">
+                                    Переглянути бібліотеку вправ
+                                  </Text>
+                                  <Text className="text-text-muted text-xs mt-0.5">
+                                    Знайдіть підходящі вправи самостійно
+                                  </Text>
+                                </View>
+                                <Ionicons
+                                  name="chevron-forward"
+                                  size={16}
+                                  color="#9CA3AF"
+                                />
+                              </Card>
+                            </TouchableOpacity>
+                          )
+                        )}
+                      </View>
+                    );
+                  })}
                 </View>
               )}
             </View>
 
+            {/* Ігри */}
             <View>
               <Text className="text-xl font-bold text-text-main mb-4">
                 Ігри для тренування 🎮
@@ -258,7 +380,13 @@ export function AnalysisResultScreen() {
           </>
         )}
 
+        {/* Кнопки */}
         <View className="gap-3 mt-2">
+          <Button
+            title="Бібліотека вправ 📚"
+            variant="outline"
+            onPress={navigateToLibrary}
+          />
           <Button
             title="Перевірити іншу групу"
             variant="outline"

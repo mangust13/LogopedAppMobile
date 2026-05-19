@@ -105,7 +105,7 @@ export function LogopedComplexListScreen() {
                           item.isDefault ? "text-blue-700" : "text-green-700"
                         }`}
                       >
-                        {item.isDefault ? "Дефолтний" : "Власний"}
+                        {item.isDefault ? "Стандартний" : "Власний"}
                       </Text>
                     </View>
                   </View>

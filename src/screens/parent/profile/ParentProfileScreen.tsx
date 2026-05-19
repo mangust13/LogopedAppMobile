@@ -50,12 +50,12 @@ export function ParentProfileScreen() {
 
           <ProfileItem icon="mail" label="Email" value={email ?? ""} />
 
-          <ProfileItem
+          {/* <ProfileItem
             icon="alarm"
             label="Нагадування"
             value="19:00"
             showDivider={false}
-          />
+          /> */}
         </ProfileSection>
 
         <ProfileSection title="Керування">

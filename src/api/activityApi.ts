@@ -7,6 +7,11 @@ export type StreakDto = {
   totalActiveDays: number;
 };
 
+export type InactiveChildDto = {
+  childId: number;
+  daysInactive: number;
+};
+
 export const activityApi = {
   track: async (childId: number, activityType: "Game" | "Exercise") => {
     await http.post("/progress/activity/track", { childId, activityType });
@@ -23,6 +28,20 @@ export const activityApi = {
     const res = await http.get<string[]>("/progress/activity/dates", {
       params: { childId },
     });
+    return res.data;
+  },
+
+  getInactiveChildren: async (
+    childIds: number[],
+    thresholdDays: number = 3,
+  ): Promise<InactiveChildDto[]> => {
+    const res = await http.post<InactiveChildDto[]>(
+      "/progress/activity/inactive",
+      {
+        childIds,
+        thresholdDays,
+      },
+    );
     return res.data;
   },
 };

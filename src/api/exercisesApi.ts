@@ -157,4 +157,28 @@ export const exercisesApi = {
   deleteComplex: async (id: number): Promise<void> => {
     await http.delete(`/exercises/complexes/${id}`);
   },
+
+  getComplexBySound: async (sound: string): Promise<ComplexDto | null> => {
+    const SOUND_TO_COMPLEX: Record<string, string> = {
+      р: "sound-r",
+      л: "sound-l",
+      ш: "hushing",
+      ж: "hushing",
+      ч: "hushing",
+      щ: "hushing",
+      с: "whistling",
+      з: "whistling",
+      ц: "whistling",
+    };
+
+    const complexName = SOUND_TO_COMPLEX[sound.toLowerCase()];
+    if (!complexName) return null;
+
+    try {
+      const res = await http.get<ComplexDto[]>("/exercises/complexes");
+      return res.data.find((c) => c.name === complexName) ?? null;
+    } catch {
+      return null;
+    }
+  },
 };

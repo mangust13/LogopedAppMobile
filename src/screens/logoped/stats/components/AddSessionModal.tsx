@@ -1,4 +1,3 @@
-// src/screens/logoped/sessions/components/AddSessionModal.tsx
 import { useState, useEffect } from "react";
 import {
   View,
@@ -15,6 +14,11 @@ import { Ionicons } from "@expo/vector-icons";
 import { sessionsApi, SessionDto } from "../../../../api/sessionsApi";
 import { ChildDto } from "../../../../api/childrenApi";
 import { Button } from "../../../../shared/ui/Button";
+import { ProblemSoundsPicker } from "../../../../shared/ui/ProblemSoundsPicker";
+import {
+  parseProblemSounds,
+  formatProblemSounds,
+} from "../../../../shared/constants/sounds";
 
 type Props = {
   visible: boolean;
@@ -34,12 +38,11 @@ export function AddSessionModal({
   const isEditing = !!session;
 
   const [selectedChildId, setSelectedChildId] = useState<number | null>(null);
-  const [date, setDate] = useState(new Date());
   const [dateStr, setDateStr] = useState("");
   const [timeStr, setTimeStr] = useState("");
   const [durationStr, setDurationStr] = useState("");
   const [notes, setNotes] = useState("");
-  const [soundsStr, setSoundsStr] = useState("");
+  const [selectedSounds, setSelectedSounds] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -51,7 +54,7 @@ export function AddSessionModal({
         setTimeStr(formatTimeInput(d));
         setDurationStr(session.durationMinutes?.toString() ?? "");
         setNotes(session.notes ?? "");
-        setSoundsStr(session.soundsWorkedOn.join(", "));
+        setSelectedSounds(parseProblemSounds(session.soundsWorkedOn.join(",")));
       } else {
         const now = new Date();
         setSelectedChildId(children[0] ? Number(children[0].id) : null);
@@ -59,7 +62,7 @@ export function AddSessionModal({
         setTimeStr(formatTimeInput(now));
         setDurationStr("");
         setNotes("");
-        setSoundsStr("");
+        setSelectedSounds([]);
       }
     }
   }, [visible, session, children]);
@@ -113,11 +116,16 @@ export function AddSessionModal({
     try {
       setSaving(true);
 
+      const soundsWorkedOn =
+        selectedSounds.length > 0
+          ? formatProblemSounds(selectedSounds)
+          : undefined;
+
       const payload = {
         date: parsedDate.toISOString(),
         durationMinutes: duration,
         notes: notes.trim() || undefined,
-        soundsWorkedOn: soundsStr.trim() || undefined,
+        soundsWorkedOn,
       };
 
       if (isEditing) {
@@ -239,18 +247,11 @@ export function AddSessionModal({
             />
           </View>
 
-          <View>
-            <Text className="text-sm font-bold text-gray-700 mb-2">
-              Звуки (через кому)
-            </Text>
-            <TextInput
-              value={soundsStr}
-              onChangeText={setSoundsStr}
-              placeholder="р, л, с"
-              autoCapitalize="none"
-              className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-base text-gray-800"
-            />
-          </View>
+          <ProblemSoundsPicker
+            label="Звуки"
+            value={selectedSounds}
+            onChange={setSelectedSounds}
+          />
 
           <View>
             <Text className="text-sm font-bold text-gray-700 mb-2">

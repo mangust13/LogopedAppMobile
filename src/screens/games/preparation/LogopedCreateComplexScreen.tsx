@@ -140,7 +140,7 @@ export function LogopedCreateComplexScreen() {
               if (onComplexCreated) {
                 onComplexCreated();
               }
-              navigation.pop(2);
+              navigation.pop(1);
             },
           },
         ]);

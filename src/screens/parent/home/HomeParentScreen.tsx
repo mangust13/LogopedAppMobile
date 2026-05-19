@@ -1,10 +1,10 @@
-﻿// src/screens/parent/home/HomeParentScreen.tsx
-import { View, Text, ScrollView, RefreshControl } from "react-native";
+﻿import { View, Text, ScrollView, RefreshControl } from "react-native";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { useCallback, useState } from "react";
 
 import { childrenApi, ChildDto } from "../../../api/childrenApi";
 import { progressApi, SoundProgressSummaryDto } from "../../../api/progressApi";
+import { activityApi, StreakDto } from "../../../api/activityApi";
 import { useChildStore } from "../../../store/childStore";
 import { parseProblemSounds } from "../../../shared/constants/sounds";
 
@@ -14,7 +14,6 @@ import { Button } from "../../../shared/ui/Button";
 
 import { ChildSelector } from "./components/ChildSelector";
 import { SoundProgressBar } from "./components/SoundProgressBar";
-import { BadgesGrid } from "./components/BadgesGrid";
 import { StreakCard } from "./components/StreakCard";
 
 import ScreenHeader from "../../../shared/ui/ScreenHeader";
@@ -36,52 +35,81 @@ export function HomeParentScreen() {
   const [soundProgress, setSoundProgress] = useState<SoundProgressSummaryDto[]>(
     [],
   );
+  const [streak, setStreak] = useState<StreakDto | null>(null);
+  const [activeDates, setActiveDates] = useState<string[]>([]);
 
-  const load = async () => {
+  const loadStreak = useCallback(async (childId: number) => {
+    try {
+      const [streakData, datesData] = await Promise.all([
+        activityApi.getStreak(childId),
+        activityApi.getActiveDates(childId),
+      ]);
+      setStreak(streakData);
+      setActiveDates(datesData);
+    } catch {
+      setStreak(null);
+      setActiveDates([]);
+    }
+  }, []);
+
+  const loadSoundProgress = useCallback(
+    async (childId: number, child: ChildDto) => {
+      const sounds = parseProblemSounds(child.problemSounds);
+      if (sounds.length === 0) return;
+
+      try {
+        const data = await progressApi.getSoundsSummary(childId, sounds);
+        setSoundProgress(data);
+      } catch {
+        setSoundProgress([]);
+      }
+    },
+    [],
+  );
+
+  const load = useCallback(async (): Promise<{
+    childId: number;
+    child: ChildDto;
+  } | null> => {
     setLoading(true);
     try {
       const data = await childrenApi.getMyChildren();
       setChildren(data);
 
-      if (data.length === 0) return;
+      if (data.length === 0) return null;
 
       const found = data.find((c) => Number(c.id) === selectedChildId);
 
       if (!found) {
         setSelectedChild(data[0]);
-      } else if (selectedChildId && !selectedChild) {
+        return { childId: Number(data[0].id), child: data[0] };
+      }
+
+      if (selectedChildId && !selectedChild) {
         setSelectedChildData(found);
       }
+
+      return { childId: Number(found.id), child: found };
     } catch {
+      return null;
     } finally {
       setLoading(false);
     }
-  };
-
-  const loadSoundProgress = useCallback(async () => {
-    if (!selectedChildId || !selectedChild) return;
-
-    const sounds = parseProblemSounds(selectedChild.problemSounds);
-    if (sounds.length === 0) return;
-
-    try {
-      const data = await progressApi.getSoundsSummary(selectedChildId, sounds);
-      setSoundProgress(data);
-    } catch {
-      setSoundProgress([]);
-    }
   }, [selectedChildId, selectedChild]);
 
-  useFocusEffect(
-    useCallback(() => {
-      load();
-    }, [selectedChildId]),
-  );
+  const loadAll = useCallback(async () => {
+    const result = await load();
+    if (!result) return;
+
+    const { childId, child } = result;
+
+    await Promise.all([loadSoundProgress(childId, child), loadStreak(childId)]);
+  }, [load, loadSoundProgress, loadStreak]);
 
   useFocusEffect(
     useCallback(() => {
-      loadSoundProgress();
-    }, [loadSoundProgress]),
+      void loadAll();
+    }, [loadAll]),
   );
 
   const renderContent = () => {
@@ -144,7 +172,7 @@ export function HomeParentScreen() {
           }}
           showsVerticalScrollIndicator={false}
           refreshControl={
-            <RefreshControl refreshing={loading} onRefresh={load} />
+            <RefreshControl refreshing={loading} onRefresh={loadAll} />
           }
         >
           <ChildSelector
@@ -154,7 +182,7 @@ export function HomeParentScreen() {
             onAddChild={() => setShowAddChild(true)}
           />
 
-          {selectedChildId && <StreakCard childId={selectedChildId} />}
+          {streak && <StreakCard streak={streak} activeDates={activeDates} />}
 
           <Card className="border-l-4 border-l-primary">
             <Text className="text-lg font-bold mb-4">План на сьогодні 📝</Text>
@@ -189,8 +217,6 @@ export function HomeParentScreen() {
               />
             </Card>
           )}
-
-          <BadgesGrid />
         </ScrollView>
       </>
     );

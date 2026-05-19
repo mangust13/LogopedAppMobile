@@ -10,21 +10,22 @@ import {
   Modal,
   ScrollView,
 } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
+
 import { Screen } from "../../../shared/ui/Screen";
-import { Button } from "../../../shared/ui/Button";
 import { BackHeader } from "../../../shared/ui/BackHeader";
+
 import type { GamesStackParamList } from "../../../navigation/games/GamesStack";
-import { useAuthStore } from "../../../store/authStore";
+
 import {
   exercisesApi,
   ExerciseDto,
   ExerciseTagDto,
   ComplexDto,
 } from "../../../api/exercisesApi";
+
 import { ENV } from "../../../config/env";
 import { cn } from "../../../shared/utils/cn";
 
@@ -36,24 +37,27 @@ type NavProp = NativeStackNavigationProp<
 type RouteProps = RouteProp<GamesStackParamList, "PreparationExerciseGallery">;
 
 const { width } = Dimensions.get("window");
+
 const COLUMNS = 3;
 const SPACING = 12;
+
 const ITEM_WIDTH = (width - SPACING * (COLUMNS + 1)) / COLUMNS;
 
 export function PreparationExerciseGalleryScreen() {
-  const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavProp>();
+
   const route = useRoute<RouteProps>();
+
   const { complexId, complexTitle } = route.params;
-  const role = useAuthStore((s) => s.role);
 
   const [allExercises, setAllExercises] = useState<ExerciseDto[]>([]);
   const [filteredExercises, setFilteredExercises] = useState<ExerciseDto[]>([]);
   const [availableTags, setAvailableTags] = useState<ExerciseTagDto[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+
   const [loading, setLoading] = useState(true);
+
   const [showFilters, setShowFilters] = useState(false);
-  const [isAllCategory, setIsAllCategory] = useState(false);
 
   useEffect(() => {
     void loadExercises();
@@ -70,7 +74,6 @@ export function PreparationExerciseGalleryScreen() {
       const complex: ComplexDto = await exercisesApi.getComplexById(complexId);
 
       setAllExercises(complex.exercises);
-      setIsAllCategory(complex.name === "all");
 
       const uniqueTags = new Map<string, ExerciseTagDto>();
 
@@ -83,6 +86,7 @@ export function PreparationExerciseGalleryScreen() {
       setAvailableTags(Array.from(uniqueTags.values()));
     } catch (error) {
       console.error(error);
+
       setAllExercises([]);
       setAvailableTags([]);
     } finally {
@@ -93,6 +97,7 @@ export function PreparationExerciseGalleryScreen() {
   const applyFilters = () => {
     if (selectedTags.length === 0) {
       setFilteredExercises(allExercises);
+
       return;
     }
 
@@ -124,6 +129,7 @@ export function PreparationExerciseGalleryScreen() {
       }
 
       acc[tag.category].push(tag);
+
       return acc;
     },
     {},
@@ -162,6 +168,7 @@ export function PreparationExerciseGalleryScreen() {
             className="flex-row items-center"
           >
             <Ionicons name="filter" size={16} color="#6B7280" />
+
             <Text className="text-sm text-text-muted ml-1">Фільтри</Text>
 
             {selectedTags.length > 0 && (
@@ -175,7 +182,10 @@ export function PreparationExerciseGalleryScreen() {
         data={filteredExercises}
         keyExtractor={(item) => item.id.toString()}
         numColumns={COLUMNS}
-        contentContainerStyle={{ padding: SPACING, paddingBottom: 100 }}
+        contentContainerStyle={{
+          padding: SPACING,
+          paddingBottom: 24,
+        }}
         columnWrapperStyle={{ gap: SPACING }}
         renderItem={({ item }) => {
           const imagePath = item.imagePath?.trim();
@@ -239,37 +249,6 @@ export function PreparationExerciseGalleryScreen() {
           );
         }}
       />
-
-      {role === "Logoped" && (
-        <View
-          className="absolute left-4 right-4"
-          style={{ bottom: Math.max(insets.bottom + 12, 24) }}
-        >
-          {isAllCategory ? (
-            <Button
-              title="+ Створити комплекс"
-              onPress={() =>
-                navigation.navigate("LogopedCreateComplex", {
-                  complexId,
-                  isEditing: false,
-                })
-              }
-              className="shadow-lg shadow-primary/30"
-            />
-          ) : (
-            <Button
-              title="Призначити дітям"
-              onPress={() =>
-                navigation.navigate("LogopedAssignComplex", {
-                  complexId,
-                  complexTitle,
-                })
-              }
-              className="shadow-lg shadow-blue-500/30"
-            />
-          )}
-        </View>
-      )}
 
       <Modal
         visible={showFilters}
@@ -342,16 +321,6 @@ export function PreparationExerciseGalleryScreen() {
                   </View>
                 ))}
               </ScrollView>
-            </View>
-
-            <View
-              className="px-6 pt-4 bg-white border-t border-gray-100"
-              style={{ paddingBottom: Math.max(insets.bottom, 16) }}
-            >
-              <Button
-                title="Застосувати"
-                onPress={() => setShowFilters(false)}
-              />
             </View>
           </View>
         </View>

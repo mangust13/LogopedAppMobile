@@ -1,88 +1,107 @@
-import { View, Text, TouchableOpacity, ScrollView } from "react-native";
-import { useNavigation } from "@react-navigation/native";
-import { useState } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  ScrollView,
+  ActivityIndicator,
+} from "react-native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
+import { useState, useCallback } from "react";
 
 import { Screen } from "../../../shared/ui/Screen";
 import { Card } from "../../../shared/ui/Card";
 import { Button } from "../../../shared/ui/Button";
 import { cn } from "../../../shared/utils/cn";
 import ScreenHeader from "../../../shared/ui/ScreenHeader";
+import { sessionsApi, SessionDto } from "../../../api/sessionsApi";
+import { logopedApi } from "../../../api/logopedApi";
+import { activityApi, InactiveChildDto } from "../../../api/activityApi";
+import { ChildDto } from "../../../api/childrenApi";
+import { Ionicons } from "@expo/vector-icons";
+
+const INACTIVE_THRESHOLD_DAYS = 3;
+const RECENT_SESSIONS_COUNT = 3;
 
 type AttentionLevel = "high" | "medium" | "low";
 
-type AttentionItem = {
-  id: string;
-  childName: string;
-  reason: string;
-  level: AttentionLevel;
-};
+function getAttentionLevel(daysInactive: number): AttentionLevel {
+  if (daysInactive >= 7) return "high";
+  if (daysInactive >= 5) return "medium";
+  return "low";
+}
 
 export function HomeLogopedScreen() {
   const navigation = useNavigation<any>();
 
-  const todayStats = {
-    sessionsToday: 5,
-    activeChildren: 4,
-    avgAccuracy: 78,
-  };
+  const [loading, setLoading] = useState(true);
+  const [sessions, setSessions] = useState<SessionDto[]>([]);
+  const [children, setChildren] = useState<ChildDto[]>([]);
+  const [inactiveChildren, setInactiveChildren] = useState<InactiveChildDto[]>(
+    [],
+  );
 
-  const [needAttention] = useState<AttentionItem[]>([
-    {
-      id: "1",
-      childName: "Софія",
-      reason: "Немає активності 4 дні",
-      level: "high",
-    },
-    {
-      id: "2",
-      childName: "Іван",
-      reason: "Низька точність (<60%)",
-      level: "medium",
-    },
-    {
-      id: "3",
-      childName: "Марко",
-      reason: "Нерегулярні заняття",
-      level: "low",
-    },
-  ]);
+  const load = useCallback(async () => {
+    try {
+      setLoading(true);
 
-  const renderAttentionItem = (item: AttentionItem) => {
-    return (
-      <View
-        key={item.id}
-        className={cn(
-          "flex-row justify-between items-center p-3 rounded-xl border mb-2",
-          item.level === "high" && "bg-red-50 border-red-100",
-          item.level === "medium" && "bg-orange-50 border-orange-100",
-          item.level === "low" && "bg-cyan-50 border-cyan-100",
-        )}
-      >
-        <View className="flex-1">
-          <View className="flex-row items-center space-x-2 mb-1">
-            <Text className="font-bold text-text-main">{item.childName}</Text>
-            <PriorityBadge level={item.level} />
-          </View>
+      const [sessionsData, childrenData] = await Promise.all([
+        sessionsApi.getMySessions(),
+        logopedApi.getLogopedChildren(),
+      ]);
 
-          <Text className="text-xs text-text-muted">{item.reason}</Text>
-        </View>
+      setSessions(sessionsData);
+      setChildren(childrenData);
 
-        <TouchableOpacity onPress={() => navigation.navigate("Children")}>
-          <Text className="text-primary font-bold text-sm">Деталі</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  };
+      if (childrenData.length > 0) {
+        const childIds = childrenData.map((c) => Number(c.id));
+        const inactive = await activityApi.getInactiveChildren(
+          childIds,
+          INACTIVE_THRESHOLD_DAYS,
+        );
+        setInactiveChildren(inactive);
+      }
+    } catch {
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      load();
+    }, [load]),
+  );
+
+  const today = new Date().toDateString();
+
+  const todaysSessions = sessions.filter(
+    (s) => new Date(s.date).toDateString() === today,
+  );
+
+  const todaysUniqueChildren = new Set(todaysSessions.map((s) => s.childId))
+    .size;
+
+  const recentSessions = sessions.slice(0, RECENT_SESSIONS_COUNT);
+
+  const getChildName = (childId: number) =>
+    children.find((c) => Number(c.id) === childId)?.name ?? "Невідомо";
 
   const Stat = ({ label, value }: { label: string; value: any }) => (
     <View className="items-center flex-1">
       <Text className="text-2xl font-bold text-primary mb-1">{value}</Text>
-
       <Text className="text-xs text-text-muted uppercase font-bold tracking-wider text-center">
         {label}
       </Text>
     </View>
   );
+
+  if (loading) {
+    return (
+      <Screen className="justify-center items-center">
+        <ActivityIndicator size="large" color="#6C63FF" />
+      </Screen>
+    );
+  }
 
   return (
     <Screen>
@@ -96,25 +115,129 @@ export function HomeLogopedScreen() {
           gap: 20,
         }}
       >
+        {/* Сьогодні */}
         <Card>
           <Text className="text-lg font-bold mb-4 text-text-main">
             Сьогодні 📅
           </Text>
 
           <View className="flex-row justify-between divide-x divide-gray-100">
-            <Stat label="Занять" value={todayStats.sessionsToday} />
-            <Stat label="Учнів" value={todayStats.activeChildren} />
-            <Stat label="Точність" value={`${todayStats.avgAccuracy}%`} />
+            <Stat label="Занять" value={todaysSessions.length} />
+            <Stat label="Учнів" value={todaysUniqueChildren} />
+            <Stat label="Всього учнів" value={children.length} />
           </View>
         </Card>
 
-        <Card>
-          <Text className="text-lg font-bold mb-3 text-text-main">
-            Потребують уваги ⚠️
-          </Text>
+        {/* Потребують уваги */}
+        {inactiveChildren.length > 0 && (
+          <Card>
+            <Text className="text-lg font-bold mb-3 text-text-main">
+              Потребують уваги ⚠️
+            </Text>
 
-          <View>{needAttention.map((item) => renderAttentionItem(item))}</View>
-        </Card>
+            <View>
+              {inactiveChildren.map((item) => {
+                const level = getAttentionLevel(item.daysInactive);
+                const childName = getChildName(item.childId);
+
+                return (
+                  <View
+                    key={item.childId}
+                    className={cn(
+                      "flex-row justify-between items-center p-3 rounded-xl border mb-2",
+                      level === "high" && "bg-red-50 border-red-100",
+                      level === "medium" && "bg-orange-50 border-orange-100",
+                      level === "low" && "bg-cyan-50 border-cyan-100",
+                    )}
+                  >
+                    <View className="flex-1">
+                      <View className="flex-row items-center mb-1">
+                        <Text className="font-bold text-text-main">
+                          {childName}
+                        </Text>
+                        <PriorityBadge level={level} />
+                      </View>
+                      <Text className="text-xs text-text-muted">
+                        Немає активності {item.daysInactive}{" "}
+                        {item.daysInactive === 1
+                          ? "день"
+                          : item.daysInactive < 5
+                            ? "дні"
+                            : "днів"}
+                      </Text>
+                    </View>
+
+                    <TouchableOpacity
+                      onPress={() => navigation.navigate("Children")}
+                    >
+                      <Text className="text-primary font-bold text-sm">
+                        Деталі
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                );
+              })}
+            </View>
+          </Card>
+        )}
+
+        {recentSessions.length > 0 && (
+          <Card>
+            <View className="flex-row items-center justify-between mb-3">
+              <Text className="text-lg font-bold text-text-main">
+                Останні заняття 📋
+              </Text>
+              <TouchableOpacity onPress={() => navigation.navigate("Progress")}>
+                <Text className="text-primary text-sm font-semibold">Всі</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View className="gap-2">
+              {recentSessions.map((session) => {
+                const date = new Date(session.date);
+                const dateStr = date.toLocaleDateString("uk-UA", {
+                  day: "numeric",
+                  month: "short",
+                });
+                const timeStr = date.toLocaleTimeString("uk-UA", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                });
+
+                return (
+                  <View
+                    key={session.id}
+                    className="flex-row items-center justify-between py-2 border-b border-gray-50"
+                  >
+                    <View className="flex-row items-center gap-3">
+                      <View className="w-8 h-8 bg-primary/10 rounded-full items-center justify-center">
+                        <Ionicons name="person" size={15} color="#6C63FF" />
+                      </View>
+                      <View>
+                        <Text className="font-semibold text-text-main text-sm">
+                          {getChildName(session.childId)}
+                        </Text>
+                        {session.soundsWorkedOn.length > 0 && (
+                          <Text className="text-xs text-gray-400">
+                            Звуки:{" "}
+                            {session.soundsWorkedOn.join(", ").toUpperCase()}
+                          </Text>
+                        )}
+                      </View>
+                    </View>
+
+                    <View className="items-end">
+                      <Text className="text-xs text-gray-500 font-medium">
+                        {dateStr}
+                      </Text>
+                      <Text className="text-xs text-gray-400">{timeStr}</Text>
+                    </View>
+                  </View>
+                );
+              })}
+            </View>
+          </Card>
+        )}
 
         <View>
           <Text className="text-lg font-bold mb-3 text-text-main">
@@ -128,7 +251,6 @@ export function HomeLogopedScreen() {
               className="flex-1"
               onPress={() => navigation.navigate("Children")}
             />
-
             <Button
               title="Звіти"
               variant="outline"

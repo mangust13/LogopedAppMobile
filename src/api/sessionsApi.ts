@@ -1,4 +1,3 @@
-// src/api/sessionsApi.ts
 import { http } from "./http";
 
 export type CreateSessionDto = {

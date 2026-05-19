@@ -1,12 +1,11 @@
-// src/screens/parent/home/components/StreakCard.tsx
-import { useEffect, useState } from "react";
 import { View, Text } from "react-native";
-import { activityApi, StreakDto } from "../../../../api/activityApi";
+import { StreakDto } from "../../../../api/activityApi";
 import { Card } from "../../../../shared/ui/Card";
 import { cn } from "../../../../shared/utils/cn";
 
 type Props = {
-  childId: number;
+  streak: StreakDto;
+  activeDates: string[];
 };
 
 type DayState = "done" | "missed" | "today" | "future";
@@ -43,23 +42,7 @@ function buildWeekDays(activeDates: string[], activeToday: boolean): DayInfo[] {
   return days;
 }
 
-export function StreakCard({ childId }: Props) {
-  const [streak, setStreak] = useState<StreakDto | null>(null);
-  const [activeDates, setActiveDates] = useState<string[]>([]);
-
-  useEffect(() => {
-    activityApi
-      .getStreak(childId)
-      .then(setStreak)
-      .catch(() => {});
-    activityApi
-      .getActiveDates(childId)
-      .then(setActiveDates)
-      .catch(() => {});
-  }, [childId]);
-
-  if (!streak) return null;
-
+export function StreakCard({ streak, activeDates }: Props) {
   const days = buildWeekDays(activeDates, streak.activeToday);
 
   return (

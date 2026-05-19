@@ -162,8 +162,10 @@ export function SwipeGameScreen({ navigation, route }: Props) {
           setCurrentIndex(nextIndex);
         } else {
           setCompleted(true);
+
           const allCorrect = newWrongItems.length === 0;
-          if (!retryMode && allCorrect && !alreadySaved) {
+
+          if (allCorrect && !alreadySaved) {
             setAlreadySaved(true);
             await progressApi.completeGame({
               childId,
@@ -289,7 +291,6 @@ export function SwipeGameScreen({ navigation, route }: Props) {
               </>
             )}
 
-            {/* Кнопка повтору помилок — тільки якщо є помилки і не в режимі повтору */}
             {wrongItems.length > 0 && !retryMode && (
               <TouchableOpacity
                 className="bg-primary w-64 py-4 rounded-xl mt-8"
